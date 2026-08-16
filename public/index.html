@@ -2453,7 +2453,7 @@
         }
       }
 
-      // DIRECT PLAY (APPLE NATIVE AVPLAYER ON IOS/IPADOS, OR DIRECT STREAM OPEN)
+      // DIRECT PLAY (EXTERNAL APP DISPATCH FOR IPHONE / IPAD)
       async function playDirectly(item) {
         const target = item || currentActiveItem;
         if (!target) return;
@@ -2467,34 +2467,13 @@
           return;
         }
 
+        const title = target.current_ep_title ? `${decodeHtml(target.name)} - ${target.current_ep_title}` : decodeHtml(target.name);
         const isAppleDevice = /iPhone|iPad|iPod/i.test(navigator.userAgent) || (navigator.platform === 'MacIntel' && navigator.maxTouchPoints > 1);
 
         if (isAppleDevice) {
-          const title = target.current_ep_title ? `${decodeHtml(target.name)} - ${target.current_ep_title}` : decodeHtml(target.name);
-          showToast("🎬 Apertura lettore Apple AVPlayer...");
-          
-          playerActiveTitle.textContent = title;
-          playerModal.classList.remove('hidden');
-          webIframe.classList.add('hidden');
-          webIframe.src = 'about:blank';
-          webVideo.classList.remove('hidden');
-
-          webVideo.src = streamUrl;
-          webVideo.load();
-          const playPromise = webVideo.play();
-          if (playPromise !== undefined) {
-            playPromise.then(() => {
-              if (webVideo.webkitEnterFullscreen) {
-                webVideo.webkitEnterFullscreen();
-              } else if (webVideo.requestFullscreen) {
-                webVideo.requestFullscreen();
-              }
-            }).catch(() => {
-              if (webVideo.webkitEnterFullscreen) {
-                webVideo.webkitEnterFullscreen();
-              }
-            });
-          }
+          // Open player chooser popup immediately so user can tap Infuse, VLC, or System Player
+          openPlayerChooser(extraction, title);
+          showToast("📱 Tocca l'app con cui riprodurre il video (Infuse, VLC, ecc.)");
           return;
         }
 
@@ -2503,7 +2482,7 @@
       }
 
       // -------------------------------------------------------------
-      // EXTERNAL PLAYER SYSTEM & INTENTS (ANDROID CHOOSER & IOS AVPLAYER)
+      // EXTERNAL PLAYER SYSTEM & INTENTS (ANDROID CHOOSER & IOS APPS)
       // -------------------------------------------------------------
       function updateChooserLinks(streamUrl, title, proxyUrl) {
         const effectiveUrl = proxyUrl || streamUrl;
@@ -2516,31 +2495,15 @@
         // 1. Android System Intent ("Apri con...")
         choiceAndroidIntent.href = `intent://${cleanEffectiveUrl}#Intent;type=video/*;scheme=https;action=android.intent.action.VIEW;S.title=${encodeURIComponent(title || '')};end;`;
 
-        // 2. Apple Native Player (Plays in AVPlayer fullscreen on iOS/iPadOS/macOS)
-        choiceIos.onclick = (e) => {
-          e.preventDefault();
+        // 2. Apple Native Player / Direct Stream Tab
+        choiceIos.href = effectiveUrl;
+        choiceIos.target = "_blank";
+        choiceIos.onclick = () => {
           playerChooserModal.classList.add('hidden');
-          playerActiveTitle.textContent = title || 'Riproduzione';
-          playerModal.classList.remove('hidden');
-          webIframe.classList.add('hidden');
-          webIframe.src = 'about:blank';
-          webVideo.classList.remove('hidden');
-          webVideo.src = effectiveUrl;
-          webVideo.load();
-          webVideo.play().then(() => {
-            if (webVideo.webkitEnterFullscreen) {
-              webVideo.webkitEnterFullscreen();
-            } else if (webVideo.requestFullscreen) {
-              webVideo.requestFullscreen();
-            }
-          }).catch(() => {
-            if (webVideo.webkitEnterFullscreen) {
-              webVideo.webkitEnterFullscreen();
-            }
-          });
+          showToast("🍏 Apertura flusso in corso...");
         };
 
-        // 3. VLC Media Player (macOS, iOS, Android, Windows)
+        // 3. VLC Media Player (iOS, Android, macOS, Windows)
         if (isIOS) {
           choiceVlc.href = `vlc-x-callback://x-callback-url/stream?url=${encodeURIComponent(effectiveUrl)}`;
         } else if (isAndroid) {
@@ -2550,6 +2513,8 @@
         }
 
         choiceVlc.onclick = (e) => {
+          playerChooserModal.classList.add('hidden');
+          showToast("🚀 Apertura VLC Media Player...");
           if (isMac || (!isIOS && !isAndroid)) {
             // Generate instant .m3u8 playlist file for 1-click VLC playback on Mac
             try {
@@ -2568,15 +2533,27 @@
             } catch (err) {}
 
             navigator.clipboard.writeText(effectiveUrl).catch(() => {});
-            showToast("🚀 File .m3u8 scaricato per VLC (e link copiato: ⌘+N)");
           }
         };
 
-        // 4. Infuse (iOS & macOS)
+        // 4. Infuse (iOS & iPadOS & macOS)
         choiceInfuse.href = `infuse://control/play?url=${encodeURIComponent(effectiveUrl)}`;
+        choiceInfuse.onclick = () => {
+          playerChooserModal.classList.add('hidden');
+          showToast("🍿 Apertura Infuse Video Player...");
+        };
 
         // 5. MX Player (Android)
         choiceMx.href = `intent://${cleanEffectiveUrl}#Intent;package=com.mxtech.videoplayer.ad;type=video/*;scheme=https;action=android.intent.action.VIEW;end;`;
+
+        // 6. Copy Link
+        if (choiceCopy) {
+          choiceCopy.onclick = () => {
+            navigator.clipboard.writeText(effectiveUrl).catch(() => {});
+            playerChooserModal.classList.add('hidden');
+            showToast("📋 Link flusso .m3u8 copiato negli appunti!");
+          };
+        }
       }
 
       async function startExternalPlayer(item) {
