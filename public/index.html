@@ -1,0 +1,1033 @@
+<!DOCTYPE html>
+<html lang="it">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+  <title>StreamingCommunity Web</title>
+
+  <!-- PWA & MOBILE / IPADOS METADATA -->
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+  <meta name="apple-mobile-web-app-title" content="StreamingCommunity">
+  <meta name="theme-color" content="#09090b">
+  
+  <script src="https://cdn.jsdelivr.net/npm/hls.js@latest"></script>
+
+  <style>
+    :root {
+      --bg-main: #09090b;
+      --bg-surface: #121217;
+      --bg-card: #181820;
+      --bg-hover: #22222e;
+      --accent: #e50914;
+      --accent-glow: rgba(229, 9, 20, 0.4);
+      --text-main: #ffffff;
+      --text-muted: #94a3b8;
+      --text-dim: #64748b;
+      --border: rgba(255, 255, 255, 0.08);
+      --radius-sm: 8px;
+      --radius-md: 14px;
+      --radius-lg: 20px;
+      --font-family: -apple-system, BlinkMacSystemFont, "SF Pro Display", "SF Pro Text", "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+    }
+
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+      -webkit-tap-highlight-color: transparent;
+    }
+
+    body {
+      background-color: var(--bg-main);
+      color: var(--text-main);
+      font-family: var(--font-family);
+      overflow-x: hidden;
+      min-height: 100vh;
+      -webkit-font-smoothing: antialiased;
+    }
+
+    .app-header {
+      position: sticky;
+      top: 0;
+      z-index: 50;
+      backdrop-filter: blur(20px);
+      -webkit-backdrop-filter: blur(20px);
+      background: rgba(9, 9, 11, 0.88);
+      border-bottom: 1px solid var(--border);
+      padding: 12px 24px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 16px;
+    }
+
+    .brand-section {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      cursor: pointer;
+    }
+
+    .brand-badge {
+      background: linear-gradient(135deg, #e50914, #ff3b30);
+      color: #fff;
+      font-weight: 900;
+      font-size: 0.85rem;
+      padding: 4px 9px;
+      border-radius: var(--radius-sm);
+      box-shadow: 0 4px 14px var(--accent-glow);
+    }
+
+    .brand-title {
+      font-size: 1.2rem;
+      font-weight: 800;
+      background: linear-gradient(to right, #fff, #cbd5e1);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+    }
+
+    .header-center {
+      flex: 1;
+      max-width: 520px;
+    }
+
+    .search-wrapper {
+      position: relative;
+      width: 100%;
+    }
+
+    .search-input {
+      width: 100%;
+      background: var(--bg-card);
+      border: 1px solid var(--border);
+      color: var(--text-main);
+      padding: 10px 16px 10px 42px;
+      border-radius: 999px;
+      font-size: 0.92rem;
+      outline: none;
+      transition: all 0.2s ease;
+    }
+
+    .search-input:focus {
+      border-color: rgba(255, 255, 255, 0.3);
+      box-shadow: 0 0 0 3px rgba(255, 255, 255, 0.06);
+      background: var(--bg-surface);
+    }
+
+    .search-icon {
+      position: absolute;
+      left: 14px;
+      top: 50%;
+      transform: translateY(-50%);
+      color: var(--text-dim);
+      pointer-events: none;
+    }
+
+    .search-clear-btn {
+      position: absolute;
+      right: 12px;
+      top: 50%;
+      transform: translateY(-50%);
+      background: rgba(255, 255, 255, 0.1);
+      border: none;
+      color: #fff;
+      width: 22px;
+      height: 22px;
+      border-radius: 50%;
+      font-size: 0.8rem;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+
+    .main-container {
+      max-width: 1440px;
+      margin: 0 auto;
+      padding: 24px 20px;
+      min-height: calc(100vh - 70px);
+    }
+
+    .hero-banner {
+      position: relative;
+      width: 100%;
+      height: 400px;
+      border-radius: var(--radius-lg);
+      overflow: hidden;
+      margin-bottom: 36px;
+      display: flex;
+      align-items: flex-end;
+      padding: 40px;
+      border: 1px solid var(--border);
+      background-size: cover;
+      background-position: center top;
+      box-shadow: 0 20px 40px rgba(0, 0, 0, 0.6);
+      transition: background-image 0.4s ease;
+    }
+
+    .hero-backdrop-overlay {
+      position: absolute;
+      inset: 0;
+      background: linear-gradient(0deg, #09090b 0%, rgba(9, 9, 11, 0.65) 55%, rgba(9, 9, 11, 0.25) 100%);
+    }
+
+    .hero-content {
+      position: relative;
+      z-index: 2;
+      max-width: 680px;
+    }
+
+    .hero-tag {
+      display: inline-block;
+      background: var(--accent);
+      color: #fff;
+      font-size: 0.75rem;
+      font-weight: 800;
+      text-transform: uppercase;
+      padding: 4px 12px;
+      border-radius: var(--radius-sm);
+      margin-bottom: 12px;
+    }
+
+    .hero-title {
+      font-size: 2.4rem;
+      font-weight: 900;
+      margin-bottom: 10px;
+      line-height: 1.15;
+    }
+
+    .hero-plot {
+      font-size: 0.96rem;
+      color: #cbd5e1;
+      line-height: 1.55;
+      display: -webkit-box;
+      -webkit-line-clamp: 3;
+      -webkit-box-orient: vertical;
+      overflow: hidden;
+      margin-bottom: 22px;
+    }
+
+    .hero-actions {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      flex-wrap: wrap;
+    }
+
+    .btn {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      gap: 8px;
+      font-weight: 700;
+      font-size: 0.92rem;
+      padding: 11px 22px;
+      border-radius: var(--radius-md);
+      border: none;
+      cursor: pointer;
+      transition: all 0.2s ease;
+      text-decoration: none;
+    }
+
+    .btn-primary {
+      background: #fff;
+      color: #000;
+    }
+
+    .btn-primary:hover {
+      background: #e2e8f0;
+      transform: translateY(-1px);
+    }
+
+    .btn-secondary {
+      background: rgba(255, 255, 255, 0.12);
+      color: #fff;
+      border: 1px solid rgba(255, 255, 255, 0.15);
+      backdrop-filter: blur(10px);
+    }
+
+    .btn-secondary:hover {
+      background: rgba(255, 255, 255, 0.22);
+    }
+
+    .btn-vix {
+      background: linear-gradient(135deg, #6366f1, #4f46e5);
+      color: #fff;
+      box-shadow: 0 4px 14px rgba(99, 102, 241, 0.4);
+    }
+
+    .btn-vix:hover {
+      opacity: 0.95;
+      transform: translateY(-1px);
+    }
+
+    .section-title {
+      font-size: 1.35rem;
+      font-weight: 800;
+      margin: 28px 0 16px 0;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+    }
+
+    .media-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(185px, 1fr));
+      gap: 20px;
+      margin-bottom: 40px;
+    }
+
+    @media (max-width: 768px) {
+      .media-grid {
+        grid-template-columns: repeat(auto-fill, minmax(140px, 1fr));
+        gap: 12px;
+      }
+      .hero-banner {
+        height: 290px;
+        padding: 20px;
+      }
+      .hero-title {
+        font-size: 1.5rem;
+      }
+      .app-header {
+        padding: 10px 14px;
+      }
+    }
+
+    .media-card {
+      position: relative;
+      background: var(--bg-card);
+      border-radius: var(--radius-md);
+      overflow: hidden;
+      cursor: pointer;
+      transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1);
+      border: 1px solid var(--border);
+    }
+
+    .media-card:hover {
+      transform: translateY(-5px) scale(1.02);
+      border-color: rgba(255, 255, 255, 0.25);
+      box-shadow: 0 14px 30px rgba(0, 0, 0, 0.6);
+    }
+
+    .card-poster-wrap {
+      position: relative;
+      width: 100%;
+      padding-top: 148%;
+      background: #181820;
+      overflow: hidden;
+    }
+
+    .card-poster {
+      position: absolute;
+      inset: 0;
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+      transition: transform 0.3s ease;
+    }
+
+    .media-card:hover .card-poster {
+      transform: scale(1.05);
+    }
+
+    .card-badge {
+      position: absolute;
+      top: 8px;
+      left: 8px;
+      background: rgba(0, 0, 0, 0.78);
+      backdrop-filter: blur(8px);
+      padding: 3px 8px;
+      border-radius: var(--radius-sm);
+      font-size: 0.72rem;
+      font-weight: 800;
+      color: #fff;
+    }
+
+    .card-info {
+      padding: 10px 12px;
+    }
+
+    .card-title {
+      font-size: 0.9rem;
+      font-weight: 700;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      color: #fff;
+    }
+
+    .card-meta {
+      font-size: 0.76rem;
+      color: var(--text-dim);
+      margin-top: 4px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+    }
+
+    .modal-overlay {
+      position: fixed;
+      inset: 0;
+      z-index: 100;
+      background: rgba(0, 0, 0, 0.85);
+      backdrop-filter: blur(18px);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 20px;
+    }
+
+    .modal-overlay.hidden {
+      display: none;
+    }
+
+    .modal-card {
+      background: #131318;
+      border: 1px solid rgba(255, 255, 255, 0.14);
+      border-radius: var(--radius-lg);
+      width: 100%;
+      max-width: 900px;
+      max-height: 90vh;
+      overflow-y: auto;
+      box-shadow: 0 25px 50px rgba(0, 0, 0, 0.9);
+      position: relative;
+    }
+
+    .modal-close-btn {
+      position: absolute;
+      top: 16px;
+      right: 16px;
+      background: rgba(255, 255, 255, 0.1);
+      border: none;
+      color: #fff;
+      width: 36px;
+      height: 36px;
+      border-radius: 50%;
+      font-size: 1.4rem;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      z-index: 10;
+    }
+
+    .modal-close-btn:hover {
+      background: rgba(255, 255, 255, 0.25);
+    }
+
+    .modal-layout {
+      display: flex;
+      gap: 26px;
+      padding: 30px;
+    }
+
+    @media (max-width: 720px) {
+      .modal-layout {
+        flex-direction: column;
+        padding: 20px;
+      }
+    }
+
+    .modal-poster {
+      width: 240px;
+      height: 350px;
+      object-fit: cover;
+      border-radius: var(--radius-md);
+      box-shadow: 0 12px 32px rgba(0, 0, 0, 0.7);
+      flex-shrink: 0;
+    }
+
+    .modal-details {
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+    }
+
+    .modal-title {
+      font-size: 1.8rem;
+      font-weight: 900;
+      margin-bottom: 6px;
+    }
+
+    .modal-plot {
+      font-size: 0.92rem;
+      color: var(--text-muted);
+      line-height: 1.55;
+      margin-bottom: 20px;
+      max-height: 140px;
+      overflow-y: auto;
+    }
+
+    .modal-options-title {
+      font-size: 0.8rem;
+      text-transform: uppercase;
+      font-weight: 800;
+      letter-spacing: 0.5px;
+      color: var(--text-dim);
+      margin-bottom: 8px;
+    }
+
+    .modal-actions-row {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 10px;
+      margin-top: 16px;
+    }
+
+    .seasons-scroll {
+      display: flex;
+      gap: 8px;
+      overflow-x: auto;
+      padding-bottom: 8px;
+      margin-bottom: 12px;
+    }
+
+    .season-pill {
+      background: rgba(255, 255, 255, 0.08);
+      color: var(--text-muted);
+      border: 1px solid var(--border);
+      padding: 6px 14px;
+      border-radius: 999px;
+      font-size: 0.82rem;
+      font-weight: 700;
+      cursor: pointer;
+      white-space: nowrap;
+    }
+
+    .season-pill.active {
+      background: #fff;
+      color: #000;
+      border-color: #fff;
+    }
+
+    .episodes-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(130px, 1fr));
+      gap: 8px;
+      max-height: 180px;
+      overflow-y: auto;
+      margin-top: 8px;
+    }
+
+    .episode-btn {
+      background: rgba(255, 255, 255, 0.06);
+      border: 1px solid var(--border);
+      color: #fff;
+      padding: 8px 10px;
+      border-radius: var(--radius-sm);
+      font-size: 0.82rem;
+      font-weight: 600;
+      cursor: pointer;
+      text-align: center;
+      transition: all 0.2s;
+    }
+
+    .episode-btn:hover {
+      background: rgba(255, 255, 255, 0.18);
+      border-color: rgba(255, 255, 255, 0.3);
+    }
+
+    .episode-btn.active {
+      background: var(--accent);
+      border-color: var(--accent);
+      color: #fff;
+    }
+
+    .player-overlay {
+      position: fixed;
+      inset: 0;
+      z-index: 200;
+      background: #000;
+      display: flex;
+      flex-direction: column;
+    }
+
+    .player-overlay.hidden {
+      display: none;
+    }
+
+    .player-top-bar {
+      padding: 14px 20px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      background: linear-gradient(180deg, rgba(0, 0, 0, 0.85) 0%, transparent 100%);
+      position: absolute;
+      top: 0;
+      left: 0;
+      right: 0;
+      z-index: 10;
+    }
+
+    .player-video {
+      width: 100%;
+      height: 100%;
+      object-fit: contain;
+      background: #000;
+    }
+
+    .player-iframe {
+      width: 100%;
+      height: 100%;
+      border: none;
+      background: #000;
+    }
+
+    .spinner {
+      width: 28px;
+      height: 28px;
+      border: 3px solid rgba(255, 255, 255, 0.1);
+      border-top-color: var(--accent);
+      border-radius: 50%;
+      animation: spin 0.8s linear infinite;
+    }
+
+    @keyframes spin {
+      to { transform: rotate(360deg); }
+    }
+
+    .toast {
+      position: fixed;
+      bottom: 24px;
+      left: 50%;
+      transform: translateX(-50%);
+      background: rgba(24, 24, 31, 0.96);
+      border: 1px solid rgba(255, 255, 255, 0.16);
+      color: #fff;
+      padding: 10px 22px;
+      border-radius: 999px;
+      font-size: 0.88rem;
+      font-weight: 600;
+      box-shadow: 0 12px 28px rgba(0, 0, 0, 0.6);
+      z-index: 300;
+      pointer-events: none;
+      backdrop-filter: blur(12px);
+      transition: all 0.25s ease;
+    }
+
+    .toast.hidden {
+      opacity: 0;
+      transform: translate(-50%, 15px);
+    }
+  </style>
+</head>
+<body>
+
+  <!-- APP HEADER -->
+  <header class="app-header">
+    <div class="brand-section" id="btn-go-home">
+      <div class="brand-badge">SC</div>
+      <h1 class="brand-title">StreamingCommunity</h1>
+    </div>
+
+    <div class="header-center">
+      <div class="search-wrapper">
+        <svg class="search-icon" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><circle cx="11" cy="11" r="8"></circle><line x1="21" y1="21" x2="16.65" y2="16.65"></line></svg>
+        <input type="text" id="main-search-input" class="search-input" placeholder="Cerca film, serie TV, anime...">
+        <button id="search-clear-btn" class="search-clear-btn hidden">&times;</button>
+      </div>
+    </div>
+
+    <div style="font-size: 0.78rem; color: #4ade80; font-weight: 700; display: flex; align-items: center; gap: 6px;">
+      <span style="width: 7px; height: 7px; background: #4ade80; border-radius: 50%; box-shadow: 0 0 8px #4ade80;"></span>
+      <span>Cloud Web</span>
+    </div>
+  </header>
+
+  <!-- MAIN CONTAINER -->
+  <main class="main-container">
+    <!-- HERO FEATURED SECTION -->
+    <div id="hero-banner" class="hero-banner">
+      <div class="hero-backdrop-overlay"></div>
+      <div class="hero-content">
+        <span class="hero-tag">In Primo Piano</span>
+        <h2 id="hero-title" class="hero-title">Caricamento catalogo...</h2>
+        <p id="hero-plot" class="hero-plot">Connessione ai server di streaming in corso...</p>
+        <div class="hero-actions">
+          <button id="btn-hero-vix" class="btn btn-vix">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"></path><polyline points="15 3 21 3 21 9"></polyline><line x1="10" y1="14" x2="21" y2="3"></line></svg>
+            Apri Link Vixcloud
+          </button>
+          <button id="btn-hero-player" class="btn btn-secondary">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor"><polygon points="5 3 19 12 5 21 5 3"></polygon></svg>
+            Lettore Integrato (iPad/Web)
+          </button>
+        </div>
+      </div>
+    </div>
+
+    <!-- CATALOG GRID SECTION -->
+    <div class="section-title">
+      <span id="grid-section-heading">🔥 Film & Serie TV in Evidenza</span>
+      <span id="loading-indicator" class="spinner" style="display: none;"></span>
+    </div>
+    <div id="catalog-grid" class="media-grid"></div>
+  </main>
+
+  <!-- MOVIE / SERIES DETAILS MODAL -->
+  <div id="details-modal" class="modal-overlay hidden">
+    <div class="modal-card">
+      <button id="btn-close-details" class="modal-close-btn">&times;</button>
+      <div class="modal-layout">
+        <img id="detail-poster" class="modal-poster" src="" alt="Poster">
+        <div class="modal-details">
+          <h2 id="detail-title" class="modal-title">Titolo</h2>
+          <div id="detail-meta" style="font-size: 0.84rem; color: var(--text-dim); margin-bottom: 12px;">Anno: 2024 • Film / Serie</div>
+          <p id="detail-plot" class="modal-plot">Caricamento dettagli...</p>
+
+          <!-- SEASONS (FOR SERIES) -->
+          <div id="seasons-container" style="display:none; margin-bottom: 16px;">
+            <div class="modal-options-title">Seleziona Stagione:</div>
+            <div id="seasons-tabs" class="seasons-scroll"></div>
+            <div class="modal-options-title">Episodi:</div>
+            <div id="episodes-grid" class="episodes-grid"></div>
+          </div>
+
+          <div class="modal-options-title">Opzioni di Riproduzione:</div>
+          <div class="modal-actions-row">
+            <!-- OPTION 1: ORIGINAL SIGNED VIXCLOUD PLAYLIST LINK -->
+            <button id="btn-modal-vix-open" class="btn btn-vix">
+              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"></path><polyline points="15 3 21 3 21 9"></polyline><line x1="10" y1="14" x2="21" y2="3"></line></svg>
+              Apri Link Originale Vixcloud
+            </button>
+
+            <!-- OPTION 2: INTEGRATED HTML5 / IPADOS NATIVE PLAYER -->
+            <button id="btn-modal-player-open" class="btn btn-primary">
+              <svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor"><polygon points="5 3 19 12 5 21 5 3"></polygon></svg>
+              Lettore Integrato (PiP / iPad)
+            </button>
+
+            <!-- OPTION 3: OPEN IN EXTERNAL APP (IPAD/MOBILE VLC, INFUSE) -->
+            <button id="btn-modal-external" class="btn btn-secondary" title="Apri in VLC / Infuse">
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path><polyline points="7 10 12 15 17 10"></polyline><line x1="12" y1="15" x2="12" y2="3"></line></svg>
+              Apri in VLC / Infuse
+            </button>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- FULLSCREEN VIDEO PLAYER MODAL -->
+  <div id="player-modal" class="player-overlay hidden">
+    <div class="player-top-bar">
+      <button id="btn-player-back" class="btn btn-secondary" style="padding: 8px 16px;">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="19" y1="12" x2="5" y2="12"></line><polyline points="12 19 5 12 12 5"></polyline></svg>
+        <span>Chiudi Lettore</span>
+      </button>
+      <span id="player-active-title" style="font-weight: 700; font-size: 1rem; color: #fff;">Riproduzione</span>
+      <button id="btn-player-vix-direct" class="btn btn-vix" style="padding: 8px 14px; font-size: 0.82rem;">
+        Apri Link Vixcloud
+      </button>
+    </div>
+
+    <video id="web-video" class="player-video" controls playsinline webkit-playsinline x-webkit-airplay="allow"></video>
+    <iframe id="web-iframe" class="player-iframe hidden" allowfullscreen allow="autoplay; fullscreen; picture-in-picture"></iframe>
+  </div>
+
+  <!-- TOAST NOTIFICATION -->
+  <div id="toast" class="toast hidden">Notifica</div>
+
+  <script>
+    (function () {
+      let loadedCatalog = [];
+      let currentActiveItem = null;
+      let currentHls = null;
+
+      const catalogGrid = document.getElementById('catalog-grid');
+      const mainSearchInput = document.getElementById('main-search-input');
+      const searchClearBtn = document.getElementById('search-clear-btn');
+      const heroBanner = document.getElementById('hero-banner');
+      const heroTitle = document.getElementById('hero-title');
+      const heroPlot = document.getElementById('hero-plot');
+      const btnHeroVix = document.getElementById('btn-hero-vix');
+      const btnHeroPlayer = document.getElementById('btn-hero-player');
+      const detailsModal = document.getElementById('details-modal');
+      const btnCloseDetails = document.getElementById('btn-close-details');
+      const detailPoster = document.getElementById('detail-poster');
+      const detailTitle = document.getElementById('detail-title');
+      const detailMeta = document.getElementById('detail-meta');
+      const detailPlot = document.getElementById('detail-plot');
+      const seasonsContainer = document.getElementById('seasons-container');
+      const seasonsTabs = document.getElementById('seasons-tabs');
+      const episodesGrid = document.getElementById('episodes-grid');
+      const btnModalVixOpen = document.getElementById('btn-modal-vix-open');
+      const btnModalPlayerOpen = document.getElementById('btn-modal-player-open');
+      const btnModalExternal = document.getElementById('btn-modal-external');
+      const playerModal = document.getElementById('player-modal');
+      const btnPlayerBack = document.getElementById('btn-player-back');
+      const playerActiveTitle = document.getElementById('player-active-title');
+      const btnPlayerVixDirect = document.getElementById('btn-player-vix-direct');
+      const webVideo = document.getElementById('web-video');
+      const webIframe = document.getElementById('web-iframe');
+      const toast = document.getElementById('toast');
+      const loadingIndicator = document.getElementById('loading-indicator');
+      const btnGoHome = document.getElementById('btn-go-home');
+
+      function showToast(msg) {
+        toast.textContent = msg;
+        toast.classList.remove('hidden');
+        setTimeout(() => toast.classList.add('hidden'), 2800);
+      }
+
+      async function loadHome() {
+        loadingIndicator.style.display = 'inline-block';
+        try {
+          const res = await fetch('/api/sc/home');
+          const data = await res.json();
+          if (data.success && data.sliders && data.sliders.length > 0) {
+            let titles = [];
+            data.sliders.forEach(s => {
+              (s.titles || []).forEach(t => {
+                if (!titles.some(x => x.id === t.id)) titles.push(t);
+              });
+            });
+
+            loadedCatalog = titles;
+            if (loadedCatalog.length > 0) {
+              updateHero(loadedCatalog[0]);
+              renderCards(loadedCatalog);
+            }
+          }
+        } catch (e) {
+          showToast('Errore di connessione al catalogo');
+        } finally {
+          loadingIndicator.style.display = 'none';
+        }
+      }
+
+      function updateHero(item) {
+        currentActiveItem = item;
+        heroBanner.style.backgroundImage = `url('${item.backdrop || item.poster}')`;
+        heroTitle.textContent = item.name;
+        heroPlot.textContent = item.plot || 'Nessuna trama disponibile.';
+      }
+
+      function renderCards(list) {
+        catalogGrid.innerHTML = '';
+        if (!list || list.length === 0) {
+          catalogGrid.innerHTML = '<div style="grid-column: 1/-1; text-align: center; color: var(--text-dim); padding: 50px;">Nessun risultato trovato.</div>';
+          return;
+        }
+
+        list.forEach(item => {
+          const card = document.createElement('div');
+          card.className = 'media-card';
+          card.innerHTML = `
+            <div class="card-poster-wrap">
+              <img class="card-poster" src="${item.poster || 'https://via.placeholder.com/300x450'}" alt="${item.name}" loading="lazy">
+              <div class="card-badge">${item.type === 'tv' ? 'Serie TV' : 'Film'}</div>
+            </div>
+            <div class="card-info">
+              <div class="card-title">${item.name}</div>
+              <div class="card-meta">
+                <span>${item.release_date || ''}</span>
+                <span style="color: #4ade80;">HD 1080p</span>
+              </div>
+            </div>
+          `;
+          card.onclick = () => openDetails(item);
+          catalogGrid.appendChild(card);
+        });
+      }
+
+      async function openDetails(item) {
+        currentActiveItem = item;
+        detailPoster.src = item.poster || '';
+        detailTitle.textContent = item.name;
+        detailMeta.textContent = `Anno: ${item.release_date || '2024'} • ${item.type === 'tv' ? 'Serie TV' : 'Film'}`;
+        detailPlot.textContent = item.plot || 'Caricamento dettagli...';
+        seasonsContainer.style.display = 'none';
+        detailsModal.classList.remove('hidden');
+
+        try {
+          const res = await fetch(`/api/sc/title/${item.id}?slug=${encodeURIComponent(item.slug || '')}`);
+          const data = await res.json();
+          if (data.success && data.title) {
+            const t = data.title;
+            if (t.plot) detailPlot.textContent = t.plot;
+            if (t.seasons && t.seasons.length > 0) {
+              seasonsContainer.style.display = 'block';
+              seasonsTabs.innerHTML = '';
+              t.seasons.forEach((s, idx) => {
+                const pill = document.createElement('button');
+                pill.className = `season-pill ${idx === 0 ? 'active' : ''}`;
+                pill.textContent = `Stagione ${s.number}`;
+                pill.onclick = () => {
+                  seasonsTabs.querySelectorAll('.season-pill').forEach(p => p.classList.remove('active'));
+                  pill.classList.add('active');
+                  loadSeasonEpisodes(item, s.number);
+                };
+                seasonsTabs.appendChild(pill);
+              });
+              loadSeasonEpisodes(item, t.seasons[0].number);
+            }
+          }
+        } catch (e) {}
+      }
+
+      async function loadSeasonEpisodes(item, seasonNum) {
+        episodesGrid.innerHTML = '<div style="grid-column:1/-1; color:var(--text-dim); text-align:center; padding:10px;">Caricamento episodi...</div>';
+        try {
+          const res = await fetch(`/api/sc/season/${item.id}/${seasonNum}?slug=${encodeURIComponent(item.slug || '')}`);
+          const data = await res.json();
+          if (data.success && data.episodes) {
+            episodesGrid.innerHTML = '';
+            data.episodes.forEach(ep => {
+              const epBtn = document.createElement('button');
+              epBtn.className = 'episode-btn';
+              epBtn.textContent = `Ep. ${ep.number} - ${ep.name || 'Episodio'}`;
+              epBtn.onclick = () => {
+                episodesGrid.querySelectorAll('.episode-btn').forEach(b => b.classList.remove('active'));
+                epBtn.classList.add('active');
+                item.current_watch_url = ep.watch_url;
+                item.current_ep_title = `S${seasonNum}E${ep.number} - ${ep.name || 'Episodio'}`;
+                showToast(`Selezionato: Ep. ${ep.number}`);
+              };
+              episodesGrid.appendChild(epBtn);
+            });
+          }
+        } catch (e) {
+          episodesGrid.innerHTML = '<div style="grid-column:1/-1; color:var(--text-dim); text-align:center;">Impossibile caricare episodi.</div>';
+        }
+      }
+
+      function closeDetails() {
+        detailsModal.classList.add('hidden');
+      }
+
+      btnCloseDetails.onclick = closeDetails;
+      detailsModal.onclick = (e) => { if (e.target === detailsModal) closeDetails(); };
+
+      async function resolveStream(item) {
+        showToast("Risoluzione flusso Vixcloud M3U8...");
+        try {
+          const res = await fetch('/api/vixcloud/extract', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+              url: item.current_watch_url,
+              titleId: item.id
+            })
+          });
+          const data = await res.json();
+          return data.master_m3u8 || data.vix_url || data.embed_url || '';
+        } catch (e) {
+          return '';
+        }
+      }
+
+      async function openVixDirect(item) {
+        const target = item || currentActiveItem;
+        const streamUrl = await resolveStream(target);
+        if (streamUrl) {
+          window.open(streamUrl, '_blank');
+          showToast("Apertura link Vixcloud M3U8 in nuova scheda...");
+        } else {
+          showToast("Impossibile estrarre il link Vixcloud.");
+        }
+      }
+
+      btnModalVixOpen.onclick = () => openVixDirect(currentActiveItem);
+      btnHeroVix.onclick = () => openVixDirect(currentActiveItem);
+      btnPlayerVixDirect.onclick = () => openVixDirect(currentActiveItem);
+
+      async function playVideo(item) {
+        const target = item || currentActiveItem;
+        closeDetails();
+        playerActiveTitle.textContent = target.current_ep_title ? `${target.name} - ${target.current_ep_title}` : target.name;
+        playerModal.classList.remove('hidden');
+
+        const streamUrl = await resolveStream(target);
+        if (!streamUrl) {
+          showToast("Errore risoluzione streaming.");
+          return;
+        }
+
+        if (streamUrl.includes('.m3u8')) {
+          webIframe.classList.add('hidden');
+          webVideo.classList.remove('hidden');
+
+          if (webVideo.canPlayType('application/vnd.apple.mpegurl')) {
+            webVideo.src = streamUrl;
+            webVideo.play().catch(() => {});
+          } else if (Hls.isSupported()) {
+            if (currentHls) currentHls.destroy();
+            currentHls = new Hls();
+            currentHls.loadSource(streamUrl);
+            currentHls.attachMedia(webVideo);
+            currentHls.on(Hls.Events.MANIFEST_PARSED, () => {
+              webVideo.play().catch(() => {});
+            });
+          }
+        } else {
+          webVideo.classList.add('hidden');
+          webVideo.pause();
+          webIframe.classList.remove('hidden');
+          webIframe.src = streamUrl;
+        }
+      }
+
+      btnModalPlayerOpen.onclick = () => playVideo(currentActiveItem);
+      btnHeroPlayer.onclick = () => playVideo(currentActiveItem);
+
+      btnModalExternal.onclick = async () => {
+        const streamUrl = await resolveStream(currentActiveItem);
+        if (streamUrl) {
+          window.location.href = `vlc://${streamUrl}`;
+          showToast("Invio flusso ad app esterna (VLC/Infuse)...");
+        }
+      };
+
+      btnPlayerBack.onclick = () => {
+        playerModal.classList.add('hidden');
+        webVideo.pause();
+        webVideo.src = '';
+        webIframe.src = 'about:blank';
+        if (currentHls) {
+          currentHls.destroy();
+          currentHls = null;
+        }
+      };
+
+      let searchTimeout = null;
+      mainSearchInput.addEventListener('input', (e) => {
+        const query = e.target.value.trim();
+        if (query) searchClearBtn.classList.remove('hidden');
+        else searchClearBtn.classList.add('hidden');
+
+        if (searchTimeout) clearTimeout(searchTimeout);
+        searchTimeout = setTimeout(async () => {
+          if (query.length >= 2) {
+            loadingIndicator.style.display = 'inline-block';
+            try {
+              const res = await fetch(`/api/sc/search?q=${encodeURIComponent(query)}`);
+              const data = await res.json();
+              if (data.success) renderCards(data.titles || []);
+            } catch (e) {}
+            loadingIndicator.style.display = 'none';
+          } else {
+            renderCards(loadedCatalog);
+          }
+        }, 300);
+      });
+
+      searchClearBtn.onclick = () => {
+        mainSearchInput.value = '';
+        searchClearBtn.classList.add('hidden');
+        renderCards(loadedCatalog);
+      };
+
+      btnGoHome.onclick = () => {
+        mainSearchInput.value = '';
+        searchClearBtn.classList.add('hidden');
+        renderCards(loadedCatalog);
+      };
+
+      loadHome();
+    })();
+  </script>
+</body>
+</html>
