@@ -1281,6 +1281,204 @@
       opacity: 0;
       transform: translate(-50%, 15px);
     }
+
+    /* --------------------------------------------------------- */
+    /* LONG-PRESS PEEK & QUICK ACTION RADIAL FLOATING CARD */
+    /* --------------------------------------------------------- */
+    .peek-overlay {
+      position: fixed;
+      inset: 0;
+      z-index: 10000;
+      background: rgba(4, 4, 6, 0.72);
+      backdrop-filter: blur(28px) saturate(190%);
+      -webkit-backdrop-filter: blur(28px) saturate(190%);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      opacity: 0;
+      pointer-events: none;
+      transition: opacity 0.38s cubic-bezier(0.16, 1, 0.3, 1);
+      touch-action: none;
+      user-select: none;
+      -webkit-user-select: none;
+    }
+
+    .peek-overlay.active {
+      opacity: 1;
+      pointer-events: auto;
+    }
+
+    .peek-card-wrap {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 22px;
+      width: min(350px, 86vw);
+      transform: scale(0.86) translateY(28px);
+      opacity: 0;
+      transition: transform 0.42s cubic-bezier(0.16, 1, 0.3, 1), opacity 0.42s cubic-bezier(0.16, 1, 0.3, 1);
+    }
+
+    .peek-overlay.active .peek-card-wrap {
+      transform: scale(1) translateY(0);
+      opacity: 1;
+    }
+
+    .peek-card {
+      width: 100%;
+      background: rgba(20, 20, 26, 0.85);
+      backdrop-filter: blur(36px) saturate(190%);
+      -webkit-backdrop-filter: blur(36px) saturate(190%);
+      border: 1px solid rgba(255, 255, 255, 0.18);
+      border-radius: 22px;
+      overflow: hidden;
+      box-shadow: 0 30px 70px rgba(0, 0, 0, 0.85), 0 0 45px rgba(229, 9, 20, 0.12);
+    }
+
+    .peek-poster-wrap {
+      position: relative;
+      width: 100%;
+      height: 220px;
+      background: #000;
+      overflow: hidden;
+    }
+
+    .peek-poster {
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+      display: block;
+    }
+
+    .peek-poster-overlay {
+      position: absolute;
+      inset: 0;
+      background: linear-gradient(180deg, transparent 35%, rgba(20, 20, 26, 0.95) 100%);
+    }
+
+    .peek-badge {
+      position: absolute;
+      top: 12px;
+      left: 12px;
+      background: var(--accent);
+      color: #fff;
+      font-size: 0.72rem;
+      font-weight: 800;
+      text-transform: uppercase;
+      padding: 4px 10px;
+      border-radius: 999px;
+      box-shadow: 0 4px 14px rgba(229, 9, 20, 0.45);
+    }
+
+    .peek-info {
+      padding: 14px 18px 18px;
+    }
+
+    .peek-title {
+      font-size: 1.2rem;
+      font-weight: 800;
+      color: #fff;
+      line-height: 1.25;
+      margin-bottom: 4px;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+
+    .peek-meta {
+      font-size: 0.78rem;
+      color: var(--text-dim);
+      font-weight: 600;
+      margin-bottom: 8px;
+    }
+
+    .peek-plot {
+      font-size: 0.82rem;
+      color: var(--text-muted);
+      line-height: 1.45;
+      display: -webkit-box;
+      -webkit-line-clamp: 3;
+      -webkit-box-orient: vertical;
+      overflow: hidden;
+    }
+
+    /* DETACHED ROUND FLOATING ACTION BUTTONS */
+    .peek-actions-detached {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 36px;
+      width: 100%;
+    }
+
+    .peek-action-btn {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 8px;
+      cursor: pointer;
+      touch-action: none;
+      transition: transform 0.25s cubic-bezier(0.16, 1, 0.3, 1);
+    }
+
+    .peek-action-icon {
+      width: 64px;
+      height: 64px;
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      background: rgba(255, 255, 255, 0.1);
+      border: 1.5px solid rgba(255, 255, 255, 0.22);
+      backdrop-filter: blur(24px);
+      -webkit-backdrop-filter: blur(24px);
+      color: #fff;
+      box-shadow: 0 12px 28px rgba(0, 0, 0, 0.55);
+      transition: all 0.25s cubic-bezier(0.16, 1, 0.3, 1);
+    }
+
+    .peek-play-btn .peek-action-icon {
+      background: linear-gradient(135deg, rgba(229, 9, 20, 0.88), rgba(185, 28, 28, 0.88));
+      border-color: rgba(255, 255, 255, 0.35);
+      box-shadow: 0 10px 30px rgba(229, 9, 20, 0.45);
+    }
+
+    .peek-share-btn .peek-action-icon {
+      background: linear-gradient(135deg, rgba(99, 102, 241, 0.88), rgba(79, 70, 229, 0.88));
+      border-color: rgba(255, 255, 255, 0.35);
+      box-shadow: 0 10px 30px rgba(99, 102, 241, 0.45);
+    }
+
+    .peek-action-label {
+      font-size: 0.78rem;
+      font-weight: 700;
+      color: var(--text-muted);
+      letter-spacing: 0.3px;
+      transition: all 0.25s cubic-bezier(0.16, 1, 0.3, 1);
+    }
+
+    /* ACTIVE HOVER EFFECT WHEN FINGER DRAGS OVER */
+    .peek-action-btn.active-hover .peek-action-icon {
+      transform: scale(1.25);
+      border-color: #fff;
+      box-shadow: 0 0 35px rgba(255, 255, 255, 0.65), 0 15px 35px rgba(0, 0, 0, 0.7);
+    }
+
+    .peek-play-btn.active-hover .peek-action-icon {
+      background: linear-gradient(135deg, #ff1a26, #e50914);
+      box-shadow: 0 0 45px rgba(229, 9, 20, 0.9), 0 15px 35px rgba(0, 0, 0, 0.7);
+    }
+
+    .peek-share-btn.active-hover .peek-action-icon {
+      background: linear-gradient(135deg, #818cf8, #6366f1);
+      box-shadow: 0 0 45px rgba(99, 102, 241, 0.9), 0 15px 35px rgba(0, 0, 0, 0.7);
+    }
+
+    .peek-action-btn.active-hover .peek-action-label {
+      color: #fff;
+      transform: translateY(2px) scale(1.08);
+      text-shadow: 0 2px 10px rgba(0, 0, 0, 0.9);
+    }
   </style>
 </head>
 <body>
@@ -1447,6 +1645,47 @@
               </svg>
             </button>
           </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- LONG-PRESS PEEK & QUICK ACTION MODAL (ANDROID / IOS / WEB) -->
+  <div id="peek-modal" class="peek-overlay">
+    <div id="peek-card-wrap" class="peek-card-wrap">
+      <div id="peek-card" class="peek-card">
+        <div class="peek-poster-wrap">
+          <img id="peek-poster" class="peek-poster" src="" alt="Poster">
+          <div class="peek-poster-overlay"></div>
+          <div class="peek-badge" id="peek-type">Film</div>
+        </div>
+        <div class="peek-info">
+          <h3 id="peek-title" class="peek-title">Titolo Film</h3>
+          <div id="peek-meta" class="peek-meta">2024 • Trending</div>
+          <p id="peek-plot" class="peek-plot">Trama in caricamento...</p>
+        </div>
+      </div>
+
+      <!-- DETACHED FLOATING ROUND ACTION BUTTONS -->
+      <div id="peek-actions" class="peek-actions-detached">
+        <div id="peek-btn-play" class="peek-action-btn peek-play-btn" data-action="play" title="Riproduci Subito">
+          <div class="peek-action-icon">
+            <svg width="28" height="28" viewBox="0 0 24 24" fill="currentColor"><polygon points="6 4 19 12 6 20"></polygon></svg>
+          </div>
+          <span class="peek-action-label">Riproduci</span>
+        </div>
+
+        <div id="peek-btn-share" class="peek-action-btn peek-share-btn" data-action="share" title="Condividi">
+          <div class="peek-action-icon">
+            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+              <circle cx="18" cy="5" r="3"></circle>
+              <circle cx="6" cy="12" r="3"></circle>
+              <circle cx="18" cy="19" r="3"></circle>
+              <line x1="8.59" y1="13.51" x2="15.42" y2="17.49"></line>
+              <line x1="15.41" y1="6.51" x2="8.59" y2="10.49"></line>
+            </svg>
+          </div>
+          <span class="peek-action-label">Condividi</span>
         </div>
       </div>
     </div>
@@ -1707,6 +1946,17 @@
       const notifBadge = document.getElementById('notif-badge');
       const navAvatarWrap = document.getElementById('nav-avatar-wrap');
       const gridSectionHeading = document.getElementById('grid-section-heading');
+
+      // LONG-PRESS PEEK & QUICK ACTION ELEMENTS
+      const peekModal = document.getElementById('peek-modal');
+      const peekCardWrap = document.getElementById('peek-card-wrap');
+      const peekPoster = document.getElementById('peek-poster');
+      const peekType = document.getElementById('peek-type');
+      const peekTitle = document.getElementById('peek-title');
+      const peekMeta = document.getElementById('peek-meta');
+      const peekPlot = document.getElementById('peek-plot');
+      const peekBtnPlay = document.getElementById('peek-btn-play');
+      const peekBtnShare = document.getElementById('peek-btn-share');
 
       // SOCIAL & NOTIFICATIONS ELEMENTS
       const btnNotifBell = document.getElementById('btn-notif-bell');
@@ -2184,7 +2434,8 @@
       // -------------------------------------------------------------
       // SHARE FILM POPUP & RESOLUTION
       // -------------------------------------------------------------
-      btnModalShareFriend.onclick = async () => {
+      async function openShareFilmModal(item) {
+        currentActiveItem = item || currentActiveItem;
         if (!currentUser) {
           showToast('Accedi con Google per inviare il film ai tuoi amici.');
           startGooglePopupLogin();
@@ -2210,9 +2461,9 @@
         }
 
         currentFriends.forEach(fr => {
-          const item = document.createElement('div');
-          item.style = 'display:flex; align-items:center; justify-content:space-between; background:rgba(255,255,255,0.05); padding:8px 12px; border-radius:8px;';
-          item.innerHTML = `
+          const el = document.createElement('div');
+          el.style = 'display:flex; align-items:center; justify-content:space-between; background:rgba(255,255,255,0.05); padding:8px 12px; border-radius:8px;';
+          el.innerHTML = `
             <div style="display:flex; align-items:center; gap:8px;">
               <img src="${fr.avatar || ''}" style="width:28px; height:28px; border-radius:50%; background:#6366f1;" onerror="this.src='https://ui-avatars.com/api/?name=${encodeURIComponent(fr.name)}&background=6366f1&color=fff'" />
               <div>
@@ -2222,10 +2473,12 @@
             </div>
             <button class="btn btn-share-friend" style="padding:6px 12px; font-size:0.75rem;" data-email="${fr.email}">Invia</button>
           `;
-          item.querySelector('button').onclick = () => sendFilmToFriend(fr.email, fr.nickname ? `@${fr.nickname}` : fr.name);
-          shareFriendsList.appendChild(item);
+          el.querySelector('button').onclick = () => sendFilmToFriend(fr.email, fr.nickname ? `@${fr.nickname}` : fr.name);
+          shareFriendsList.appendChild(el);
         });
-      };
+      }
+
+      btnModalShareFriend.onclick = () => openShareFilmModal(currentActiveItem);
 
       async function sendFilmToFriend(friendEmail, friendTag) {
         showToast(`Invio film a ${friendTag}...`);
@@ -2258,6 +2511,121 @@
       }
 
       btnCloseShare.onclick = () => shareModal.classList.add('hidden');
+
+      // -------------------------------------------------------------
+      // LONG-PRESS PEEK & QUICK ACTION RADIAL FLOATING CONTROLLER
+      // -------------------------------------------------------------
+      let isPeeking = false;
+      let activePeekItem = null;
+      let currentPeekHoverAction = null; // 'play' | 'share' | null
+
+      function openPeek(item) {
+        if (!item) return;
+        activePeekItem = item;
+        currentActiveItem = item;
+        isPeeking = true;
+        currentPeekHoverAction = null;
+
+        peekPoster.src = item.poster || '';
+        peekTitle.textContent = decodeHtml(item.name || 'Titolo');
+        peekType.textContent = item.type === 'tv' ? 'Serie TV' : 'Film';
+        peekMeta.textContent = `${item.release_date || '2024'} • HD 1080p`;
+        peekPlot.textContent = decodeHtml(item.plot || 'Nessuna trama disponibile.');
+
+        peekBtnPlay.classList.remove('active-hover');
+        peekBtnShare.classList.remove('active-hover');
+
+        peekModal.classList.add('active');
+
+        if (navigator.vibrate) {
+          try { navigator.vibrate(25); } catch (e) {}
+        }
+      }
+
+      function closePeek() {
+        if (!isPeeking && !peekModal.classList.contains('active')) return;
+        isPeeking = false;
+        peekModal.classList.remove('active');
+        peekBtnPlay.classList.remove('active-hover');
+        peekBtnShare.classList.remove('active-hover');
+        currentPeekHoverAction = null;
+      }
+
+      function updatePeekHover(clientX, clientY) {
+        if (!isPeeking) return;
+        const elem = document.elementFromPoint(clientX, clientY);
+        const actionBtn = elem ? elem.closest('.peek-action-btn') : null;
+        const newAction = actionBtn ? actionBtn.dataset.action : null;
+
+        if (newAction !== currentPeekHoverAction) {
+          currentPeekHoverAction = newAction;
+          if (newAction === 'play') {
+            peekBtnPlay.classList.add('active-hover');
+            peekBtnShare.classList.remove('active-hover');
+            if (navigator.vibrate) {
+              try { navigator.vibrate(15); } catch (e) {}
+            }
+          } else if (newAction === 'share') {
+            peekBtnShare.classList.add('active-hover');
+            peekBtnPlay.classList.remove('active-hover');
+            if (navigator.vibrate) {
+              try { navigator.vibrate(15); } catch (e) {}
+            }
+          } else {
+            peekBtnPlay.classList.remove('active-hover');
+            peekBtnShare.classList.remove('active-hover');
+          }
+        }
+      }
+
+      function executePeekAction() {
+        if (!isPeeking) return;
+        const actionToRun = currentPeekHoverAction;
+        const itemToRun = activePeekItem;
+        closePeek();
+
+        if (actionToRun === 'play' && itemToRun) {
+          playDirectly(itemToRun);
+        } else if (actionToRun === 'share' && itemToRun) {
+          openShareFilmModal(itemToRun);
+        }
+      }
+
+      // Global touch and pointer drag handlers while peeking
+      window.addEventListener('touchmove', (e) => {
+        if (isPeeking && e.touches.length > 0) {
+          if (e.cancelable) e.preventDefault();
+          updatePeekHover(e.touches[0].clientX, e.touches[0].clientY);
+        }
+      }, { passive: false });
+
+      window.addEventListener('touchend', (e) => {
+        if (isPeeking) {
+          executePeekAction();
+        }
+      });
+
+      window.addEventListener('touchcancel', () => {
+        if (isPeeking) {
+          closePeek();
+        }
+      });
+
+      window.addEventListener('mousemove', (e) => {
+        if (isPeeking) {
+          updatePeekHover(e.clientX, e.clientY);
+        }
+      });
+
+      window.addEventListener('mouseup', () => {
+        if (isPeeking) {
+          executePeekAction();
+        }
+      });
+
+      peekModal.onclick = (e) => {
+        if (e.target === peekModal) closePeek();
+      };
 
       // -------------------------------------------------------------
       // CATALOG & DETAILS ENGINE
@@ -2316,7 +2684,110 @@
               </div>
             </div>
           `;
-          card.onclick = () => openDetails(item);
+
+          // GESTURE HANDLERS (TOUCH & MOUSE / POINTER)
+          let pressTimer = null;
+          let startX = 0;
+          let startY = 0;
+          let isLongPressActive = false;
+          let isTouchCanceled = false;
+
+          // Touchstart
+          card.addEventListener('touchstart', (e) => {
+            if (e.touches.length !== 1) return;
+            const t = e.touches[0];
+            startX = t.clientX;
+            startY = t.clientY;
+            isLongPressActive = false;
+            isTouchCanceled = false;
+
+            pressTimer = setTimeout(() => {
+              isLongPressActive = true;
+              openPeek(item);
+            }, 340);
+          }, { passive: true });
+
+          // Touchmove
+          card.addEventListener('touchmove', (e) => {
+            if (e.touches.length !== 1) return;
+            const t = e.touches[0];
+            const dx = Math.abs(t.clientX - startX);
+            const dy = Math.abs(t.clientY - startY);
+
+            if (!isLongPressActive) {
+              if (dx > 10 || dy > 10) {
+                clearTimeout(pressTimer);
+                isTouchCanceled = true;
+              }
+            } else {
+              if (e.cancelable) e.preventDefault();
+              updatePeekHover(t.clientX, t.clientY);
+            }
+          }, { passive: false });
+
+          // Touchend
+          card.addEventListener('touchend', (e) => {
+            clearTimeout(pressTimer);
+            if (isLongPressActive) {
+              if (e.cancelable) e.preventDefault();
+              executePeekAction();
+              isLongPressActive = false;
+            } else if (!isTouchCanceled) {
+              openDetails(item);
+            }
+          });
+
+          card.addEventListener('touchcancel', () => {
+            clearTimeout(pressTimer);
+            if (isLongPressActive) {
+              closePeek();
+              isLongPressActive = false;
+            }
+          });
+
+          // Mouse / Desktop fallback for emulator and desktop pairing
+          let mouseTimer = null;
+          let isMouseDown = false;
+
+          card.addEventListener('mousedown', (e) => {
+            if (e.button !== 0) return;
+            isMouseDown = true;
+            startX = e.clientX;
+            startY = e.clientY;
+            isLongPressActive = false;
+
+            mouseTimer = setTimeout(() => {
+              if (isMouseDown) {
+                isLongPressActive = true;
+                openPeek(item);
+              }
+            }, 340);
+          });
+
+          card.addEventListener('mousemove', (e) => {
+            if (isLongPressActive) {
+              e.preventDefault();
+              updatePeekHover(e.clientX, e.clientY);
+            } else if (isMouseDown) {
+              const dx = Math.abs(e.clientX - startX);
+              const dy = Math.abs(e.clientY - startY);
+              if (dx > 8 || dy > 8) {
+                clearTimeout(mouseTimer);
+              }
+            }
+          });
+
+          card.addEventListener('mouseup', (e) => {
+            clearTimeout(mouseTimer);
+            if (isLongPressActive) {
+              executePeekAction();
+              isLongPressActive = false;
+            } else if (isMouseDown) {
+              openDetails(item);
+            }
+            isMouseDown = false;
+          });
+
           catalogGrid.appendChild(card);
         });
       }
