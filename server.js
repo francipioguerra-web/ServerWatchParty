@@ -432,10 +432,71 @@ app.get('/api/sc/home', async (req, res) => {
       }))
     }));
 
+    let cleanFeatured = null;
+    if (props.featured) {
+      const f = props.featured;
+      cleanFeatured = {
+        id: f.id,
+        name: f.name,
+        type: f.type || 'movie',
+        slug: f.slug || '',
+        release_date: f.release_date || f.year || '2024',
+        poster: f.images && f.images[0] ? `${cdn}/images/${f.images[0].filename}` : 'https://via.placeholder.com/300x450',
+        backdrop: f.images && f.images[1] ? `${cdn}/images/${f.images[1].filename}` : (f.images && f.images[0] ? `${cdn}/images/${f.images[0].filename}` : ''),
+        plot: f.plot || 'Nessuna trama disponibile.'
+      };
+    }
+
     res.json({
       success: true,
       domain: fetched.domain,
+      featured: cleanFeatured,
+      genres: props.genres || [],
       sliders: cleanSliders
+    });
+  } catch (err) {
+    res.status(500).json({ success: false, error: err.message });
+  }
+});
+
+app.get('/api/sc/browse', async (req, res) => {
+  const { genre, type, sort, page } = req.query || {};
+  let queryParts = [];
+  if (genre) queryParts.push(`genre%5B%5D=${encodeURIComponent(genre)}`);
+  if (type) queryParts.push(`type=${encodeURIComponent(type)}`);
+  if (sort) queryParts.push(`sortBy=${encodeURIComponent(sort)}`);
+  if (page) queryParts.push(`page=${encodeURIComponent(page)}`);
+
+  const queryString = queryParts.length > 0 ? `?${queryParts.join('&')}` : '';
+
+  try {
+    const fetched = await fetchWithFallback(`/it/archive${queryString}`);
+    if (!fetched) return res.json({ success: true, titles: [] });
+
+    const match = fetched.text.match(/data-page=["'](.*?)["']/);
+    if (!match) return res.json({ success: true, titles: [] });
+
+    const raw = unescapeHtml(match[1]);
+    const dp = JSON.parse(raw);
+    const props = dp.props || {};
+    const titles = props.titles || [];
+    const cdn = props.cdn_url || 'https://cdn.streamingcommunityz.luxe';
+
+    const cleanTitles = titles.map(t => ({
+      id: t.id,
+      name: t.name,
+      type: t.type || 'movie',
+      slug: t.slug || '',
+      release_date: t.release_date || t.year || '2024',
+      poster: t.images && t.images[0] ? `${cdn}/images/${t.images[0].filename}` : 'https://via.placeholder.com/300x450',
+      backdrop: t.images && t.images[1] ? `${cdn}/images/${t.images[1].filename}` : (t.images && t.images[0] ? `${cdn}/images/${t.images[0].filename}` : ''),
+      plot: t.plot || 'Nessuna trama disponibile.'
+    }));
+
+    res.json({
+      success: true,
+      titles: cleanTitles,
+      totalCount: props.totalCount || cleanTitles.length
     });
   } catch (err) {
     res.status(500).json({ success: false, error: err.message });

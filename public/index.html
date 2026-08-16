@@ -748,6 +748,229 @@
       }
     }
 
+    /* CATEGORY & GENRE FILTER PILLS BAR */
+    .category-pills-bar {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      overflow-x: auto;
+      padding: 10px 16px;
+      margin-bottom: 8px;
+      scrollbar-width: none;
+      -ms-overflow-style: none;
+      -webkit-overflow-scrolling: touch;
+      position: sticky;
+      top: 56px;
+      z-index: 40;
+      background: rgba(9, 9, 11, 0.78);
+      backdrop-filter: blur(24px) saturate(180%);
+      -webkit-backdrop-filter: blur(24px) saturate(180%);
+      border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+    }
+
+    .category-pills-bar::-webkit-scrollbar {
+      display: none;
+    }
+
+    .category-pill {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      padding: 7px 14px;
+      border-radius: 999px;
+      font-size: 0.82rem;
+      font-weight: 700;
+      color: var(--text-muted);
+      background: rgba(255, 255, 255, 0.06);
+      border: 1px solid rgba(255, 255, 255, 0.12);
+      white-space: nowrap;
+      cursor: pointer;
+      transition: all 0.22s cubic-bezier(0.16, 1, 0.3, 1);
+      user-select: none;
+      -webkit-user-select: none;
+      flex-shrink: 0;
+    }
+
+    .category-pill:hover {
+      color: #fff;
+      background: rgba(255, 255, 255, 0.14);
+      border-color: rgba(255, 255, 255, 0.25);
+      transform: translateY(-1px);
+    }
+
+    .category-pill.active {
+      color: #fff;
+      background: linear-gradient(135deg, var(--accent), #b20710);
+      border-color: rgba(255, 255, 255, 0.4);
+      box-shadow: 0 4px 16px rgba(229, 9, 20, 0.45);
+    }
+
+    /* STREAMINGCOMMUNITY MULTI-ROW CAROUSELS */
+    .home-sections-container {
+      display: flex;
+      flex-direction: column;
+      gap: 36px;
+      margin-bottom: 80px;
+    }
+
+    .carousel-section {
+      position: relative;
+      width: 100%;
+    }
+
+    .carousel-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      margin-bottom: 12px;
+      padding: 0 4px;
+    }
+
+    .carousel-title {
+      font-size: 1.22rem;
+      font-weight: 800;
+      color: #fff;
+      letter-spacing: -0.2px;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    .carousel-see-all {
+      font-size: 0.8rem;
+      font-weight: 700;
+      color: var(--accent);
+      cursor: pointer;
+      text-decoration: none;
+      transition: all 0.2s ease;
+    }
+
+    .carousel-see-all:hover {
+      color: #fff;
+      text-decoration: underline;
+    }
+
+    .carousel-scroll-wrapper {
+      position: relative;
+      width: 100%;
+    }
+
+    .carousel-track {
+      display: flex;
+      gap: 14px;
+      overflow-x: auto;
+      scroll-behavior: smooth;
+      padding: 6px 4px 14px;
+      scrollbar-width: none;
+      -ms-overflow-style: none;
+      -webkit-overflow-scrolling: touch;
+    }
+
+    .carousel-track::-webkit-scrollbar {
+      display: none;
+    }
+
+    .carousel-track .media-card {
+      flex: 0 0 148px;
+      max-width: 148px;
+    }
+
+    @media (min-width: 768px) {
+      .carousel-track .media-card {
+        flex: 0 0 180px;
+        max-width: 180px;
+      }
+    }
+
+    .carousel-nav-btn {
+      position: absolute;
+      top: 50%;
+      transform: translateY(-50%);
+      width: 38px;
+      height: 70px;
+      background: rgba(10, 10, 14, 0.88);
+      border: 1px solid rgba(255, 255, 255, 0.18);
+      backdrop-filter: blur(16px);
+      -webkit-backdrop-filter: blur(16px);
+      color: #fff;
+      border-radius: 8px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      cursor: pointer;
+      z-index: 10;
+      opacity: 0;
+      transition: all 0.25s ease;
+      box-shadow: 0 8px 24px rgba(0, 0, 0, 0.7);
+    }
+
+    .carousel-scroll-wrapper:hover .carousel-nav-btn {
+      opacity: 1;
+    }
+
+    .carousel-nav-btn.prev {
+      left: -12px;
+    }
+
+    .carousel-nav-btn.next {
+      right: -12px;
+    }
+
+    .carousel-nav-btn:hover {
+      background: var(--accent);
+      border-color: #fff;
+      transform: translateY(-50%) scale(1.08);
+    }
+
+    /* TOP 10 NUMBERED CARDS (STREAMINGCOMMUNITY / NETFLIX STYLE) */
+    .top10-track .media-card {
+      flex: 0 0 205px;
+      max-width: 205px;
+      background: transparent;
+      border: none;
+      box-shadow: none;
+      display: flex;
+      align-items: flex-end;
+      position: relative;
+    }
+
+    .top10-rank-number {
+      font-size: 6.5rem;
+      font-weight: 900;
+      line-height: 0.8;
+      color: #0b0b0f;
+      -webkit-text-stroke: 2.5px rgba(255, 255, 255, 0.75);
+      text-shadow: 0 10px 25px rgba(0, 0, 0, 0.9);
+      user-select: none;
+      -webkit-user-select: none;
+      margin-right: -24px;
+      z-index: 2;
+      letter-spacing: -6px;
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+    }
+
+    .top10-card-inner {
+      flex: 1;
+      background: var(--bg-card);
+      border-radius: var(--radius-md);
+      overflow: hidden;
+      border: 1px solid var(--border);
+      transition: all 0.22s ease;
+      position: relative;
+      z-index: 1;
+    }
+
+    .top10-track .media-card:hover .top10-card-inner {
+      transform: translateY(-4px) scale(1.03);
+      border-color: rgba(255, 255, 255, 0.35);
+      box-shadow: 0 14px 30px rgba(0, 0, 0, 0.8);
+    }
+
+    .top10-track .media-card:hover .top10-rank-number {
+      -webkit-text-stroke: 3px var(--accent);
+      color: rgba(229, 9, 20, 0.25);
+    }
+
     .media-card {
       position: relative;
       background: var(--bg-card);
@@ -813,6 +1036,36 @@
       display: flex;
       align-items: center;
       justify-content: space-between;
+    }
+
+    /* FILTERED VIEW (GENRE / BROWSE) */
+    .genre-view-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      margin-bottom: 20px;
+      flex-wrap: wrap;
+      gap: 12px;
+    }
+
+    .btn-back-home {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      background: rgba(255, 255, 255, 0.08);
+      border: 1px solid rgba(255, 255, 255, 0.15);
+      color: #fff;
+      padding: 6px 14px;
+      border-radius: 999px;
+      font-size: 0.82rem;
+      font-weight: 700;
+      cursor: pointer;
+      transition: all 0.2s ease;
+    }
+
+    .btn-back-home:hover {
+      background: rgba(255, 255, 255, 0.18);
+      transform: translateX(-2px);
     }
 
     /* PURE BLUR MODAL OVERLAYS & CARDS */
@@ -1559,32 +1812,170 @@
 
   <!-- MAIN CONTAINER -->
   <main class="main-container">
-    <!-- HERO FEATURED SECTION -->
-    <div id="hero-banner" class="hero-banner">
-      <div class="hero-backdrop-overlay"></div>
-      <div class="hero-content">
-        <span class="hero-tag">In Primo Piano</span>
-        <h2 id="hero-title" class="hero-title">Caricamento catalogo...</h2>
-        <p id="hero-plot" class="hero-plot">Connessione ai server di streaming in corso...</p>
-        <div class="hero-actions">
-          <button id="btn-hero-player" class="icon-action-btn btn-primary" data-tooltip="Riproduci Subito" title="Riproduci Subito">
-            <svg width="22" height="22" viewBox="0 0 24 24" fill="currentColor"><polygon points="6 4 19 12 6 20"></polygon></svg>
-          </button>
-          <button id="btn-hero-vix" class="icon-action-btn btn-vix" data-tooltip="Scegli Lettore Esterno / Web" title="Scegli Lettore Esterno / Web">
-            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-              <rect x="2" y="4" width="20" height="16" rx="3"></rect>
-              <polygon points="10 8 16 12 10 16" fill="currentColor"></polygon>
-            </svg>
-          </button>
+    <!-- CATEGORY & GENRE FILTER PILLS BAR (STICKY) -->
+    <div class="category-pills-bar" id="category-pills-bar">
+      <button class="category-pill active" data-type="all">🌟 Tutti</button>
+      <button class="category-pill" data-type="movie">🎬 Film</button>
+      <button class="category-pill" data-type="tv">🍿 Serie TV</button>
+      <button class="category-pill" data-genre="4" data-name="Azione">💥 Azione</button>
+      <button class="category-pill" data-genre="19" data-name="Animazione">💫 Animazione</button>
+      <button class="category-pill" data-genre="12" data-name="Commedia">😂 Commedia</button>
+      <button class="category-pill" data-genre="7" data-name="Horror">😱 Horror</button>
+      <button class="category-pill" data-genre="10" data-name="Fantascienza">🚀 Fantascienza</button>
+      <button class="category-pill" data-genre="5" data-name="Thriller">🕵️ Thriller</button>
+      <button class="category-pill" data-genre="1" data-name="Dramma">🎭 Dramma</button>
+      <button class="category-pill" data-genre="2" data-name="Crime">🔍 Crime</button>
+      <button class="category-pill" data-genre="15" data-name="Romance">❤️ Romance</button>
+      <button class="category-pill" data-genre="24" data-name="Documentari">🌍 Documentari</button>
+      <button class="category-pill" data-genre="16" data-name="Famiglia">👨‍👩‍👧 Famiglia</button>
+      <button class="category-pill" data-genre="8" data-name="Fantasy">🧙‍♂️ Fantasy</button>
+      <button class="category-pill" data-genre="20" data-name="Western">🤠 Western</button>
+    </div>
+
+    <!-- HOME MULTI-ROW EXPERIENCE CONTAINER -->
+    <div id="home-multi-rows">
+      <!-- HERO FEATURED SECTION -->
+      <div id="hero-banner" class="hero-banner">
+        <div class="hero-backdrop-overlay"></div>
+        <div class="hero-content">
+          <span class="hero-tag" id="hero-tag">In Primo Piano</span>
+          <h2 id="hero-title" class="hero-title">Caricamento catalogo...</h2>
+          <p id="hero-plot" class="hero-plot">Connessione ai server di streaming in corso...</p>
+          <div class="hero-actions">
+            <button id="btn-hero-player" class="btn btn-primary" style="padding: 10px 20px; font-weight: 800; font-size: 0.95rem;">
+              <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor" style="margin-right: 6px;"><polygon points="6 4 19 12 6 20"></polygon></svg>
+              Riproduci Subito
+            </button>
+            <button id="btn-hero-details" class="btn btn-secondary" style="padding: 10px 18px;">
+              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="margin-right: 6px;"><circle cx="12" cy="12" r="10"></circle><line x1="12" y1="16" x2="12" y2="12"></line><line x1="12" y1="8" x2="12.01" y2="8"></line></svg>
+              Altre Info
+            </button>
+            <button id="btn-hero-vix" class="icon-action-btn btn-vix" data-tooltip="Scegli Lettore (VLC, Apple, Android)" title="Scegli Lettore (VLC, Apple, Android)" style="width: 42px; height: 42px;">
+              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <rect x="2" y="4" width="20" height="16" rx="3"></rect>
+                <polygon points="10 8 16 12 10 16" fill="currentColor"></polygon>
+              </svg>
+            </button>
+          </div>
         </div>
+      </div>
+
+      <!-- SECTIONS CONTAINER -->
+      <div class="home-sections-container">
+        <!-- ROW 1: TOP 10 DI OGGI IN ITALIA -->
+        <section class="carousel-section" id="section-top10">
+          <div class="carousel-header">
+            <h3 class="carousel-title">🏆 Top 10 di Oggi in Italia</h3>
+          </div>
+          <div class="carousel-scroll-wrapper">
+            <button class="carousel-nav-btn prev" data-target="track-top10" aria-label="Scorri a sinistra">‹</button>
+            <div class="carousel-track top10-track" id="track-top10"></div>
+            <button class="carousel-nav-btn next" data-target="track-top10" aria-label="Scorri a destra">›</button>
+          </div>
+        </section>
+
+        <!-- ROW 2: DI TENDENZA -->
+        <section class="carousel-section" id="section-trending">
+          <div class="carousel-header">
+            <h3 class="carousel-title">🔥 Di Tendenza su StreamingCommunity</h3>
+          </div>
+          <div class="carousel-scroll-wrapper">
+            <button class="carousel-nav-btn prev" data-target="track-trending" aria-label="Scorri a sinistra">‹</button>
+            <div class="carousel-track" id="track-trending"></div>
+            <button class="carousel-nav-btn next" data-target="track-trending" aria-label="Scorri a destra">›</button>
+          </div>
+        </section>
+
+        <!-- ROW 3: NUOVE USCITE -->
+        <section class="carousel-section" id="section-latest">
+          <div class="carousel-header">
+            <h3 class="carousel-title">✨ Nuove Aggiunte & Ultime Uscite</h3>
+          </div>
+          <div class="carousel-scroll-wrapper">
+            <button class="carousel-nav-btn prev" data-target="track-latest" aria-label="Scorri a sinistra">‹</button>
+            <div class="carousel-track" id="track-latest"></div>
+            <button class="carousel-nav-btn next" data-target="track-latest" aria-label="Scorri a destra">›</button>
+          </div>
+        </section>
+
+        <!-- ROW 4: FILM PIÙ VISTI -->
+        <section class="carousel-section" id="section-movies">
+          <div class="carousel-header">
+            <h3 class="carousel-title">🎬 Film Più Visti</h3>
+            <span class="carousel-see-all" data-filter-type="movie">Vedi tutti i film →</span>
+          </div>
+          <div class="carousel-scroll-wrapper">
+            <button class="carousel-nav-btn prev" data-target="track-movies" aria-label="Scorri a sinistra">‹</button>
+            <div class="carousel-track" id="track-movies"></div>
+            <button class="carousel-nav-btn next" data-target="track-movies" aria-label="Scorri a destra">›</button>
+          </div>
+        </section>
+
+        <!-- ROW 5: SERIE TV POPOLARI -->
+        <section class="carousel-section" id="section-series">
+          <div class="carousel-header">
+            <h3 class="carousel-title">🍿 Serie TV Popolari</h3>
+            <span class="carousel-see-all" data-filter-type="tv">Vedi tutte le serie →</span>
+          </div>
+          <div class="carousel-scroll-wrapper">
+            <button class="carousel-nav-btn prev" data-target="track-series" aria-label="Scorri a sinistra">‹</button>
+            <div class="carousel-track" id="track-series"></div>
+            <button class="carousel-nav-btn next" data-target="track-series" aria-label="Scorri a destra">›</button>
+          </div>
+        </section>
+
+        <!-- ROW 6: AZIONE & AVVENTURA -->
+        <section class="carousel-section" id="section-action">
+          <div class="carousel-header">
+            <h3 class="carousel-title">💥 Azione & Adrenalina</h3>
+            <span class="carousel-see-all" data-filter-genre="4" data-name="Azione">Esplora Azione →</span>
+          </div>
+          <div class="carousel-scroll-wrapper">
+            <button class="carousel-nav-btn prev" data-target="track-action" aria-label="Scorri a sinistra">‹</button>
+            <div class="carousel-track" id="track-action"></div>
+            <button class="carousel-nav-btn next" data-target="track-action" aria-label="Scorri a destra">›</button>
+          </div>
+        </section>
+
+        <!-- ROW 7: ANIMAZIONE & ANIME -->
+        <section class="carousel-section" id="section-animation">
+          <div class="carousel-header">
+            <h3 class="carousel-title">💫 Animazione & Anime</h3>
+            <span class="carousel-see-all" data-filter-genre="19" data-name="Animazione">Esplora Animazione →</span>
+          </div>
+          <div class="carousel-scroll-wrapper">
+            <button class="carousel-nav-btn prev" data-target="track-animation" aria-label="Scorri a sinistra">‹</button>
+            <div class="carousel-track" id="track-animation"></div>
+            <button class="carousel-nav-btn next" data-target="track-animation" aria-label="Scorri a destra">›</button>
+          </div>
+        </section>
+
+        <!-- ROW 8: COMMEDIE ESILARANTI -->
+        <section class="carousel-section" id="section-comedy">
+          <div class="carousel-header">
+            <h3 class="carousel-title">😂 Commedie & Risate</h3>
+            <span class="carousel-see-all" data-filter-genre="12" data-name="Commedia">Esplora Commedie →</span>
+          </div>
+          <div class="carousel-scroll-wrapper">
+            <button class="carousel-nav-btn prev" data-target="track-comedy" aria-label="Scorri a sinistra">‹</button>
+            <div class="carousel-track" id="track-comedy"></div>
+            <button class="carousel-nav-btn next" data-target="track-comedy" aria-label="Scorri a destra">›</button>
+          </div>
+        </section>
       </div>
     </div>
 
-    <!-- CATALOG GRID SECTION -->
-    <div class="section-title">
-      <span id="grid-section-heading">🔥 Film & Serie TV in Evidenza</span>
+    <!-- GENRE / CATEGORY / SEARCH FILTERED GRID VIEW (ACTIVATED WHEN FILTERING) -->
+    <div id="genre-filtered-view" class="hidden">
+      <div class="genre-view-header">
+        <div>
+          <button class="btn-back-home" id="btn-back-to-home">← Torna a Tutti</button>
+          <h2 id="genre-view-title" style="font-size: 1.5rem; font-weight: 900; margin-top: 8px; color: #fff;">Catalogo Filtrato</h2>
+        </div>
+        <span id="genre-view-count" style="font-size: 0.85rem; color: var(--text-dim); font-weight: 700;">60 Titoli</span>
+      </div>
+      <div id="catalog-grid" class="media-grid"></div>
     </div>
-    <div id="catalog-grid" class="media-grid"></div>
   </main>
 
   <!-- MOVIE / SERIES DETAILS MODAL -->
@@ -1946,6 +2337,25 @@
       const notifBadge = document.getElementById('notif-badge');
       const navAvatarWrap = document.getElementById('nav-avatar-wrap');
       const gridSectionHeading = document.getElementById('grid-section-heading');
+
+      // STREAMINGCOMMUNITY HOME & GENRE MULTI-ROW ELEMENTS
+      const categoryPillsBar = document.getElementById('category-pills-bar');
+      const homeMultiRows = document.getElementById('home-multi-rows');
+      const genreFilteredView = document.getElementById('genre-filtered-view');
+      const genreViewTitle = document.getElementById('genre-view-title');
+      const genreViewCount = document.getElementById('genre-view-count');
+      const btnBackToHome = document.getElementById('btn-back-to-home');
+      const btnHeroDetails = document.getElementById('btn-hero-details');
+      const heroTag = document.getElementById('hero-tag');
+
+      const trackTop10 = document.getElementById('track-top10');
+      const trackTrending = document.getElementById('track-trending');
+      const trackLatest = document.getElementById('track-latest');
+      const trackMovies = document.getElementById('track-movies');
+      const trackSeries = document.getElementById('track-series');
+      const trackAction = document.getElementById('track-action');
+      const trackAnimation = document.getElementById('track-animation');
+      const trackComedy = document.getElementById('track-comedy');
 
       // LONG-PRESS PEEK & QUICK ACTION ELEMENTS
       const peekModal = document.getElementById('peek-modal');
@@ -2628,49 +3038,32 @@
       };
 
       // -------------------------------------------------------------
-      // CATALOG & DETAILS ENGINE
+      // MEDIA CARD BUILDER & GESTURES (TOUCH, DRAG-TO-ACTION, CLICK)
       // -------------------------------------------------------------
-      async function loadHome() {
-        try {
-          const res = await fetch('/api/sc/home');
-          const data = await res.json();
-          if (data.success && data.sliders && data.sliders.length > 0) {
-            let titles = [];
-            data.sliders.forEach(s => {
-              (s.titles || []).forEach(t => {
-                if (!titles.some(x => x.id === t.id)) titles.push(t);
-              });
-            });
+      function createMediaCard(item, rankNumber = null) {
+        const card = document.createElement('div');
+        const cleanName = decodeHtml(item.name || 'Titolo');
 
-            loadedCatalog = titles;
-            if (loadedCatalog.length > 0) {
-              updateHero(loadedCatalog[0]);
-              renderCards(loadedCatalog);
-            }
-          }
-        } catch (e) {
-          showToast('Connessione al catalogo fallita');
-        }
-      }
-
-      function updateHero(item) {
-        currentActiveItem = item;
-        heroBanner.style.backgroundImage = `url('${item.backdrop || item.poster}')`;
-        heroTitle.textContent = decodeHtml(item.name);
-        heroPlot.textContent = decodeHtml(item.plot || 'Nessuna trama disponibile.');
-      }
-
-      function renderCards(list) {
-        catalogGrid.innerHTML = '';
-        if (!list || list.length === 0) {
-          catalogGrid.innerHTML = '<div style="grid-column: 1/-1; text-align: center; color: var(--text-dim); padding: 40px;">Nessun titolo trovato.</div>';
-          return;
-        }
-
-        list.forEach(item => {
-          const card = document.createElement('div');
+        if (rankNumber) {
           card.className = 'media-card';
-          const cleanName = decodeHtml(item.name);
+          card.innerHTML = `
+            <div class="top10-rank-number">${rankNumber}</div>
+            <div class="top10-card-inner">
+              <div class="card-poster-wrap">
+                <img class="card-poster" src="${item.poster || 'https://via.placeholder.com/300x450'}" alt="${cleanName}" loading="lazy">
+                <div class="card-badge">${item.type === 'tv' ? 'Serie TV' : 'Film'}</div>
+              </div>
+              <div class="card-info">
+                <div class="card-title">${cleanName}</div>
+                <div class="card-meta">
+                  <span>${item.release_date || '2024'}</span>
+                  <span style="color: #4ade80;">HD 1080p</span>
+                </div>
+              </div>
+            </div>
+          `;
+        } else {
+          card.className = 'media-card';
           card.innerHTML = `
             <div class="card-poster-wrap">
               <img class="card-poster" src="${item.poster || 'https://via.placeholder.com/300x450'}" alt="${cleanName}" loading="lazy">
@@ -2679,117 +3072,337 @@
             <div class="card-info">
               <div class="card-title">${cleanName}</div>
               <div class="card-meta">
-                <span>${item.release_date || ''}</span>
+                <span>${item.release_date || '2024'}</span>
                 <span style="color: #4ade80;">HD 1080p</span>
               </div>
             </div>
           `;
+        }
 
-          // GESTURE HANDLERS (TOUCH & MOUSE / POINTER)
-          let pressTimer = null;
-          let startX = 0;
-          let startY = 0;
-          let isLongPressActive = false;
-          let isTouchCanceled = false;
+        // GESTURE HANDLERS (TOUCH & MOUSE / POINTER WITH LONG-PRESS 3D PEEK)
+        let pressTimer = null;
+        let startX = 0;
+        let startY = 0;
+        let isLongPressActive = false;
+        let isTouchCanceled = false;
 
-          // Touchstart
-          card.addEventListener('touchstart', (e) => {
-            if (e.touches.length !== 1) return;
-            const t = e.touches[0];
-            startX = t.clientX;
-            startY = t.clientY;
+        card.addEventListener('touchstart', (e) => {
+          if (e.touches.length !== 1) return;
+          const t = e.touches[0];
+          startX = t.clientX;
+          startY = t.clientY;
+          isLongPressActive = false;
+          isTouchCanceled = false;
+
+          pressTimer = setTimeout(() => {
+            isLongPressActive = true;
+            openPeek(item);
+          }, 340);
+        }, { passive: true });
+
+        card.addEventListener('touchmove', (e) => {
+          if (e.touches.length !== 1) return;
+          const t = e.touches[0];
+          const dx = Math.abs(t.clientX - startX);
+          const dy = Math.abs(t.clientY - startY);
+
+          if (!isLongPressActive) {
+            if (dx > 10 || dy > 10) {
+              clearTimeout(pressTimer);
+              isTouchCanceled = true;
+            }
+          } else {
+            if (e.cancelable) e.preventDefault();
+            updatePeekHover(t.clientX, t.clientY);
+          }
+        }, { passive: false });
+
+        card.addEventListener('touchend', (e) => {
+          clearTimeout(pressTimer);
+          if (isLongPressActive) {
+            if (e.cancelable) e.preventDefault();
+            executePeekAction();
             isLongPressActive = false;
-            isTouchCanceled = false;
+          } else if (!isTouchCanceled) {
+            openDetails(item);
+          }
+        });
 
-            pressTimer = setTimeout(() => {
+        card.addEventListener('touchcancel', () => {
+          clearTimeout(pressTimer);
+          if (isLongPressActive) {
+            closePeek();
+            isLongPressActive = false;
+          }
+        });
+
+        // Mouse Fallback for Desktop & Emulator
+        let mouseTimer = null;
+        let isMouseDown = false;
+
+        card.addEventListener('mousedown', (e) => {
+          if (e.button !== 0) return;
+          isMouseDown = true;
+          startX = e.clientX;
+          startY = e.clientY;
+          isLongPressActive = false;
+
+          mouseTimer = setTimeout(() => {
+            if (isMouseDown) {
               isLongPressActive = true;
               openPeek(item);
-            }, 340);
-          }, { passive: true });
-
-          // Touchmove
-          card.addEventListener('touchmove', (e) => {
-            if (e.touches.length !== 1) return;
-            const t = e.touches[0];
-            const dx = Math.abs(t.clientX - startX);
-            const dy = Math.abs(t.clientY - startY);
-
-            if (!isLongPressActive) {
-              if (dx > 10 || dy > 10) {
-                clearTimeout(pressTimer);
-                isTouchCanceled = true;
-              }
-            } else {
-              if (e.cancelable) e.preventDefault();
-              updatePeekHover(t.clientX, t.clientY);
             }
-          }, { passive: false });
+          }, 340);
+        });
 
-          // Touchend
-          card.addEventListener('touchend', (e) => {
-            clearTimeout(pressTimer);
-            if (isLongPressActive) {
-              if (e.cancelable) e.preventDefault();
-              executePeekAction();
-              isLongPressActive = false;
-            } else if (!isTouchCanceled) {
-              openDetails(item);
+        card.addEventListener('mousemove', (e) => {
+          if (isLongPressActive) {
+            e.preventDefault();
+            updatePeekHover(e.clientX, e.clientY);
+          } else if (isMouseDown) {
+            const dx = Math.abs(e.clientX - startX);
+            const dy = Math.abs(e.clientY - startY);
+            if (dx > 8 || dy > 8) {
+              clearTimeout(mouseTimer);
             }
-          });
+          }
+        });
 
-          card.addEventListener('touchcancel', () => {
-            clearTimeout(pressTimer);
-            if (isLongPressActive) {
-              closePeek();
-              isLongPressActive = false;
-            }
-          });
-
-          // Mouse / Desktop fallback for emulator and desktop pairing
-          let mouseTimer = null;
-          let isMouseDown = false;
-
-          card.addEventListener('mousedown', (e) => {
-            if (e.button !== 0) return;
-            isMouseDown = true;
-            startX = e.clientX;
-            startY = e.clientY;
+        card.addEventListener('mouseup', (e) => {
+          clearTimeout(mouseTimer);
+          if (isLongPressActive) {
+            executePeekAction();
             isLongPressActive = false;
+          } else if (isMouseDown) {
+            openDetails(item);
+          }
+          isMouseDown = false;
+        });
 
-            mouseTimer = setTimeout(() => {
-              if (isMouseDown) {
-                isLongPressActive = true;
-                openPeek(item);
-              }
-            }, 340);
-          });
+        return card;
+      }
 
-          card.addEventListener('mousemove', (e) => {
-            if (isLongPressActive) {
-              e.preventDefault();
-              updatePeekHover(e.clientX, e.clientY);
-            } else if (isMouseDown) {
-              const dx = Math.abs(e.clientX - startX);
-              const dy = Math.abs(e.clientY - startY);
-              if (dx > 8 || dy > 8) {
-                clearTimeout(mouseTimer);
-              }
-            }
-          });
+      function renderCarousel(trackElement, list, isTop10 = false) {
+        if (!trackElement) return;
+        trackElement.innerHTML = '';
+        if (!list || list.length === 0) {
+          trackElement.innerHTML = '<div style="color:var(--text-dim); padding:20px; font-size:0.85rem;">Nessun titolo disponibile.</div>';
+          return;
+        }
 
-          card.addEventListener('mouseup', (e) => {
-            clearTimeout(mouseTimer);
-            if (isLongPressActive) {
-              executePeekAction();
-              isLongPressActive = false;
-            } else if (isMouseDown) {
-              openDetails(item);
-            }
-            isMouseDown = false;
-          });
+        list.forEach((item, idx) => {
+          const card = createMediaCard(item, isTop10 ? idx + 1 : null);
+          trackElement.appendChild(card);
+        });
+      }
 
+      function renderCards(list) {
+        if (!catalogGrid) return;
+        catalogGrid.innerHTML = '';
+        if (!list || list.length === 0) {
+          catalogGrid.innerHTML = '<div style="grid-column: 1/-1; text-align: center; color: var(--text-dim); padding: 40px;">Nessun titolo trovato.</div>';
+          return;
+        }
+
+        list.forEach(item => {
+          const card = createMediaCard(item);
           catalogGrid.appendChild(card);
         });
+      }
+
+      // -------------------------------------------------------------
+      // CATALOG & MULTI-ROW ENGINE
+      // -------------------------------------------------------------
+      async function loadHome() {
+        showHomeMultiRows();
+        try {
+          const res = await fetch('/api/sc/home');
+          const data = await res.json();
+          if (data.success && data.sliders && data.sliders.length > 0) {
+            let allTitles = [];
+            let top10Titles = [];
+            let trendingTitles = [];
+            let latestTitles = [];
+
+            data.sliders.forEach(s => {
+              const nameLower = (s.name || '').toLowerCase();
+              if (nameLower.includes('top10') || nameLower.includes('top 10')) {
+                top10Titles = s.titles || [];
+              } else if (nameLower.includes('trending') || nameLower.includes('tendenza')) {
+                trendingTitles = s.titles || [];
+              } else if (nameLower.includes('latest') || nameLower.includes('nuove')) {
+                latestTitles = s.titles || [];
+              }
+
+              (s.titles || []).forEach(t => {
+                if (!allTitles.some(x => x.id === t.id)) allTitles.push(t);
+              });
+            });
+
+            loadedCatalog = allTitles;
+
+            // Update Hero Banner with featured or top item
+            const featuredItem = data.featured || (top10Titles.length > 0 ? top10Titles[0] : allTitles[0]);
+            if (featuredItem) updateHero(featuredItem);
+
+            // Row 1: Top 10
+            const finalTop10 = top10Titles.length > 0 ? top10Titles.slice(0, 10) : (trendingTitles.length > 0 ? trendingTitles.slice(0, 10) : allTitles.slice(0, 10));
+            renderCarousel(trackTop10, finalTop10, true);
+
+            // Row 2: Di Tendenza
+            renderCarousel(trackTrending, trendingTitles.length > 0 ? trendingTitles : allTitles);
+
+            // Row 3: Nuove Uscite
+            renderCarousel(trackLatest, latestTitles.length > 0 ? latestTitles : allTitles);
+
+            // Row 4: Film Più Visti
+            const movieTitles = allTitles.filter(t => t.type === 'movie');
+            renderCarousel(trackMovies, movieTitles.length > 0 ? movieTitles : allTitles);
+
+            // Row 5: Serie TV Popolari
+            const seriesTitles = allTitles.filter(t => t.type === 'tv');
+            renderCarousel(trackSeries, seriesTitles.length > 0 ? seriesTitles : allTitles);
+
+            // Async preload popular genre rows
+            loadRowGenre(trackAction, 4);      // Azione
+            loadRowGenre(trackAnimation, 19);  // Animazione
+            loadRowGenre(trackComedy, 12);     // Commedia
+          }
+        } catch (e) {
+          showToast('Connessione al catalogo fallita');
+        }
+      }
+
+      async function loadRowGenre(trackElement, genreId) {
+        if (!trackElement) return;
+        try {
+          const res = await fetch(`/api/sc/browse?genre=${genreId}`);
+          const data = await res.json();
+          if (data.success && data.titles && data.titles.length > 0) {
+            renderCarousel(trackElement, data.titles.slice(0, 20));
+          }
+        } catch (e) {}
+      }
+
+      function updateHero(item) {
+        if (!item) return;
+        currentActiveItem = item;
+        heroBanner.style.backgroundImage = `url('${item.backdrop || item.poster}')`;
+        heroTitle.textContent = decodeHtml(item.name);
+        heroPlot.textContent = decodeHtml(item.plot || 'Nessuna trama disponibile.');
+        if (heroTag) heroTag.textContent = item.type === 'tv' ? 'Serie TV in Evidenza' : 'Film in Primo Piano';
+      }
+
+      function showHomeMultiRows() {
+        if (homeMultiRows) homeMultiRows.classList.remove('hidden');
+        if (genreFilteredView) genreFilteredView.classList.add('hidden');
+      }
+
+      function showFilteredGridView(title, countText) {
+        if (homeMultiRows) homeMultiRows.classList.add('hidden');
+        if (genreFilteredView) genreFilteredView.classList.remove('hidden');
+        if (genreViewTitle) genreViewTitle.textContent = title;
+        if (genreViewCount) genreViewCount.textContent = countText || '';
+        window.scrollTo({ top: 0, behavior: 'smooth' });
+      }
+
+      async function loadGenreOrType({ genreId, type, name }) {
+        let title = name || (type === 'movie' ? 'Tutti i Film' : (type === 'tv' ? 'Tutte le Serie TV' : 'Catalogo'));
+        showFilteredGridView(`Caricamento ${title}...`, '');
+        catalogGrid.innerHTML = '<div style="grid-column: 1/-1; text-align: center; color: var(--text-dim); padding: 50px;">Caricamento in corso...</div>';
+
+        let url = '/api/sc/browse?';
+        if (genreId) url += `genre=${genreId}&`;
+        if (type) url += `type=${type}&`;
+
+        try {
+          const res = await fetch(url);
+          const data = await res.json();
+          if (data.success && data.titles) {
+            showFilteredGridView(title, `${data.totalCount || data.titles.length} Titoli`);
+            renderCards(data.titles);
+          } else {
+            showFilteredGridView(title, '0 Titoli');
+            catalogGrid.innerHTML = '<div style="grid-column: 1/-1; text-align: center; color: var(--text-dim); padding: 40px;">Nessun titolo trovato.</div>';
+          }
+        } catch (e) {
+          showToast('Errore nel caricamento del catalogo');
+        }
+      }
+
+      // CATEGORY PILLS BAR CLICK LISTENER
+      if (categoryPillsBar) {
+        categoryPillsBar.addEventListener('click', (e) => {
+          const pill = e.target.closest('.category-pill');
+          if (!pill) return;
+
+          categoryPillsBar.querySelectorAll('.category-pill').forEach(p => p.classList.remove('active'));
+          pill.classList.add('active');
+
+          const type = pill.dataset.type;
+          const genreId = pill.dataset.genre;
+          const name = pill.dataset.name || pill.textContent.trim();
+
+          if (type === 'all') {
+            showHomeMultiRows();
+          } else if (type) {
+            loadGenreOrType({ type, name });
+          } else if (genreId) {
+            loadGenreOrType({ genreId, name });
+          }
+        });
+      }
+
+      // BACK TO HOME BUTTON
+      if (btnBackToHome) {
+        btnBackToHome.onclick = () => {
+          categoryPillsBar.querySelectorAll('.category-pill').forEach(p => {
+            if (p.dataset.type === 'all') p.classList.add('active');
+            else p.classList.remove('active');
+          });
+          showHomeMultiRows();
+        };
+      }
+
+      // SEE ALL LINKS IN SECTION HEADERS
+      document.querySelectorAll('.carousel-see-all').forEach(link => {
+        link.onclick = () => {
+          const type = link.dataset.filterType;
+          const genreId = link.dataset.filterGenre;
+          const name = link.dataset.name;
+
+          categoryPillsBar.querySelectorAll('.category-pill').forEach(p => {
+            if ((type && p.dataset.type === type) || (genreId && p.dataset.genre === genreId)) {
+              p.classList.add('active');
+              p.scrollIntoView({ behavior: 'smooth', inline: 'center', block: 'nearest' });
+            } else {
+              p.classList.remove('active');
+            }
+          });
+
+          loadGenreOrType({ genreId, type, name });
+        };
+      });
+
+      // CAROUSEL NAVIGATION CHEVRONS SCROLL
+      document.querySelectorAll('.carousel-nav-btn').forEach(btn => {
+        btn.onclick = () => {
+          const targetId = btn.dataset.target;
+          const track = document.getElementById(targetId);
+          if (!track) return;
+          const scrollAmount = track.clientWidth * 0.75;
+          if (btn.classList.contains('prev')) {
+            track.scrollBy({ left: -scrollAmount, behavior: 'smooth' });
+          } else {
+            track.scrollBy({ left: scrollAmount, behavior: 'smooth' });
+          }
+        };
+      });
+
+      if (btnHeroDetails) {
+        btnHeroDetails.onclick = () => {
+          if (currentActiveItem) openDetails(currentActiveItem);
+        };
       }
 
       // DETAILS MODAL WITH SEASON DROPDOWN & PREVIEW EPISODES
@@ -3238,23 +3851,25 @@
       async function performSearch(query) {
         const q = (query || '').trim();
         if (!q) {
-          gridSectionHeading.textContent = '🔥 Film & Serie TV in Evidenza';
-          renderCards(loadedCatalog);
+          showHomeMultiRows();
           return;
         }
 
-        gridSectionHeading.textContent = `🔍 Risultati per: "${q}"`;
+        showFilteredGridView(`🔍 Risultati per: "${q}"`, 'Ricerca...');
         try {
           const res = await fetch(`/api/sc/search?q=${encodeURIComponent(q)}`);
           const data = await res.json();
           if (data.success && data.titles && data.titles.length > 0) {
+            showFilteredGridView(`🔍 Risultati per: "${q}"`, `${data.titles.length} Titoli`);
             renderCards(data.titles);
           } else {
             const filtered = loadedCatalog.filter(t => t.name.toLowerCase().includes(q.toLowerCase()));
+            showFilteredGridView(`🔍 Risultati per: "${q}"`, `${filtered.length} Titoli`);
             renderCards(filtered);
           }
         } catch (e) {
           const filtered = loadedCatalog.filter(t => t.name.toLowerCase().includes(q.toLowerCase()));
+          showFilteredGridView(`🔍 Risultati per: "${q}"`, `${filtered.length} Titoli`);
           renderCards(filtered);
         }
       }
