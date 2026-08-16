@@ -748,63 +748,6 @@
       }
     }
 
-    /* CATEGORY & GENRE FILTER PILLS BAR */
-    .category-pills-bar {
-      display: flex;
-      align-items: center;
-      gap: 8px;
-      overflow-x: auto;
-      padding: 10px 16px;
-      margin-bottom: 8px;
-      scrollbar-width: none;
-      -ms-overflow-style: none;
-      -webkit-overflow-scrolling: touch;
-      position: sticky;
-      top: 56px;
-      z-index: 40;
-      background: rgba(9, 9, 11, 0.78);
-      backdrop-filter: blur(24px) saturate(180%);
-      -webkit-backdrop-filter: blur(24px) saturate(180%);
-      border-bottom: 1px solid rgba(255, 255, 255, 0.08);
-    }
-
-    .category-pills-bar::-webkit-scrollbar {
-      display: none;
-    }
-
-    .category-pill {
-      display: inline-flex;
-      align-items: center;
-      gap: 6px;
-      padding: 7px 14px;
-      border-radius: 999px;
-      font-size: 0.82rem;
-      font-weight: 700;
-      color: var(--text-muted);
-      background: rgba(255, 255, 255, 0.06);
-      border: 1px solid rgba(255, 255, 255, 0.12);
-      white-space: nowrap;
-      cursor: pointer;
-      transition: all 0.22s cubic-bezier(0.16, 1, 0.3, 1);
-      user-select: none;
-      -webkit-user-select: none;
-      flex-shrink: 0;
-    }
-
-    .category-pill:hover {
-      color: #fff;
-      background: rgba(255, 255, 255, 0.14);
-      border-color: rgba(255, 255, 255, 0.25);
-      transform: translateY(-1px);
-    }
-
-    .category-pill.active {
-      color: #fff;
-      background: linear-gradient(135deg, var(--accent), #b20710);
-      border-color: rgba(255, 255, 255, 0.4);
-      box-shadow: 0 4px 16px rgba(229, 9, 20, 0.45);
-    }
-
     /* STREAMINGCOMMUNITY MULTI-ROW CAROUSELS */
     .home-sections-container {
       display: flex;
@@ -1763,7 +1706,7 @@
   <div id="notif-dropdown" class="modal-overlay hidden">
     <div class="modal-card" style="max-width: 480px; padding: 22px;">
       <button id="btn-close-notif-dropdown" class="modal-close-btn">&times;</button>
-      <h3 style="font-size: 1.2rem; font-weight: 800; margin-bottom: 4px;">🔔 Notifiche & Inviti</h3>
+      <h3 style="font-size: 1.2rem; font-weight: 800; margin-bottom: 4px;">Notifiche & Inviti</h3>
       <p style="font-size: 0.82rem; color: var(--text-muted); margin-bottom: 16px;">Tutte le notifiche di film condivisi e richieste di amicizia:</p>
       <div id="notif-list" style="display: flex; flex-direction: column; gap: 10px; max-height: 340px; overflow-y: auto;">
         <div class="notif-empty">Nessuna notifica ricevuta.</div>
@@ -1787,19 +1730,19 @@
 
         <div style="display: flex; flex-direction: column; gap: 10px;">
           <button id="btn-change-nickname" class="btn btn-secondary" style="width:100%; justify-content: flex-start; padding: 12px 16px; font-size: 0.88rem;">
-            ✏️ Modifica Nickname
+            Modifica Nickname
           </button>
           <button id="btn-open-friends-modal" class="btn btn-secondary" style="width:100%; justify-content: flex-start; padding: 12px 16px; font-size: 0.88rem;">
-            👥 Gestisci Amici (<span id="user-friends-count">0</span>)
+            Gestisci Amici (<span id="user-friends-count">0</span>)
           </button>
           <button id="btn-logout" class="btn btn-secondary" style="width:100%; justify-content: flex-start; padding: 12px 16px; color: #ef4444; font-size: 0.88rem;">
-            🚪 Esci dall'account
+            Esci dall'account
           </button>
         </div>
       </div>
 
       <div id="user-profile-unlogged-view" style="display:none; text-align:center; padding: 10px 0;">
-        <div style="font-size: 2.2rem; margin-bottom: 8px;">👤</div>
+        
         <h3 style="font-size: 1.2rem; font-weight: 800; margin-bottom: 6px;">Accedi al tuo Profilo</h3>
         <p style="font-size: 0.82rem; color: var(--text-muted); margin-bottom: 18px;">Accedi con il tuo account Google per condividere film con gli amici, gestire le notifiche e creare la tua Watch Party:</p>
         <button id="btn-google-login-trigger" class="btn btn-primary" style="width: 100%; padding: 12px; font-size: 0.92rem; justify-content: center;">
@@ -1812,26 +1755,6 @@
 
   <!-- MAIN CONTAINER -->
   <main class="main-container">
-    <!-- CATEGORY & GENRE FILTER PILLS BAR (STICKY) -->
-    <div class="category-pills-bar" id="category-pills-bar">
-      <button class="category-pill active" data-type="all">🌟 Tutti</button>
-      <button class="category-pill" data-type="movie">🎬 Film</button>
-      <button class="category-pill" data-type="tv">🍿 Serie TV</button>
-      <button class="category-pill" data-genre="4" data-name="Azione">💥 Azione</button>
-      <button class="category-pill" data-genre="19" data-name="Animazione">💫 Animazione</button>
-      <button class="category-pill" data-genre="12" data-name="Commedia">😂 Commedia</button>
-      <button class="category-pill" data-genre="7" data-name="Horror">😱 Horror</button>
-      <button class="category-pill" data-genre="10" data-name="Fantascienza">🚀 Fantascienza</button>
-      <button class="category-pill" data-genre="5" data-name="Thriller">🕵️ Thriller</button>
-      <button class="category-pill" data-genre="1" data-name="Dramma">🎭 Dramma</button>
-      <button class="category-pill" data-genre="2" data-name="Crime">🔍 Crime</button>
-      <button class="category-pill" data-genre="15" data-name="Romance">❤️ Romance</button>
-      <button class="category-pill" data-genre="24" data-name="Documentari">🌍 Documentari</button>
-      <button class="category-pill" data-genre="16" data-name="Famiglia">👨‍👩‍👧 Famiglia</button>
-      <button class="category-pill" data-genre="8" data-name="Fantasy">🧙‍♂️ Fantasy</button>
-      <button class="category-pill" data-genre="20" data-name="Western">🤠 Western</button>
-    </div>
-
     <!-- HOME MULTI-ROW EXPERIENCE CONTAINER -->
     <div id="home-multi-rows">
       <!-- HERO FEATURED SECTION -->
@@ -1865,7 +1788,7 @@
         <!-- ROW 1: TOP 10 DI OGGI IN ITALIA -->
         <section class="carousel-section" id="section-top10">
           <div class="carousel-header">
-            <h3 class="carousel-title">🏆 Top 10 di Oggi in Italia</h3>
+            <h3 class="carousel-title">Top 10 di Oggi in Italia</h3>
           </div>
           <div class="carousel-scroll-wrapper">
             <button class="carousel-nav-btn prev" data-target="track-top10" aria-label="Scorri a sinistra">‹</button>
@@ -1877,7 +1800,7 @@
         <!-- ROW 2: DI TENDENZA -->
         <section class="carousel-section" id="section-trending">
           <div class="carousel-header">
-            <h3 class="carousel-title">🔥 Di Tendenza su StreamingCommunity</h3>
+            <h3 class="carousel-title">Di Tendenza su StreamingCommunity</h3>
           </div>
           <div class="carousel-scroll-wrapper">
             <button class="carousel-nav-btn prev" data-target="track-trending" aria-label="Scorri a sinistra">‹</button>
@@ -1889,7 +1812,7 @@
         <!-- ROW 3: NUOVE USCITE -->
         <section class="carousel-section" id="section-latest">
           <div class="carousel-header">
-            <h3 class="carousel-title">✨ Nuove Aggiunte & Ultime Uscite</h3>
+            <h3 class="carousel-title">Nuove Aggiunte & Ultime Uscite</h3>
           </div>
           <div class="carousel-scroll-wrapper">
             <button class="carousel-nav-btn prev" data-target="track-latest" aria-label="Scorri a sinistra">‹</button>
@@ -1901,7 +1824,7 @@
         <!-- ROW 4: FILM PIÙ VISTI -->
         <section class="carousel-section" id="section-movies">
           <div class="carousel-header">
-            <h3 class="carousel-title">🎬 Film Più Visti</h3>
+            <h3 class="carousel-title">Film Più Visti</h3>
             <span class="carousel-see-all" data-filter-type="movie">Vedi tutti i film →</span>
           </div>
           <div class="carousel-scroll-wrapper">
@@ -1914,7 +1837,7 @@
         <!-- ROW 5: SERIE TV POPOLARI -->
         <section class="carousel-section" id="section-series">
           <div class="carousel-header">
-            <h3 class="carousel-title">🍿 Serie TV Popolari</h3>
+            <h3 class="carousel-title">Serie TV Popolari</h3>
             <span class="carousel-see-all" data-filter-type="tv">Vedi tutte le serie →</span>
           </div>
           <div class="carousel-scroll-wrapper">
@@ -1927,7 +1850,7 @@
         <!-- ROW 6: AZIONE & AVVENTURA -->
         <section class="carousel-section" id="section-action">
           <div class="carousel-header">
-            <h3 class="carousel-title">💥 Azione & Adrenalina</h3>
+            <h3 class="carousel-title">Azione & Adrenalina</h3>
             <span class="carousel-see-all" data-filter-genre="4" data-name="Azione">Esplora Azione →</span>
           </div>
           <div class="carousel-scroll-wrapper">
@@ -1940,7 +1863,7 @@
         <!-- ROW 7: ANIMAZIONE & ANIME -->
         <section class="carousel-section" id="section-animation">
           <div class="carousel-header">
-            <h3 class="carousel-title">💫 Animazione & Anime</h3>
+            <h3 class="carousel-title">Animazione & Anime</h3>
             <span class="carousel-see-all" data-filter-genre="19" data-name="Animazione">Esplora Animazione →</span>
           </div>
           <div class="carousel-scroll-wrapper">
@@ -1953,7 +1876,7 @@
         <!-- ROW 8: COMMEDIE ESILARANTI -->
         <section class="carousel-section" id="section-comedy">
           <div class="carousel-header">
-            <h3 class="carousel-title">😂 Commedie & Risate</h3>
+            <h3 class="carousel-title">Commedie</h3>
             <span class="carousel-see-all" data-filter-genre="12" data-name="Commedia">Esplora Commedie →</span>
           </div>
           <div class="carousel-scroll-wrapper">
@@ -2086,13 +2009,13 @@
   <div id="player-chooser-modal" class="modal-overlay hidden">
     <div class="modal-card" style="max-width: 480px; padding: 22px;">
       <button id="btn-close-chooser" class="modal-close-btn">&times;</button>
-      <h3 style="font-size: 1.2rem; font-weight: 800; margin-bottom: 4px;">📱 Scegli Lettore Esterno</h3>
+      <h3 style="font-size: 1.2rem; font-weight: 800; margin-bottom: 4px;">Scegli Lettore Esterno</h3>
       <p style="font-size: 0.82rem; color: var(--text-muted); margin-bottom: 16px;">Tocca il lettore con cui vuoi aprire il video:</p>
 
       <div style="display: flex; flex-direction: column; gap: 10px;">
         <!-- OPTION 1: ANDROID POPUP (OPPO / SAMSUNG / SYSTEM VIDEO PLAYERS) -->
         <a id="choice-android-intent" class="player-option-card" href="#" target="_blank" style="text-decoration: none;">
-          <div class="player-icon-box" style="background: rgba(34, 197, 94, 0.2); color: #22c55e;">🤖</div>
+          <div class="player-icon-box" style="background: rgba(34, 197, 94, 0.2); color: #22c55e;">Android</div>
           <div>
             <div style="font-weight: 800; font-size: 0.92rem;">Lettore Video Oppo / Samsung / Android</div>
             <div style="font-size: 0.75rem; color: var(--text-dim);">Apre il popup di sistema "Apri con..." dello smartphone</div>
@@ -2101,7 +2024,7 @@
 
         <!-- OPTION 2: APPLE QUICKTIME / AVPLAYER (IOS / IPADOS) -->
         <a id="choice-ios" class="player-option-card" href="#" target="_top" style="text-decoration: none;">
-          <div class="player-icon-box" style="background: rgba(168, 85, 247, 0.2); color: #a855f7;">🍏</div>
+          <div class="player-icon-box" style="background: rgba(168, 85, 247, 0.2); color: #a855f7;">Apple</div>
           <div>
             <div style="font-weight: 800; font-size: 0.92rem;">Lettore Nativo Apple (iPhone / iPad)</div>
             <div style="font-size: 0.75rem; color: var(--text-dim);">Apre il player QuickTime nativo di sistema</div>
@@ -2110,7 +2033,7 @@
 
         <!-- OPTION 3: VLC MEDIA PLAYER -->
         <a id="choice-vlc" class="player-option-card" href="#" style="text-decoration: none;">
-          <div class="player-icon-box" style="background: rgba(249, 115, 22, 0.2); color: #f97316;">🚀</div>
+          <div class="player-icon-box" style="background: rgba(249, 115, 22, 0.2); color: #f97316;">VLC</div>
           <div>
             <div style="font-weight: 800; font-size: 0.92rem;">VLC Media Player (Android & iOS)</div>
             <div style="font-size: 0.75rem; color: var(--text-dim);">Apre direttamente l'app VLC sul dispositivo</div>
@@ -2119,7 +2042,7 @@
 
         <!-- OPTION 4: INFUSE / OUTPLAYER (IOS) -->
         <a id="choice-infuse" class="player-option-card" href="#" style="text-decoration: none;">
-          <div class="player-icon-box" style="background: rgba(236, 72, 153, 0.2); color: #ec4899;">🍿</div>
+          <div class="player-icon-box" style="background: rgba(236, 72, 153, 0.2); color: #ec4899;">Infuse</div>
           <div>
             <div style="font-weight: 800; font-size: 0.92rem;">Infuse / OutPlayer (iOS & iPadOS)</div>
             <div style="font-size: 0.75rem; color: var(--text-dim);">Invia il flusso a Infuse o OutPlayer su iPad e iPhone</div>
@@ -2128,7 +2051,7 @@
 
         <!-- OPTION 5: MX PLAYER (ANDROID) -->
         <a id="choice-mx" class="player-option-card" href="#" style="text-decoration: none;">
-          <div class="player-icon-box" style="background: rgba(59, 130, 246, 0.2); color: #3b82f6;">🎬</div>
+          <div class="player-icon-box" style="background: rgba(59, 130, 246, 0.2); color: #3b82f6;">MX</div>
           <div>
             <div style="font-weight: 800; font-size: 0.92rem;">MX Player (Android)</div>
             <div style="font-size: 0.75rem; color: var(--text-dim);">Invia il flusso all'app MX Player</div>
@@ -2137,7 +2060,7 @@
 
         <!-- OPTION 6: COPY STREAM URL -->
         <button id="choice-copy" class="player-option-card" style="border: 1px dashed rgba(255,255,255,0.2);">
-          <div class="player-icon-box" style="background: rgba(255, 255, 255, 0.1); color: #fff;">📋</div>
+          <div class="player-icon-box" style="background: rgba(255, 255, 255, 0.1); color: #fff;">Link</div>
           <div>
             <div style="font-weight: 800; font-size: 0.92rem;">Copia Link Flusso M3U8</div>
             <div style="font-size: 0.75rem; color: var(--text-dim);">Copia negli appunti per incollarlo in qualsiasi altra app</div>
@@ -2151,7 +2074,7 @@
   <div id="share-modal" class="modal-overlay hidden">
     <div class="modal-card" style="max-width: 440px; padding: 22px;">
       <button id="btn-close-share" class="modal-close-btn">&times;</button>
-      <h3 style="font-size: 1.2rem; font-weight: 800; margin-bottom: 6px;">📤 Invia Film a un Amico</h3>
+      <h3 style="font-size: 1.2rem; font-weight: 800; margin-bottom: 6px;"> Invia Film a un Amico</h3>
       <p style="font-size: 0.82rem; color: var(--text-muted); margin-bottom: 16px;">Seleziona l'amico a cui vuoi inviare il link diretto Vixcloud di questo film:</p>
       
       <div id="share-friends-list" style="display: flex; flex-direction: column; gap: 8px; max-height: 240px; overflow-y: auto; margin-bottom: 14px;">
@@ -2163,7 +2086,7 @@
   <!-- NICKNAME SETUP / MODAL -->
   <div id="nickname-modal" class="modal-overlay hidden">
     <div class="modal-card" style="max-width: 400px; padding: 24px; text-align: center;">
-      <div style="font-size: 2.2rem; margin-bottom: 8px;">🏷️</div>
+      
       <h2 style="font-size: 1.3rem; font-weight: 800; margin-bottom: 6px;">Crea il tuo Nickname Univoco</h2>
       <p style="font-size: 0.82rem; color: var(--text-muted); margin-bottom: 18px;">I tuoi amici potranno cercarti e inviarti film utilizzando questo nickname.</p>
 
@@ -2209,7 +2132,7 @@
   <div id="friends-modal" class="modal-overlay hidden">
     <div class="modal-card" style="max-width: 480px; padding: 22px;">
       <button id="btn-close-friends" class="modal-close-btn">&times;</button>
-      <h3 style="font-size: 1.2rem; font-weight: 800; margin-bottom: 6px;">👥 Gestione Amici</h3>
+      <h3 style="font-size: 1.2rem; font-weight: 800; margin-bottom: 6px;">Gestione Amici</h3>
       <p style="font-size: 0.82rem; color: var(--text-muted); margin-bottom: 16px;">Invia richieste digitando il <strong>@nickname</strong> o l'email Google del tuo amico.</p>
 
       <form id="form-add-friend" style="display: flex; gap: 8px; margin-bottom: 20px;">
@@ -2549,7 +2472,7 @@
             localStorage.setItem('sc_logged_user', JSON.stringify(currentUser));
             nicknameModal.classList.add('hidden');
             updateAuthUI();
-            showToast(`Nickname impostato: @${currentUser.nickname}! 🎉`);
+            showToast(`Nickname impostato: @${currentUser.nickname}`);
           } else {
             nicknameError.textContent = data.error || 'Nickname non valido o già occupato.';
             nicknameError.style.display = 'block';
@@ -2686,7 +2609,7 @@
                 <div style="font-size:0.72rem; color:var(--text-dim);">${fr.email}</div>
               </div>
             </div>
-            <span style="font-size:0.72rem; color:#4ade80; font-weight:700;">Amico ✓</span>
+            <span style="font-size:0.72rem; color:#4ade80; font-weight:700;">Amico</span>
           `;
           activeFriendsList.appendChild(item);
         });
@@ -2774,7 +2697,7 @@
             card.innerHTML = `
               <img class="notif-poster" src="${n.poster || 'https://via.placeholder.com/100x150'}" alt="${n.filmTitle}" />
               <div class="notif-info">
-                <div class="notif-title">🎬 ${n.filmTitle}</div>
+                <div class="notif-title">${n.filmTitle}</div>
                 <div class="notif-sender">Inviato da <strong>${senderTag}</strong></div>
                 <button class="notif-btn-play" data-stream="${n.streamUrl || ''}" data-title="${n.filmTitle}">
                   <svg width="12" height="12" viewBox="0 0 24 24" fill="currentColor"><polygon points="5 3 19 12 5 21 5 3"></polygon></svg>
@@ -2789,7 +2712,7 @@
           } else if (n.type === 'friend_request') {
             const senderTag = n.fromNickname ? `@${n.fromNickname}` : (n.fromName || n.fromEmail);
             card.innerHTML = `
-              <div style="width:36px; height:36px; border-radius:50%; background:#6366f1; display:flex; align-items:center; justify-content:center; font-size:1.1rem; flex-shrink:0;">👤</div>
+              <div style="width:36px; height:36px; border-radius:50%; background:#6366f1; display:flex; align-items:center; justify-content:center; font-weight:800; font-size:0.85rem; flex-shrink:0;">U</div>
               <div class="notif-info">
                 <div class="notif-title">Richiesta di Amicizia</div>
                 <div class="notif-sender">Da: <strong>${senderTag}</strong></div>
@@ -2804,7 +2727,7 @@
           } else if (n.type === 'friend_accepted') {
             const senderTag = n.fromNickname ? `@${n.fromNickname}` : (n.fromName || n.fromEmail);
             card.innerHTML = `
-              <div style="width:36px; height:36px; border-radius:50%; background:#22c55e; display:flex; align-items:center; justify-content:center; font-size:1.1rem; flex-shrink:0;">🤝</div>
+              <div style="width:36px; height:36px; border-radius:50%; background:#22c55e; display:flex; align-items:center; justify-content:center; font-weight:800; font-size:0.85rem; flex-shrink:0;">OK</div>
               <div class="notif-info">
                 <div class="notif-title">Nuovo Amico!</div>
                 <div class="notif-sender"><strong>${senderTag}</strong> ha accettato la tua richiesta.</div>
@@ -2911,7 +2834,7 @@
           });
           const data = await res.json();
           if (data.success) {
-            showToast(`✅ Film inviato a ${friendTag}!`);
+            showToast(`Film inviato a ${friendTag}`);
           } else {
             showToast('Errore durante l\'invio del film.');
           }
@@ -3330,27 +3253,7 @@
         }
       }
 
-      // CATEGORY PILLS BAR CLICK LISTENER
-      if (categoryPillsBar) {
-        categoryPillsBar.addEventListener('click', (e) => {
-          const pill = e.target.closest('.category-pill');
-          if (!pill) return;
-
-          categoryPillsBar.querySelectorAll('.category-pill').forEach(p => p.classList.remove('active'));
-          pill.classList.add('active');
-
-          const type = pill.dataset.type;
-          const genreId = pill.dataset.genre;
-          const name = pill.dataset.name || pill.textContent.trim();
-
-          if (type === 'all') {
-            showHomeMultiRows();
-          } else if (type) {
-            loadGenreOrType({ type, name });
-          } else if (genreId) {
-            loadGenreOrType({ genreId, name });
-          }
-        });
+              });
       }
 
       // BACK TO HOME BUTTON
@@ -3498,7 +3401,7 @@
             item.current_watch_url = ep.watch_url;
             item.current_episode_id = ep.id;
             item.current_ep_title = `S${seasonNum}E${ep.number} - ${cleanEpName}`;
-            showToast(`✅ Selezionato: S${seasonNum} Ep. ${ep.number}`);
+            showToast(`Selezionato: S${seasonNum} Ep. ${ep.number}`);
           };
 
           episodesContainer.appendChild(card);
@@ -3557,12 +3460,12 @@
         if (isAppleDevice) {
           // Open player chooser popup immediately so user can tap Infuse, VLC, or System Player
           openPlayerChooser(extraction, title);
-          showToast("📱 Tocca l'app con cui riprodurre il video (Infuse, VLC, ecc.)");
+          showToast("Tocca l'app con cui riprodurre il video (Infuse, VLC, ecc.)");
           return;
         }
 
         window.open(streamUrl, '_blank');
-        showToast("🚀 Apertura flusso Vixcloud...");
+        showToast("Apertura flusso Vixcloud...");
       }
 
       // -------------------------------------------------------------
@@ -3584,7 +3487,7 @@
         choiceIos.target = "_blank";
         choiceIos.onclick = () => {
           playerChooserModal.classList.add('hidden');
-          showToast("🍏 Apertura flusso in corso...");
+          showToast("Apertura flusso in corso...");
         };
 
         // 3. VLC Media Player (iOS, Android, macOS, Windows)
@@ -3598,7 +3501,7 @@
 
         choiceVlc.onclick = (e) => {
           playerChooserModal.classList.add('hidden');
-          showToast("🚀 Apertura VLC Media Player...");
+          showToast("Apertura VLC Media Player...");
           if (isMac || (!isIOS && !isAndroid)) {
             // Generate instant .m3u8 playlist file for 1-click VLC playback on Mac
             try {
@@ -3624,7 +3527,7 @@
         choiceInfuse.href = `infuse://control/play?url=${encodeURIComponent(effectiveUrl)}`;
         choiceInfuse.onclick = () => {
           playerChooserModal.classList.add('hidden');
-          showToast("🍿 Apertura Infuse Video Player...");
+          showToast("Apertura Infuse Video Player...");
         };
 
         // 5. MX Player (Android)
@@ -3635,7 +3538,7 @@
           choiceCopy.onclick = () => {
             navigator.clipboard.writeText(effectiveUrl).catch(() => {});
             playerChooserModal.classList.add('hidden');
-            showToast("📋 Link flusso .m3u8 copiato negli appunti!");
+            showToast("Link flusso .m3u8 copiato negli appunti!");
           };
         }
       }
@@ -3682,7 +3585,7 @@
       choiceCopy.onclick = () => {
         if (!pendingExtraction || !pendingExtraction.m3u8) return;
         navigator.clipboard.writeText(pendingExtraction.m3u8);
-        showToast("📋 Link flusso M3U8 copiato negli appunti!");
+        showToast("Link flusso M3U8 copiato negli appunti!");
       };
 
       // RIPRODUCI SUBITO -> PLAYS DIRECTLY WITH VIXCLOUD
@@ -3710,7 +3613,7 @@
         const title = target.current_ep_title ? `${decodeHtml(target.name)} - ${target.current_ep_title}` : decodeHtml(target.name);
         const watchUrl = target.current_watch_url || `${window.location.origin}/it/watch/${target.id}${target.current_episode_id ? `?e=${target.current_episode_id}` : ''}`;
         
-        showToast("🚀 Apertura StreamingCommunity.app per il download...");
+        showToast("Apertura StreamingCommunity.app per il download...");
 
         // 1. Send download task directly to local app background server (if running)
         fetch('http://127.0.0.1:5555/api/download/start', {
@@ -3836,7 +3739,7 @@
           return;
         }
         const rand = loadedCatalog[Math.floor(Math.random() * loadedCatalog.length)];
-        showToast(`🎲 Scelto per te: ${decodeHtml(rand.name)}`);
+        showToast(`Scelto per te: ${decodeHtml(rand.name)}`);
         openDetails(rand);
       }
 
@@ -3855,21 +3758,21 @@
           return;
         }
 
-        showFilteredGridView(`🔍 Risultati per: "${q}"`, 'Ricerca...');
+        showFilteredGridView(`Risultati per: "${q}"`, 'Ricerca...');
         try {
           const res = await fetch(`/api/sc/search?q=${encodeURIComponent(q)}`);
           const data = await res.json();
           if (data.success && data.titles && data.titles.length > 0) {
-            showFilteredGridView(`🔍 Risultati per: "${q}"`, `${data.titles.length} Titoli`);
+            showFilteredGridView(`Risultati per: "${q}"`, `${data.titles.length} Titoli`);
             renderCards(data.titles);
           } else {
             const filtered = loadedCatalog.filter(t => t.name.toLowerCase().includes(q.toLowerCase()));
-            showFilteredGridView(`🔍 Risultati per: "${q}"`, `${filtered.length} Titoli`);
+            showFilteredGridView(`Risultati per: "${q}"`, `${filtered.length} Titoli`);
             renderCards(filtered);
           }
         } catch (e) {
           const filtered = loadedCatalog.filter(t => t.name.toLowerCase().includes(q.toLowerCase()));
-          showFilteredGridView(`🔍 Risultati per: "${q}"`, `${filtered.length} Titoli`);
+          showFilteredGridView(`Risultati per: "${q}"`, `${filtered.length} Titoli`);
           renderCards(filtered);
         }
       }
