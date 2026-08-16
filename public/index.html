@@ -650,9 +650,9 @@
             <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"></path><polyline points="15 3 21 3 21 9"></polyline><line x1="10" y1="14" x2="21" y2="3"></line></svg>
             Apri Link Vixcloud
           </button>
-          <button id="btn-hero-player" class="btn btn-secondary">
+          <button id="btn-hero-player" class="btn btn-primary">
             <svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor"><polygon points="5 3 19 12 5 21 5 3"></polygon></svg>
-            Lettore Integrato (iPad/Web)
+            📱 Lettore Nativo (Android / iOS)
           </button>
         </div>
       </div>
@@ -687,16 +687,16 @@
 
           <div class="modal-options-title">Opzioni di Riproduzione:</div>
           <div class="modal-actions-row">
-            <!-- OPTION 1: ORIGINAL SIGNED VIXCLOUD PLAYLIST LINK -->
+            <!-- OPTION 1: NATIVE SYSTEM PLAYER (IOS AVPLAYER / ANDROID INTENT) -->
+            <button id="btn-modal-player-open" class="btn btn-primary">
+              <svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor"><polygon points="5 3 19 12 5 21 5 3"></polygon></svg>
+              📱 Lettore Nativo Dispositivo (iOS / Android)
+            </button>
+
+            <!-- OPTION 2: ORIGINAL SIGNED VIXCLOUD PLAYLIST LINK -->
             <button id="btn-modal-vix-open" class="btn btn-vix">
               <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"></path><polyline points="15 3 21 3 21 9"></polyline><line x1="10" y1="14" x2="21" y2="3"></line></svg>
               Apri Link Originale Vixcloud
-            </button>
-
-            <!-- OPTION 2: INTEGRATED HTML5 / IPADOS NATIVE PLAYER -->
-            <button id="btn-modal-player-open" class="btn btn-primary">
-              <svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor"><polygon points="5 3 19 12 5 21 5 3"></polygon></svg>
-              Lettore Integrato (PiP / iPad)
             </button>
 
             <!-- OPTION 3: OPEN IN EXTERNAL APP (IPAD/MOBILE VLC, INFUSE) -->
@@ -936,15 +936,52 @@
 
       async function playVideo(item) {
         const target = item || currentActiveItem;
+        const isAndroid = /Android/i.test(navigator.userAgent);
+        const isIOS = /iPhone|iPad|iPod/i.test(navigator.userAgent) || (navigator.platform === 'MacIntel' && navigator.maxTouchPoints > 1);
+
+        showToast("Risoluzione flusso per lettore nativo...");
+        const streamUrl = await resolveStream(target);
+        if (!streamUrl) {
+          showToast("Errore nella risoluzione del video.");
+          return;
+        }
+
+        // 1. NATIVE ANDROID SYSTEM PLAYER INTENT
+        if (isAndroid && streamUrl.includes('.m3u8')) {
+          const cleanUrl = streamUrl.replace(/^https?:\/\//, '');
+          const androidIntentUrl = `intent://${cleanUrl}#Intent;scheme=https;type=video/*;action=android.intent.action.VIEW;end;`;
+          
+          showToast("Apertura nel lettore nativo Android...");
+          window.location.href = androidIntentUrl;
+          return;
+        }
+
+        // 2. NATIVE IOS / IPADOS AVPLAYER
+        if (isIOS && streamUrl.includes('.m3u8')) {
+          closeDetails();
+          playerActiveTitle.textContent = target.current_ep_title ? `${target.name} - ${target.current_ep_title}` : target.name;
+          playerModal.classList.remove('hidden');
+
+          webIframe.classList.add('hidden');
+          webVideo.classList.remove('hidden');
+          webVideo.src = streamUrl;
+
+          try {
+            await webVideo.play();
+            // Enter native iOS fullscreen player directly
+            if (webVideo.webkitEnterFullscreen) {
+              webVideo.webkitEnterFullscreen();
+            } else if (webVideo.requestFullscreen) {
+              webVideo.requestFullscreen();
+            }
+          } catch (e) {}
+          return;
+        }
+
+        // 3. DESKTOP / BROWSER NATIVE PLAYER
         closeDetails();
         playerActiveTitle.textContent = target.current_ep_title ? `${target.name} - ${target.current_ep_title}` : target.name;
         playerModal.classList.remove('hidden');
-
-        const streamUrl = await resolveStream(target);
-        if (!streamUrl) {
-          showToast("Errore risoluzione streaming.");
-          return;
-        }
 
         if (streamUrl.includes('.m3u8')) {
           webIframe.classList.add('hidden');
