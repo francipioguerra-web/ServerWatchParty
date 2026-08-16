@@ -8,6 +8,8 @@ app.use(cors());
 app.use(express.json());
 app.use(express.static(path.join(__dirname, 'public')));
 
+const GOOGLE_CLIENT_ID = process.env.GOOGLE_CLIENT_ID || "827422677497-4ohkdeqrl6thm55dqvba6j7q2qmdb6nm.apps.googleusercontent.com";
+
 const CANDIDATE_DOMAINS = [
   'https://streamingcommunityz.luxe',
   'https://streamingcommunityz.miami',
@@ -18,9 +20,10 @@ const CANDIDATE_DOMAINS = [
 let activeScDomain = CANDIDATE_DOMAINS[0];
 
 // In-memory data store for Users, Friendships, and Notifications
-const users = {}; // email -> { email, name, avatar, lastSeen }
+const users = {}; // email -> { email, name, nickname, avatar, lastSeen }
+const nicknames = {}; // lowercase nickname -> email
 const friendships = {}; // email -> { friends: Set of emails, incoming: Set of emails, outgoing: Set of emails }
-const notifications = {}; // email -> Array of { id, type, fromEmail, fromName, filmTitle, streamUrl, poster, timestamp, read }
+const notifications = {}; // email -> Array of { id, type, fromEmail, fromName, fromNickname, filmTitle, streamUrl, poster, timestamp, read }
 
 function getOrCreateUserRelations(email) {
   const normEmail = (email || '').toLowerCase().trim();
@@ -73,42 +76,107 @@ async function fetchWithFallback(pathUrl) {
 }
 
 // -------------------------------------------------------------
-// USER AUTH & PROFILE APIs
+// GOOGLE AUTH & USER PROFILE APIs
 // -------------------------------------------------------------
-app.post('/api/auth/login', (req, res) => {
-  const { email, name, avatar } = req.body || {};
+app.get('/api/auth/config', (req, res) => {
+  res.json({
+    googleClientId: GOOGLE_CLIENT_ID
+  });
+});
+
+app.post('/api/auth/google-login', (req, res) => {
+  const { email, name, avatar, googleSub } = req.body || {};
   const normEmail = (email || '').toLowerCase().trim();
 
   if (!normEmail) {
-    return res.status(400).json({ success: false, error: 'Email richiesta per il login' });
+    return res.status(400).json({ success: false, error: 'Email Google richiesta per il login' });
   }
+
+  const existingUser = users[normEmail] || {};
+  const userNickname = existingUser.nickname || '';
 
   users[normEmail] = {
     email: normEmail,
-    name: name || normEmail.split('@')[0],
-    avatar: avatar || `https://ui-avatars.com/api/?name=${encodeURIComponent(name || normEmail.split('@')[0])}&background=6366f1&color=fff&size=128`,
+    name: name || existingUser.name || normEmail.split('@')[0],
+    nickname: userNickname,
+    avatar: avatar || existingUser.avatar || `https://ui-avatars.com/api/?name=${encodeURIComponent(name || normEmail)}&background=6366f1&color=fff&size=128`,
+    googleSub: googleSub || existingUser.googleSub,
     lastSeen: Date.now()
   };
+
+  if (userNickname) {
+    nicknames[userNickname.toLowerCase()] = normEmail;
+  }
 
   getOrCreateUserRelations(normEmail);
 
   res.json({
     success: true,
-    user: users[normEmail]
+    user: users[normEmail],
+    needsNickname: !userNickname
+  });
+});
+
+// SET / UPDATE UNIQUE NICKNAME
+app.post('/api/auth/set-nickname', (req, res) => {
+  const email = (req.body.email || '').toLowerCase().trim();
+  let nickname = (req.body.nickname || '').trim().replace(/^@/, '').toLowerCase();
+
+  if (!email || !users[email]) {
+    return res.status(400).json({ success: false, error: 'Utente non trovato' });
+  }
+
+  if (!nickname || nickname.length < 3 || nickname.length > 20) {
+    return res.status(400).json({ success: false, error: 'Il nickname deve contenere tra 3 e 20 caratteri' });
+  }
+
+  if (!/^[a-z0-9_]+$/.test(nickname)) {
+    return res.status(400).json({ success: false, error: 'Il nickname può contenere solo lettere, numeri e underscore' });
+  }
+
+  const currentHolder = nicknames[nickname];
+  if (currentHolder && currentHolder !== email) {
+    return res.status(400).json({ success: false, error: `Il nickname @${nickname} è già occupato da un altro utente` });
+  }
+
+  // Release old nickname if changing
+  if (users[email].nickname && users[email].nickname.toLowerCase() !== nickname) {
+    delete nicknames[users[email].nickname.toLowerCase()];
+  }
+
+  nicknames[nickname] = email;
+  users[email].nickname = nickname;
+
+  res.json({
+    success: true,
+    nickname: nickname,
+    user: users[email]
   });
 });
 
 // -------------------------------------------------------------
-// FRIENDS MANAGEMENT APIs
+// FRIENDS MANAGEMENT APIs (BY EMAIL OR @NICKNAME)
 // -------------------------------------------------------------
+function resolveUserIdentifier(query) {
+  if (!query) return null;
+  const clean = query.trim().replace(/^@/, '').toLowerCase();
+  // Check if it's an email
+  if (users[clean]) return users[clean];
+  // Check if it's a nickname
+  if (nicknames[clean] && users[nicknames[clean]]) return users[nicknames[clean]];
+  // Direct check by email
+  if (users[query.toLowerCase().trim()]) return users[query.toLowerCase().trim()];
+  return null;
+}
+
 app.get('/api/friends/list', (req, res) => {
   const normEmail = (req.query.email || '').toLowerCase().trim();
   if (!normEmail) return res.json({ success: true, friends: [], incoming: [], outgoing: [] });
 
   const rel = getOrCreateUserRelations(normEmail);
-  const friendsList = Array.from(rel.friends).map(e => users[e] || { email: e, name: e.split('@')[0], avatar: '' });
-  const incomingList = Array.from(rel.incoming).map(e => users[e] || { email: e, name: e.split('@')[0], avatar: '' });
-  const outgoingList = Array.from(rel.outgoing).map(e => users[e] || { email: e, name: e.split('@')[0], avatar: '' });
+  const friendsList = Array.from(rel.friends).map(e => users[e] || { email: e, name: e.split('@')[0], nickname: '', avatar: '' });
+  const incomingList = Array.from(rel.incoming).map(e => users[e] || { email: e, name: e.split('@')[0], nickname: '', avatar: '' });
+  const outgoingList = Array.from(rel.outgoing).map(e => users[e] || { email: e, name: e.split('@')[0], nickname: '', avatar: '' });
 
   res.json({
     success: true,
@@ -120,14 +188,30 @@ app.get('/api/friends/list', (req, res) => {
 
 app.post('/api/friends/request', (req, res) => {
   const fromEmail = (req.body.fromEmail || '').toLowerCase().trim();
-  const toEmail = (req.body.toEmail || '').toLowerCase().trim();
+  const targetQuery = (req.body.target || '').trim();
 
-  if (!fromEmail || !toEmail) {
-    return res.status(400).json({ success: false, error: 'Email mittente e destinatario richieste' });
+  if (!fromEmail || !targetQuery) {
+    return res.status(400).json({ success: false, error: 'Mittente e destinatario richiesti' });
+  }
+
+  const fromUser = users[fromEmail];
+  if (!fromUser) {
+    return res.status(400).json({ success: false, error: 'Devi aver effettuato l\'accesso con Google' });
+  }
+
+  // Find target by Email or Nickname
+  let targetUser = resolveUserIdentifier(targetQuery);
+  let toEmail = targetUser ? targetUser.email : targetQuery.toLowerCase().trim();
+
+  // If email format but not registered yet
+  if (!targetUser && targetQuery.includes('@')) {
+    toEmail = targetQuery.toLowerCase().trim();
+  } else if (!targetUser) {
+    return res.status(404).json({ success: false, error: `Nessun utente trovato con il nickname @${targetQuery}` });
   }
 
   if (fromEmail === toEmail) {
-    return res.status(400).json({ success: false, error: 'Non puoi inviare una richiesta a te stesso' });
+    return res.status(400).json({ success: false, error: 'Non puoi inviare una richiesta di amicizia a te stesso' });
   }
 
   const fromRel = getOrCreateUserRelations(fromEmail);
@@ -141,18 +225,21 @@ app.post('/api/friends/request', (req, res) => {
   toRel.incoming.add(fromEmail);
 
   // Send notification to recipient
-  const fromUser = users[fromEmail] || { name: fromEmail.split('@')[0], email: fromEmail };
   notifications[toEmail].unshift({
     id: `notif_${Date.now()}_${Math.random().toString(36).substring(2, 7)}`,
     type: 'friend_request',
     fromEmail: fromEmail,
     fromName: fromUser.name,
+    fromNickname: fromUser.nickname || '',
     fromAvatar: fromUser.avatar,
     timestamp: Date.now(),
     read: false
   });
 
-  res.json({ success: true, message: `Richiesta di amicizia inviata a ${toEmail}` });
+  res.json({
+    success: true,
+    message: `Richiesta di amicizia inviata a ${targetUser ? '@' + targetUser.nickname : toEmail}!`
+  });
 });
 
 app.post('/api/friends/respond', (req, res) => {
@@ -174,13 +261,13 @@ app.post('/api/friends/respond', (req, res) => {
     userRel.friends.add(fromEmail);
     fromRel.friends.add(userEmail);
 
-    // Notify the other user that request was accepted
-    const userObj = users[userEmail] || { name: userEmail.split('@')[0], email: userEmail };
+    const userObj = users[userEmail] || { name: userEmail.split('@')[0], nickname: '', email: userEmail };
     notifications[fromEmail].unshift({
       id: `notif_${Date.now()}_${Math.random().toString(36).substring(2, 7)}`,
       type: 'friend_accepted',
       fromEmail: userEmail,
       fromName: userObj.name,
+      fromNickname: userObj.nickname || '',
       fromAvatar: userObj.avatar,
       timestamp: Date.now(),
       read: false
@@ -203,8 +290,7 @@ app.post('/api/share/film', async (req, res) => {
   }
 
   getOrCreateUserRelations(toEmail);
-  const fromUser = users[fromEmail] || { name: fromEmail.split('@')[0], email: fromEmail };
-
+  const fromUser = users[fromEmail] || { name: fromEmail.split('@')[0], nickname: '', email: fromEmail };
   const finalStreamUrl = streamUrl || vixUrl || watchUrl || '';
 
   notifications[toEmail].unshift({
@@ -212,6 +298,7 @@ app.post('/api/share/film', async (req, res) => {
     type: 'film_share',
     fromEmail: fromEmail,
     fromName: fromUser.name,
+    fromNickname: fromUser.nickname || '',
     fromAvatar: fromUser.avatar,
     filmTitle: filmTitle,
     streamUrl: finalStreamUrl,
@@ -220,7 +307,7 @@ app.post('/api/share/film', async (req, res) => {
     read: false
   });
 
-  res.json({ success: true, message: `Film "${filmTitle}" inviato con successo a ${toEmail}!` });
+  res.json({ success: true, message: `Film "${filmTitle}" inviato con successo!` });
 });
 
 // -------------------------------------------------------------
@@ -525,6 +612,6 @@ server.listen(PORT, '0.0.0.0', () => {
   console.log(`========================================================`);
   console.log(` 🚀 STREAMINGCOMMUNITY SOCIAL & UNIVERSAL WEB APP`);
   console.log(` • Porta: ${PORT}`);
-  console.log(` • Google Auth, Friends & Notifications attivi`);
+  console.log(` • Google OAuth & Unique Nicknames attivi`);
   console.log(`========================================================`);
 });

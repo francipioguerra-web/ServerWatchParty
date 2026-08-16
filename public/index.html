@@ -12,6 +12,8 @@
   <meta name="theme-color" content="#09090b">
   
   <script src="https://cdn.jsdelivr.net/npm/hls.js@latest"></script>
+  <!-- OFFICIAL GOOGLE IDENTITY SERVICES (GSI) -->
+  <script src="https://accounts.google.com/gsi/client" async defer></script>
 
   <style>
     :root {
@@ -204,30 +206,30 @@
     }
 
     .btn-header-login {
-      background: linear-gradient(135deg, #6366f1, #4f46e5);
-      color: #fff;
+      background: #fff;
+      color: #1f2937;
       font-weight: 700;
       font-size: 0.82rem;
-      padding: 6px 14px;
+      padding: 6px 13px;
       border-radius: 999px;
-      border: none;
+      border: 1px solid rgba(0, 0, 0, 0.15);
       cursor: pointer;
       display: flex;
       align-items: center;
-      gap: 6px;
-      box-shadow: 0 2px 10px rgba(99, 102, 241, 0.35);
+      gap: 7px;
+      box-shadow: 0 2px 10px rgba(0, 0, 0, 0.35);
       transition: all 0.2s;
     }
 
     .btn-header-login:hover {
-      opacity: 0.95;
+      background: #f1f5f9;
       transform: translateY(-1px);
     }
 
     .user-profile-badge {
       display: flex;
       align-items: center;
-      gap: 8px;
+      gap: 7px;
       background: rgba(255, 255, 255, 0.08);
       border: 1px solid var(--border);
       padding: 3px 10px 3px 4px;
@@ -936,11 +938,11 @@
         <span id="notif-badge" class="notif-badge hidden">0</span>
       </button>
 
-      <!-- USER PROFILE / LOGIN WIDGET BUTTON -->
+      <!-- USER PROFILE / GOOGLE LOGIN WIDGET BUTTON -->
       <div id="user-profile-widget">
-        <button id="btn-login-open" class="btn-header-login">
-          <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path><circle cx="12" cy="7" r="4"></circle></svg>
-          <span>Accedi</span>
+        <button id="btn-google-login-trigger" class="btn-header-login">
+          <svg width="16" height="16" viewBox="0 0 24 24"><path fill="#4285F4" d="M23.745 12.27c0-.7-.06-1.4-.19-2.07H12v4.51h6.6c-.29 1.52-1.14 2.82-2.4 3.68v3.05h3.88c2.27-2.09 3.66-5.17 3.66-9.17z"/><path fill="#34A853" d="M12 24c3.24 0 5.95-1.08 7.93-2.91l-3.88-3.05c-1.08.72-2.45 1.16-4.05 1.16-3.12 0-5.77-2.1-6.72-4.93H1.25v3.15C3.26 21.36 7.35 24 12 24z"/><path fill="#FBBC05" d="M5.28 14.27c-.25-.72-.38-1.49-.38-2.27s.13-1.55.38-2.27V6.58H1.25C.45 8.18 0 9.99 0 12s.45 3.82 1.25 5.42l4.03-3.15z"/><path fill="#EA4335" d="M12 4.75c1.77 0 3.35.61 4.6 1.8l3.42-3.42C17.95 1.19 15.24 0 12 0 7.35 0 3.26 2.64 1.25 6.58l4.03 3.15c.95-2.83 3.6-4.98 6.72-4.98z"/></svg>
+          <span>Accedi con Google</span>
         </button>
       </div>
     </div>
@@ -958,17 +960,23 @@
   </div>
 
   <!-- USER PROFILE DROPDOWN MENU -->
-  <div id="user-dropdown" class="dropdown-menu hidden" style="width: 260px;">
+  <div id="user-dropdown" class="dropdown-menu hidden" style="width: 280px;">
     <div class="dropdown-header">
       <span id="dropdown-user-name">Mio Profilo</span>
       <button id="btn-close-user-dropdown" style="background:none; border:none; color:var(--text-muted); cursor:pointer; font-size:1.2rem;">&times;</button>
     </div>
     <div style="padding: 14px; display: flex; flex-direction: column; gap: 10px;">
-      <div style="font-size: 0.78rem; color: var(--text-dim);" id="dropdown-user-email">email@gmail.com</div>
-      <button id="btn-open-friends-modal" class="btn btn-secondary" style="width:100%; justify-content: flex-start;">
+      <div>
+        <div style="font-size: 0.9rem; font-weight: 800; color: #4ade80;" id="dropdown-user-nickname">@nickname</div>
+        <div style="font-size: 0.75rem; color: var(--text-dim);" id="dropdown-user-email">email@gmail.com</div>
+      </div>
+      <button id="btn-change-nickname" class="btn btn-secondary" style="width:100%; justify-content: flex-start; font-size: 0.8rem;">
+        ✏️ Modifica Nickname
+      </button>
+      <button id="btn-open-friends-modal" class="btn btn-secondary" style="width:100%; justify-content: flex-start; font-size: 0.8rem;">
         👥 Gestisci Amici (<span id="user-friends-count">0</span>)
       </button>
-      <button id="btn-logout" class="btn btn-secondary" style="width:100%; justify-content: flex-start; color: #ef4444;">
+      <button id="btn-logout" class="btn btn-secondary" style="width:100%; justify-content: flex-start; color: #ef4444; font-size: 0.8rem;">
         🚪 Esci dall'account
       </button>
     </div>
@@ -1066,26 +1074,23 @@
     </div>
   </div>
 
-  <!-- GOOGLE LOGIN MODAL -->
-  <div id="login-modal" class="modal-overlay hidden">
-    <div class="modal-card" style="max-width: 420px; padding: 24px; text-align: center;">
-      <button id="btn-close-login" class="modal-close-btn">&times;</button>
-      <div style="width: 50px; height: 50px; background: rgba(99, 102, 241, 0.2); border: 1px solid rgba(99, 102, 241, 0.4); border-radius: 50%; display: flex; align-items: center; justify-content: center; margin: 0 auto 14px;">
-        <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="var(--accent-indigo)" stroke-width="2.5"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path><circle cx="12" cy="7" r="4"></circle></svg>
-      </div>
-      <h2 style="font-size: 1.3rem; font-weight: 800; margin-bottom: 6px;">Accedi a StreamingCommunity</h2>
-      <p style="font-size: 0.82rem; color: var(--text-muted); margin-bottom: 20px;">Accedi per aggiungere amici e condividere i film istantaneamente.</p>
+  <!-- NICKNAME SETUP / MODAL -->
+  <div id="nickname-modal" class="modal-overlay hidden">
+    <div class="modal-card" style="max-width: 400px; padding: 24px; text-align: center;">
+      <div style="font-size: 2.2rem; margin-bottom: 8px;">🏷️</div>
+      <h2 style="font-size: 1.3rem; font-weight: 800; margin-bottom: 6px;">Crea il tuo Nickname Univoco</h2>
+      <p style="font-size: 0.82rem; color: var(--text-muted); margin-bottom: 18px;">I tuoi amici potranno cercarti e inviarti film utilizzando questo nickname.</p>
 
-      <form id="form-login" style="display: flex; flex-direction: column; gap: 10px; text-align: left;">
+      <form id="form-nickname" style="display: flex; flex-direction: column; gap: 12px; text-align: left;">
         <div>
-          <label style="font-size: 0.75rem; color: var(--text-dim); font-weight: 700; text-transform: uppercase;">La tua Email Google</label>
-          <input type="email" id="input-login-email" required placeholder="tuonome@gmail.com" style="width:100%; background:rgba(255,255,255,0.06); border:1px solid rgba(255,255,255,0.12); color:#fff; padding:10px 14px; border-radius:8px; font-size:0.9rem; margin-top:4px; outline:none;" />
+          <label style="font-size: 0.75rem; color: var(--text-dim); font-weight: 700; text-transform: uppercase;">Nickname</label>
+          <div style="position:relative; margin-top:4px;">
+            <span style="position:absolute; left:12px; top:50%; transform:translateY(-50%); color:var(--text-dim); font-weight:700;">@</span>
+            <input type="text" id="input-unique-nickname" required placeholder="luca99" style="width:100%; background:rgba(255,255,255,0.06); border:1px solid rgba(255,255,255,0.12); color:#fff; padding:10px 14px 10px 30px; border-radius:8px; font-size:0.95rem; font-weight:700; outline:none;" />
+          </div>
+          <div id="nickname-error" style="color: #ef4444; font-size: 0.75rem; margin-top: 4px; display: none;">Nickname già in uso.</div>
         </div>
-        <div>
-          <label style="font-size: 0.75rem; color: var(--text-dim); font-weight: 700; text-transform: uppercase;">Il tuo Nome</label>
-          <input type="text" id="input-login-name" required placeholder="Marco" style="width:100%; background:rgba(255,255,255,0.06); border:1px solid rgba(255,255,255,0.12); color:#fff; padding:10px 14px; border-radius:8px; font-size:0.9rem; margin-top:4px; outline:none;" />
-        </div>
-        <button type="submit" class="btn btn-primary" style="margin-top: 10px; padding: 12px; width: 100%;">Accedi Subito</button>
+        <button type="submit" class="btn btn-primary" style="margin-top: 6px; padding: 12px; width: 100%;">Salva Nickname</button>
       </form>
     </div>
   </div>
@@ -1095,10 +1100,10 @@
     <div class="modal-card" style="max-width: 480px; padding: 22px;">
       <button id="btn-close-friends" class="modal-close-btn">&times;</button>
       <h3 style="font-size: 1.2rem; font-weight: 800; margin-bottom: 6px;">👥 Gestione Amici</h3>
-      <p style="font-size: 0.82rem; color: var(--text-muted); margin-bottom: 16px;">Invia richieste di amicizia tramite email per scambiarvi i link dei film.</p>
+      <p style="font-size: 0.82rem; color: var(--text-muted); margin-bottom: 16px;">Invia richieste digitando il <strong>@nickname</strong> o l'email Google del tuo amico.</p>
 
       <form id="form-add-friend" style="display: flex; gap: 8px; margin-bottom: 20px;">
-        <input type="email" id="input-friend-email" required placeholder="email.amico@gmail.com" style="flex:1; background:rgba(255,255,255,0.06); border:1px solid rgba(255,255,255,0.12); color:#fff; padding:9px 12px; border-radius:8px; font-size:0.88rem; outline:none;" />
+        <input type="text" id="input-friend-target" required placeholder="@nickname oppure email@gmail.com" style="flex:1; background:rgba(255,255,255,0.06); border:1px solid rgba(255,255,255,0.12); color:#fff; padding:9px 12px; border-radius:8px; font-size:0.88rem; outline:none;" />
         <button type="submit" class="btn btn-primary" style="padding:9px 16px; font-size:0.85rem;">Invia Invito</button>
       </form>
 
@@ -1151,12 +1156,15 @@
 
   <script>
     (function () {
+      const GOOGLE_CLIENT_ID = "827422677497-4ohkdeqrl6thm55dqvba6j7q2qmdb6nm.apps.googleusercontent.com";
+
       let loadedCatalog = [];
       let currentActiveItem = null;
       let currentHls = null;
       let currentUser = JSON.parse(localStorage.getItem('sc_logged_user') || 'null');
       let currentFriends = [];
       let notifPollingInterval = null;
+      let googleTokenClient = null;
 
       // DOM ELEMENTS
       const catalogGrid = document.getElementById('catalog-grid');
@@ -1204,19 +1212,20 @@
       const userDropdown = document.getElementById('user-dropdown');
       const btnCloseUserDropdown = document.getElementById('btn-close-user-dropdown');
       const dropdownUserName = document.getElementById('dropdown-user-name');
+      const dropdownUserNickname = document.getElementById('dropdown-user-nickname');
       const dropdownUserEmail = document.getElementById('dropdown-user-email');
       const userFriendsCount = document.getElementById('user-friends-count');
       const btnOpenFriendsModal = document.getElementById('btn-open-friends-modal');
+      const btnChangeNickname = document.getElementById('btn-change-nickname');
       const btnLogout = document.getElementById('btn-logout');
-      const loginModal = document.getElementById('login-modal');
-      const btnCloseLogin = document.getElementById('btn-close-login');
-      const formLogin = document.getElementById('form-login');
-      const inputLoginEmail = document.getElementById('input-login-email');
-      const inputLoginName = document.getElementById('input-login-name');
+      const nicknameModal = document.getElementById('nickname-modal');
+      const formNickname = document.getElementById('form-nickname');
+      const inputUniqueNickname = document.getElementById('input-unique-nickname');
+      const nicknameError = document.getElementById('nickname-error');
       const friendsModal = document.getElementById('friends-modal');
       const btnCloseFriends = document.getElementById('btn-close-friends');
       const formAddFriend = document.getElementById('form-add-friend');
-      const inputFriendEmail = document.getElementById('input-friend-email');
+      const inputFriendTarget = document.getElementById('input-friend-target');
       const activeFriendsList = document.getElementById('active-friends-list');
       const shareModal = document.getElementById('share-modal');
       const btnCloseShare = document.getElementById('btn-close-share');
@@ -1228,19 +1237,151 @@
         setTimeout(() => toast.classList.add('hidden'), 2800);
       }
 
+      function parseJwt(token) {
+        try {
+          const base64Url = token.split('.')[1];
+          const base64 = base64Url.replace(/-/g, '+').replace(/_/g, '/');
+          const jsonPayload = decodeURIComponent(atob(base64).split('').map(function(c) {
+            return '%' + ('00' + c.charCodeAt(0).toString(16)).slice(-2);
+          }).join(''));
+          return JSON.parse(jsonPayload);
+        } catch (e) {
+          return null;
+        }
+      }
+
       // -------------------------------------------------------------
-      // USER AUTH & PROFILE
+      // GOOGLE AUTH INITIALIZATION
+      // -------------------------------------------------------------
+      function initGoogleAuth() {
+        if (typeof google === 'undefined' || !google.accounts) {
+          setTimeout(initGoogleAuth, 400);
+          return;
+        }
+
+        try {
+          // Initialize One Tap & Standard Credentials
+          google.accounts.id.initialize({
+            client_id: GOOGLE_CLIENT_ID,
+            callback: onGoogleCredentialResponse
+          });
+
+          // Initialize OAuth2 Popup Token Client
+          googleTokenClient = google.accounts.oauth2.initTokenClient({
+            client_id: GOOGLE_CLIENT_ID,
+            scope: 'openid email profile',
+            callback: async (tokenResponse) => {
+              if (tokenResponse && tokenResponse.access_token) {
+                try {
+                  const userInfoRes = await fetch('https://www.googleapis.com/oauth2/v3/userinfo', {
+                    headers: { Authorization: `Bearer ${tokenResponse.access_token}` }
+                  });
+                  const profile = await userInfoRes.json();
+                  handleGoogleProfile(profile.email, profile.name, profile.picture, profile.sub);
+                } catch (e) {
+                  showToast('Errore nel recupero profilo Google.');
+                }
+              }
+            }
+          });
+        } catch (err) {
+          console.error("Google Auth init error:", err);
+        }
+      }
+
+      function onGoogleCredentialResponse(response) {
+        const payload = parseJwt(response.credential);
+        if (payload && payload.email) {
+          handleGoogleProfile(payload.email, payload.name, payload.picture, payload.sub);
+        }
+      }
+
+      function startGooglePopupLogin() {
+        if (googleTokenClient) {
+          googleTokenClient.requestAccessToken({ prompt: 'consent' });
+        } else if (typeof google !== 'undefined' && google.accounts && google.accounts.id) {
+          google.accounts.id.prompt();
+        } else {
+          showToast("Caricamento Google Sign-In...");
+        }
+      }
+
+      async function handleGoogleProfile(email, name, picture, sub) {
+        try {
+          const res = await fetch('/api/auth/google-login', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ email, name, avatar: picture, googleSub: sub })
+          });
+          const data = await res.json();
+          if (data.success && data.user) {
+            currentUser = data.user;
+            localStorage.setItem('sc_logged_user', JSON.stringify(currentUser));
+            updateAuthUI();
+
+            if (data.needsNickname || !currentUser.nickname) {
+              nicknameModal.classList.remove('hidden');
+              inputUniqueNickname.value = (currentUser.name || '').toLowerCase().replace(/[^a-z0-9_]/g, '');
+            } else {
+              showToast(`Benvenuto, @${currentUser.nickname}!`);
+            }
+          }
+        } catch (err) {
+          showToast('Errore durante l\'accesso con Google.');
+        }
+      }
+
+      // NICKNAME CREATION / EDITING
+      formNickname.onsubmit = async (e) => {
+        e.preventDefault();
+        const rawNick = inputUniqueNickname.value.trim().replace(/^@/, '');
+        nicknameError.style.display = 'none';
+
+        try {
+          const res = await fetch('/api/auth/set-nickname', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ email: currentUser.email, nickname: rawNick })
+          });
+          const data = await res.json();
+          if (data.success && data.user) {
+            currentUser = data.user;
+            localStorage.setItem('sc_logged_user', JSON.stringify(currentUser));
+            nicknameModal.classList.add('hidden');
+            updateAuthUI();
+            showToast(`Nickname impostato: @${currentUser.nickname}! 🎉`);
+          } else {
+            nicknameError.textContent = data.error || 'Nickname non valido o già occupato.';
+            nicknameError.style.display = 'block';
+          }
+        } catch (err) {
+          nicknameError.textContent = 'Errore di connessione.';
+          nicknameError.style.display = 'block';
+        }
+      };
+
+      btnChangeNickname.onclick = () => {
+        userDropdown.classList.add('hidden');
+        inputUniqueNickname.value = currentUser.nickname || '';
+        nicknameError.style.display = 'none';
+        nicknameModal.classList.remove('hidden');
+      };
+
+      // -------------------------------------------------------------
+      // USER AUTH & PROFILE UI
       // -------------------------------------------------------------
       function updateAuthUI() {
         if (currentUser && currentUser.email) {
+          const displayTag = currentUser.nickname ? `@${currentUser.nickname}` : currentUser.name;
           userProfileWidget.innerHTML = `
             <div class="user-profile-badge" id="btn-user-avatar" title="${currentUser.name}">
               <img class="user-avatar-mini" src="${currentUser.avatar || ''}" alt="${currentUser.name}" onerror="this.src='https://ui-avatars.com/api/?name=${encodeURIComponent(currentUser.name)}&background=6366f1&color=fff'" />
-              <span class="user-name-mini">${currentUser.name}</span>
+              <span class="user-name-mini">${displayTag}</span>
             </div>
           `;
           document.getElementById('btn-user-avatar').onclick = () => {
             dropdownUserName.textContent = currentUser.name;
+            dropdownUserNickname.textContent = currentUser.nickname ? `@${currentUser.nickname}` : '(Nessun nickname)';
             dropdownUserEmail.textContent = currentUser.email;
             userDropdown.classList.toggle('hidden');
             notifDropdown.classList.add('hidden');
@@ -1249,41 +1390,16 @@
           startNotificationPolling();
         } else {
           userProfileWidget.innerHTML = `
-            <button id="btn-login-open" class="btn-header-login">
-              <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path><circle cx="12" cy="7" r="4"></circle></svg>
-              <span>Accedi</span>
+            <button id="btn-google-login-trigger" class="btn-header-login">
+              <svg width="16" height="16" viewBox="0 0 24 24"><path fill="#4285F4" d="M23.745 12.27c0-.7-.06-1.4-.19-2.07H12v4.51h6.6c-.29 1.52-1.14 2.82-2.4 3.68v3.05h3.88c2.27-2.09 3.66-5.17 3.66-9.17z"/><path fill="#34A853" d="M12 24c3.24 0 5.95-1.08 7.93-2.91l-3.88-3.05c-1.08.72-2.45 1.16-4.05 1.16-3.12 0-5.77-2.1-6.72-4.93H1.25v3.15C3.26 21.36 7.35 24 12 24z"/><path fill="#FBBC05" d="M5.28 14.27c-.25-.72-.38-1.49-.38-2.27s.13-1.55.38-2.27V6.58H1.25C.45 8.18 0 9.99 0 12s.45 3.82 1.25 5.42l4.03-3.15z"/><path fill="#EA4335" d="M12 4.75c1.77 0 3.35.61 4.6 1.8l3.42-3.42C17.95 1.19 15.24 0 12 0 7.35 0 3.26 2.64 1.25 6.58l4.03 3.15c.95-2.83 3.6-4.98 6.72-4.98z"/></svg>
+              <span>Accedi con Google</span>
             </button>
           `;
-          document.getElementById('btn-login-open').onclick = () => loginModal.classList.remove('hidden');
+          document.getElementById('btn-google-login-trigger').onclick = startGooglePopupLogin;
           if (notifPollingInterval) clearInterval(notifPollingInterval);
           notifBadge.classList.add('hidden');
         }
       }
-
-      formLogin.onsubmit = async (e) => {
-        e.preventDefault();
-        const email = inputLoginEmail.value.trim();
-        const name = inputLoginName.value.trim();
-        if (!email) return;
-
-        try {
-          const res = await fetch('/api/auth/login', {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ email, name })
-          });
-          const data = await res.json();
-          if (data.success && data.user) {
-            currentUser = data.user;
-            localStorage.setItem('sc_logged_user', JSON.stringify(currentUser));
-            loginModal.classList.add('hidden');
-            updateAuthUI();
-            showToast(`Bentornato, ${currentUser.name}!`);
-          }
-        } catch (err) {
-          showToast('Errore durante l\'accesso.');
-        }
-      };
 
       btnLogout.onclick = () => {
         currentUser = null;
@@ -1293,7 +1409,6 @@
         showToast('Disconnesso con successo.');
       };
 
-      btnCloseLogin.onclick = () => loginModal.classList.add('hidden');
       btnCloseUserDropdown.onclick = () => userDropdown.classList.add('hidden');
 
       // -------------------------------------------------------------
@@ -1326,7 +1441,7 @@
             <div style="display:flex; align-items:center; gap:8px;">
               <img src="${fr.avatar || ''}" style="width:28px; height:28px; border-radius:50%; background:#6366f1;" onerror="this.src='https://ui-avatars.com/api/?name=${encodeURIComponent(fr.name)}&background=6366f1&color=fff'" />
               <div>
-                <div style="font-size:0.85rem; font-weight:700; color:#fff;">${fr.name}</div>
+                <div style="font-size:0.85rem; font-weight:700; color:#fff;">${fr.nickname ? '@' + fr.nickname : fr.name}</div>
                 <div style="font-size:0.72rem; color:var(--text-dim);">${fr.email}</div>
               </div>
             </div>
@@ -1338,10 +1453,10 @@
 
       formAddFriend.onsubmit = async (e) => {
         e.preventDefault();
-        const toEmail = inputFriendEmail.value.trim();
+        const target = inputFriendTarget.value.trim();
         if (!currentUser) {
-          showToast('Accedi prima per inviare richieste.');
-          loginModal.classList.remove('hidden');
+          showToast('Accedi con Google per inviare richieste.');
+          startGooglePopupLogin();
           return;
         }
 
@@ -1349,11 +1464,11 @@
           const res = await fetch('/api/friends/request', {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ fromEmail: currentUser.email, toEmail: toEmail })
+            body: JSON.stringify({ fromEmail: currentUser.email, target: target })
           });
           const data = await res.json();
           if (data.success) {
-            inputFriendEmail.value = '';
+            inputFriendTarget.value = '';
             showToast(data.message || 'Richiesta di amicizia inviata!');
             fetchFriends();
           } else {
@@ -1371,7 +1486,7 @@
       };
       btnCloseFriends.onclick = () => friendsModal.classList.add('hidden');
       navFriends.onclick = () => {
-        if (!currentUser) loginModal.classList.remove('hidden');
+        if (!currentUser) startGooglePopupLogin();
         else {
           friendsModal.classList.remove('hidden');
           fetchFriends();
@@ -1414,11 +1529,12 @@
           card.className = `notif-card ${!n.read ? 'unread' : ''}`;
 
           if (n.type === 'film_share') {
+            const senderTag = n.fromNickname ? `@${n.fromNickname}` : (n.fromName || n.fromEmail);
             card.innerHTML = `
               <img class="notif-poster" src="${n.poster || 'https://via.placeholder.com/100x150'}" alt="${n.filmTitle}" />
               <div class="notif-info">
                 <div class="notif-title">🎬 ${n.filmTitle}</div>
-                <div class="notif-sender">Inviato da <strong>${n.fromName || n.fromEmail}</strong></div>
+                <div class="notif-sender">Inviato da <strong>${senderTag}</strong></div>
                 <button class="notif-btn-play" data-stream="${n.streamUrl || ''}" data-title="${n.filmTitle}">
                   <svg width="12" height="12" viewBox="0 0 24 24" fill="currentColor"><polygon points="5 3 19 12 5 21 5 3"></polygon></svg>
                   Guarda Ora
@@ -1430,11 +1546,12 @@
               playDirectStream(n.streamUrl, n.filmTitle);
             };
           } else if (n.type === 'friend_request') {
+            const senderTag = n.fromNickname ? `@${n.fromNickname}` : (n.fromName || n.fromEmail);
             card.innerHTML = `
               <div style="width:36px; height:36px; border-radius:50%; background:#6366f1; display:flex; align-items:center; justify-content:center; font-size:1.1rem; flex-shrink:0;">👤</div>
               <div class="notif-info">
                 <div class="notif-title">Richiesta di Amicizia</div>
-                <div class="notif-sender">Da: <strong>${n.fromName || n.fromEmail}</strong></div>
+                <div class="notif-sender">Da: <strong>${senderTag}</strong></div>
                 <div style="display:flex; gap:6px; margin-top:4px;">
                   <button class="notif-btn-action" style="background:#22c55e;" data-accept="true">Accetta</button>
                   <button class="notif-btn-action" style="background:#ef4444;" data-accept="false">Rifiuta</button>
@@ -1444,11 +1561,12 @@
             card.querySelector('[data-accept="true"]').onclick = () => respondFriend(n.fromEmail, true);
             card.querySelector('[data-accept="false"]').onclick = () => respondFriend(n.fromEmail, false);
           } else if (n.type === 'friend_accepted') {
+            const senderTag = n.fromNickname ? `@${n.fromNickname}` : (n.fromName || n.fromEmail);
             card.innerHTML = `
               <div style="width:36px; height:36px; border-radius:50%; background:#22c55e; display:flex; align-items:center; justify-content:center; font-size:1.1rem; flex-shrink:0;">🤝</div>
               <div class="notif-info">
                 <div class="notif-title">Nuovo Amico!</div>
-                <div class="notif-sender"><strong>${n.fromName || n.fromEmail}</strong> ha accettato la tua richiesta.</div>
+                <div class="notif-sender"><strong>${senderTag}</strong> ha accettato la tua richiesta.</div>
               </div>
             `;
           }
@@ -1481,7 +1599,7 @@
 
       btnNotifBell.onclick = () => {
         if (!currentUser) {
-          loginModal.classList.remove('hidden');
+          startGooglePopupLogin();
           return;
         }
         notifDropdown.classList.toggle('hidden');
@@ -1503,8 +1621,8 @@
       // -------------------------------------------------------------
       btnModalShareFriend.onclick = async () => {
         if (!currentUser) {
-          showToast('Accedi per inviare il film ai tuoi amici.');
-          loginModal.classList.remove('hidden');
+          showToast('Accedi con Google per inviare il film ai tuoi amici.');
+          startGooglePopupLogin();
           return;
         }
 
@@ -1533,19 +1651,19 @@
             <div style="display:flex; align-items:center; gap:8px;">
               <img src="${fr.avatar || ''}" style="width:28px; height:28px; border-radius:50%; background:#6366f1;" onerror="this.src='https://ui-avatars.com/api/?name=${encodeURIComponent(fr.name)}&background=6366f1&color=fff'" />
               <div>
-                <div style="font-size:0.85rem; font-weight:700; color:#fff;">${fr.name}</div>
+                <div style="font-size:0.85rem; font-weight:700; color:#fff;">${fr.nickname ? '@' + fr.nickname : fr.name}</div>
                 <div style="font-size:0.72rem; color:var(--text-dim);">${fr.email}</div>
               </div>
             </div>
             <button class="btn btn-share-friend" style="padding:6px 12px; font-size:0.75rem;" data-email="${fr.email}">Invia</button>
           `;
-          item.querySelector('button').onclick = () => sendFilmToFriend(fr.email, fr.name);
+          item.querySelector('button').onclick = () => sendFilmToFriend(fr.email, fr.nickname ? `@${fr.nickname}` : fr.name);
           shareFriendsList.appendChild(item);
         });
       };
 
-      async function sendFilmToFriend(friendEmail, friendName) {
-        showToast(`Invio film a ${friendName}...`);
+      async function sendFilmToFriend(friendEmail, friendTag) {
+        showToast(`Invio film a ${friendTag}...`);
         shareModal.classList.add('hidden');
 
         try {
@@ -1564,7 +1682,7 @@
           });
           const data = await res.json();
           if (data.success) {
-            showToast(`✅ Film inviato a ${friendName}!`);
+            showToast(`✅ Film inviato a ${friendTag}!`);
           } else {
             showToast('Errore durante l\'invio del film.');
           }
@@ -1935,6 +2053,7 @@
 
       // INITIALIZE
       updateAuthUI();
+      initGoogleAuth();
       loadHome();
     })();
   </script>
