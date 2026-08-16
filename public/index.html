@@ -2089,13 +2089,20 @@
         // 3. VLC Media Player (macOS, iOS, Android, Windows)
         if (isIOS) {
           choiceVlc.href = `vlc-x-callback://x-callback-url/stream?url=${encodeURIComponent(effectiveUrl)}`;
-        } else if (isMac) {
-          choiceVlc.href = `vlc://${cleanEffectiveUrl}`;
         } else if (isAndroid) {
           choiceVlc.href = `intent://${cleanEffectiveUrl}#Intent;package=org.videolan.vlc;type=video/*;scheme=https;action=android.intent.action.VIEW;end;`;
         } else {
-          choiceVlc.href = `vlc://${cleanEffectiveUrl}`;
+          // macOS & Desktop: VLC expects vlc://https://... or direct protocol launch
+          choiceVlc.href = `vlc://${effectiveUrl}`;
         }
+
+        choiceVlc.onclick = (e) => {
+          if (isMac || (!isIOS && !isAndroid)) {
+            // Also copy to clipboard for convenience in case protocol popup is dismissed
+            navigator.clipboard.writeText(effectiveUrl).catch(() => {});
+            showToast("🚀 Apertura in VLC... (Link copiato negli appunti: ⌘+N)");
+          }
+        };
 
         // 4. Infuse (iOS & macOS)
         choiceInfuse.href = `infuse://control/play?url=${encodeURIComponent(effectiveUrl)}`;
