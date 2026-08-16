@@ -539,6 +539,97 @@
       transform: translateY(-1px);
     }
 
+    /* ICON-ONLY MINIMAL ACTION BUTTONS */
+    .icon-action-btn {
+      position: relative;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      width: 46px;
+      height: 46px;
+      padding: 0;
+      border-radius: 50%;
+      cursor: pointer;
+      transition: all 0.22s cubic-bezier(0.16, 1, 0.3, 1);
+      border: 1.5px solid rgba(255, 255, 255, 0.16);
+      background: rgba(255, 255, 255, 0.1);
+      backdrop-filter: blur(20px);
+      -webkit-backdrop-filter: blur(20px);
+      color: #fff;
+    }
+
+    .icon-action-btn.btn-primary {
+      background: #ffffff;
+      color: #000000;
+      border: none;
+      box-shadow: 0 4px 18px rgba(255, 255, 255, 0.25);
+    }
+
+    .icon-action-btn.btn-primary:hover {
+      background: #f1f1f1;
+      transform: scale(1.08);
+      box-shadow: 0 6px 24px rgba(255, 255, 255, 0.4);
+    }
+
+    .icon-action-btn.btn-vix {
+      background: rgba(255, 255, 255, 0.12);
+      border: 1.5px solid rgba(255, 255, 255, 0.22);
+      color: #ffffff;
+      box-shadow: 0 4px 14px rgba(0, 0, 0, 0.4);
+    }
+
+    .icon-action-btn.btn-vix:hover {
+      background: rgba(255, 255, 255, 0.24);
+      border-color: rgba(255, 255, 255, 0.45);
+      transform: scale(1.08);
+    }
+
+    .icon-action-btn.btn-share-friend {
+      background: rgba(168, 85, 247, 0.18);
+      border: 1.5px solid rgba(168, 85, 247, 0.35);
+      color: #c084fc;
+    }
+
+    .icon-action-btn.btn-share-friend:hover {
+      background: rgba(168, 85, 247, 0.35);
+      border-color: rgba(168, 85, 247, 0.6);
+      color: #ffffff;
+      transform: scale(1.08);
+    }
+
+    /* MINI HOVER TOOLTIP */
+    [data-tooltip] {
+      position: relative;
+    }
+
+    [data-tooltip]::after {
+      content: attr(data-tooltip);
+      position: absolute;
+      bottom: -32px;
+      left: 50%;
+      transform: translateX(-50%) translateY(4px);
+      background: rgba(14, 14, 18, 0.92);
+      backdrop-filter: blur(16px);
+      -webkit-backdrop-filter: blur(16px);
+      border: 1px solid rgba(255, 255, 255, 0.18);
+      color: #ffffff;
+      font-size: 0.74rem;
+      font-weight: 700;
+      padding: 3px 8px;
+      border-radius: 6px;
+      white-space: nowrap;
+      pointer-events: none;
+      opacity: 0;
+      transition: opacity 0.18s ease, transform 0.18s ease;
+      z-index: 150;
+      box-shadow: 0 6px 16px rgba(0, 0, 0, 0.6);
+    }
+
+    [data-tooltip]:hover::after {
+      opacity: 1;
+      transform: translateX(-50%) translateY(0);
+    }
+
     /* MEDIA GRIDS */
     .section-title {
       font-size: 1.3rem;
@@ -1056,13 +1147,14 @@
         <h2 id="hero-title" class="hero-title">Caricamento catalogo...</h2>
         <p id="hero-plot" class="hero-plot">Connessione ai server di streaming in corso...</p>
         <div class="hero-actions">
-          <button id="btn-hero-player" class="btn btn-primary">
-            <svg width="17" height="17" viewBox="0 0 24 24" fill="currentColor"><polygon points="5 3 19 12 5 21 5 3"></polygon></svg>
-            📱 Scegli Lettore Esterno (Oppo / iOS)
+          <button id="btn-hero-player" class="icon-action-btn btn-primary" data-tooltip="Riproduci Subito" title="Riproduci Subito">
+            <svg width="22" height="22" viewBox="0 0 24 24" fill="currentColor"><polygon points="6 4 19 12 6 20"></polygon></svg>
           </button>
-          <button id="btn-hero-vix" class="btn btn-vix">
-            <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"></path><polyline points="15 3 21 3 21 9"></polyline><line x1="10" y1="14" x2="21" y2="3"></line></svg>
-            Apri Vixcloud
+          <button id="btn-hero-vix" class="icon-action-btn btn-vix" data-tooltip="Scegli Lettore Esterno / Web" title="Scegli Lettore Esterno / Web">
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <rect x="2" y="4" width="20" height="16" rx="3"></rect>
+              <polygon points="10 8 16 12 10 16" fill="currentColor"></polygon>
+            </svg>
           </button>
         </div>
       </div>
@@ -1094,24 +1186,30 @@
             <div id="episodes-grid" class="episodes-grid"></div>
           </div>
 
-          <div class="modal-options-title">Opzioni di Riproduzione & Social:</div>
+          <div class="modal-options-title">Azioni di Riproduzione:</div>
           <div class="modal-actions-row">
-            <!-- OPTION 1: DIRECT VIXCLOUD M3U8 STREAM -->
-            <button id="btn-modal-player-open" class="btn btn-primary">
-              <svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor"><polygon points="5 3 19 12 5 21 5 3"></polygon></svg>
-              📱 Apri Link Vixcloud (.m3u8)
+            <!-- OPTION 1: DIRECT PLAY -->
+            <button id="btn-modal-player-open" class="icon-action-btn btn-primary" data-tooltip="Riproduci Subito" title="Riproduci Subito">
+              <svg width="22" height="22" viewBox="0 0 24 24" fill="currentColor"><polygon points="6 4 19 12 6 20"></polygon></svg>
             </button>
 
             <!-- OPTION 2: CHOOSER / EMBED -->
-            <button id="btn-modal-vix-embed" class="btn btn-vix">
-              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polygon points="5 3 19 12 5 21 5 3"></polygon></svg>
-              🎬 Scegli Lettore Esterno / Web
+            <button id="btn-modal-vix-embed" class="icon-action-btn btn-vix" data-tooltip="Scegli Lettore (VLC, Apple, Android, Infuse)" title="Scegli Lettore (VLC, Apple, Android, Infuse)">
+              <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <rect x="2" y="4" width="20" height="16" rx="3"></rect>
+                <polygon points="10 8 16 12 10 16" fill="currentColor"></polygon>
+              </svg>
             </button>
 
             <!-- OPTION 3: SHARE FILM WITH FRIEND -->
-            <button id="btn-modal-share-friend" class="btn btn-share-friend" title="Invia film a un amico">
-              <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><circle cx="18" cy="5" r="3"></circle><circle cx="6" cy="12" r="3"></circle><circle cx="18" cy="19" r="3"></circle><line x1="8.59" y1="13.51" x2="15.42" y2="17.49"></line><line x1="15.41" y1="6.51" x2="8.59" y2="10.49"></line></svg>
-              Invia ad un Amico
+            <button id="btn-modal-share-friend" class="icon-action-btn btn-share-friend" data-tooltip="Invia Film a un Amico" title="Invia Film a un Amico">
+              <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <circle cx="18" cy="5" r="3"></circle>
+                <circle cx="6" cy="12" r="3"></circle>
+                <circle cx="18" cy="19" r="3"></circle>
+                <line x1="8.59" y1="13.51" x2="15.42" y2="17.49"></line>
+                <line x1="15.41" y1="6.51" x2="8.59" y2="10.49"></line>
+              </svg>
             </button>
           </div>
         </div>
@@ -1264,13 +1362,12 @@
   <!-- FULLSCREEN VIDEO PLAYER MODAL -->
   <div id="player-modal" class="player-overlay hidden">
     <div class="player-top-bar">
-      <button id="btn-player-back" class="btn btn-secondary" style="padding: 7px 14px;">
-        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="19" y1="12" x2="5" y2="12"></line><polyline points="12 19 5 12 12 5"></polyline></svg>
-        <span>Chiudi</span>
+      <button id="btn-player-back" class="icon-action-btn" data-tooltip="Chiudi Player" title="Chiudi Player" style="width: 38px; height: 38px;">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><line x1="19" y1="12" x2="5" y2="12"></line><polyline points="12 19 5 12 12 5"></polyline></svg>
       </button>
       <span id="player-active-title" style="font-weight: 700; font-size: 0.95rem; color: #fff; text-align: center; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; max-width: 60%;">Riproduzione</span>
-      <button id="btn-player-vix-direct" class="btn btn-vix" style="padding: 7px 12px; font-size: 0.8rem;">
-        Apri Vixcloud
+      <button id="btn-player-vix-direct" class="icon-action-btn btn-vix" data-tooltip="Apri Link Diretto Vixcloud" title="Apri Link Diretto Vixcloud" style="width: 38px; height: 38px;">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"></path><polyline points="15 3 21 3 21 9"></polyline><line x1="10" y1="14" x2="21" y2="3"></line></svg>
       </button>
     </div>
 
