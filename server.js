@@ -66,8 +66,8 @@ app.post('/api/room/:code/sync', (req, res) => {
     rooms[code] = {
       code,
       title: data.title || 'Film Sincronizzato',
-      streamUrl: data.streamUrl || '',
-      isEmbed: data.isEmbed || false,
+      streamUrl: data.streamUrl || data.embedUrl || '',
+      isEmbed: data.isEmbed ?? (data.streamUrl ? data.streamUrl.includes('embed') || data.streamUrl.includes('vixcloud') || data.streamUrl.includes('watch') : true),
       time: data.time || 0,
       isPlaying: data.isPlaying ?? true,
       host: data.user || 'Host',
@@ -78,6 +78,7 @@ app.post('/api/room/:code/sync', (req, res) => {
   } else {
     if (data.title) rooms[code].title = data.title;
     if (data.streamUrl) rooms[code].streamUrl = data.streamUrl;
+    if (data.embedUrl) rooms[code].streamUrl = data.embedUrl;
     if (data.isEmbed !== undefined) rooms[code].isEmbed = data.isEmbed;
     if (data.time !== undefined) rooms[code].time = data.time;
     if (data.isPlaying !== undefined) rooms[code].isPlaying = data.isPlaying;
@@ -196,6 +197,11 @@ function renderPlayerPage(req, res) {
       margin: 0;
       color: #fff;
     }
+    .room-badge-container {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
     .room-badge {
       background: linear-gradient(135deg, rgba(168, 85, 247, 0.25) 0%, rgba(59, 130, 246, 0.25) 100%);
       border: 1px solid rgba(168, 85, 247, 0.4);
@@ -283,6 +289,18 @@ function renderPlayerPage(req, res) {
       0% { opacity: 1; transform: translateY(0) scale(0.8); }
       100% { opacity: 0; transform: translateY(-200px) scale(1.6); }
     }
+    .room-input-btn {
+      background: rgba(255,255,255,0.08);
+      border: 1px solid rgba(255,255,255,0.15);
+      color: #fff;
+      padding: 6px 10px;
+      border-radius: 8px;
+      font-size: 0.78rem;
+      cursor: pointer;
+    }
+    .room-input-btn:hover {
+      background: rgba(168, 85, 247, 0.3);
+    }
   </style>
 </head>
 <body>
@@ -300,14 +318,17 @@ function renderPlayerPage(req, res) {
   <div class="main-box" id="main-container">
     <div class="player-header">
       <h1 class="movie-title" id="film-title">In attesa dell'avvio del film...</h1>
-      <div class="room-badge" id="room-badge">Stanza: <span id="room-code-txt">--</span></div>
+      <div class="room-badge-container">
+        <div class="room-badge" id="room-badge">Stanza: <strong id="room-code-txt">CARICAMENTO...</strong></div>
+        <button class="room-input-btn" id="btn-change-room" title="Inserisci o cambia codice stanza">Cambia Stanza</button>
+      </div>
     </div>
 
     <div class="video-wrapper" id="video-wrapper">
       <div class="waiting-screen" id="waiting-screen">
         <div class="waiting-spinner"></div>
-        <h3 style="margin:0 0 8px;">Connesso alla Stanza Sincronizzata</h3>
-        <p style="color:var(--muted); margin:0;" id="waiting-desc">Non appena l'host avvia il film dall'app, il video partirà in sincronia automatica.</p>
+        <h3 style="margin:0 0 8px;" id="waiting-headline">Connesso alla Stanza Sincronizzata</h3>
+        <p style="color:var(--muted); margin:0;" id="waiting-desc">Non appena l'host avvia il film dall'app, il video partirà automaticamente qui in streaming sincronizzato.</p>
       </div>
       <video id="player" controls playsinline style="display:none;"></video>
       <div id="emoji-container"></div>
@@ -315,7 +336,7 @@ function renderPlayerPage(req, res) {
 
     <div class="controls-bar">
       <div style="font-size: 0.88rem; color: var(--muted);" id="user-info-bar">
-        ⚡ Sincronizzazione real-time attiva via WebSocket
+        ⚡ Sincronizzazione real-time attiva via WebSocket (Render Cloud)
       </div>
       <div class="reactions">
         <button class="react-btn" onclick="sendEmoji('🍿')">🍿</button>
@@ -336,7 +357,8 @@ function renderPlayerPage(req, res) {
       const path = window.location.pathname.replace(/^\\/+/, '').trim();
       if (path && !path.startsWith('api') && path !== 'health') {
         const segments = path.split('/');
-        return segments[segments.length - 1].toUpperCase().trim();
+        const last = segments[segments.length - 1].toUpperCase().trim();
+        if (last.startsWith('SC-') || last.length >= 4) return last;
       }
       return '';
     }
@@ -350,20 +372,32 @@ function renderPlayerPage(req, res) {
     const filmTitleEl = document.getElementById('film-title');
     const roomCodeTxt = document.getElementById('room-code-txt');
     const waitingScreen = document.getElementById('waiting-screen');
+    const waitingHeadline = document.getElementById('waiting-headline');
     const waitingDesc = document.getElementById('waiting-desc');
     const player = document.getElementById('player');
     const videoWrapper = document.getElementById('video-wrapper');
     const emojiContainer = document.getElementById('emoji-container');
     const syncStatus = document.getElementById('sync-status');
+    const btnChangeRoom = document.getElementById('btn-change-room');
 
     roomCodeTxt.textContent = roomCode;
+
+    if (btnChangeRoom) {
+      btnChangeRoom.addEventListener('click', () => {
+        const newCode = prompt("Inserisci il codice della stanza (es. SC-1234):", roomCode);
+        if (newCode && newCode.trim()) {
+          const clean = newCode.toUpperCase().trim();
+          window.location.href = '/?party=' + clean;
+        }
+      });
+    }
 
     let hls = null;
     let isRemoteUpdate = false;
     const socket = io();
 
     socket.on('connect', () => {
-      syncStatus.textContent = '🟢 Connesso al Cloud';
+      syncStatus.textContent = '🟢 Cloud Online (' + roomCode + ')';
       socket.emit('join_room', {
         roomCode: roomCode,
         user: 'Ospite Web ' + Math.floor(Math.random() * 100)
@@ -386,22 +420,31 @@ function renderPlayerPage(req, res) {
       spawnEmoji(data.emoji);
     });
 
-    // Also poll state once immediately via REST
-    fetch('/api/room/' + roomCode)
-      .then(r => r.json())
-      .then(res => {
-        if (res && res.room) handleSyncState(res.room);
-      })
-      .catch(() => {});
+    // Auto-poll state every 3 seconds for instant sync backup
+    function pollRoomState() {
+      fetch('/api/room/' + roomCode)
+        .then(r => r.json())
+        .then(res => {
+          if (res && res.room && res.room.streamUrl) {
+            handleSyncState(res.room);
+          }
+        })
+        .catch(() => {});
+    }
+
+    pollRoomState();
+    setInterval(pollRoomState, 3000);
 
     function handleSyncState(data) {
       if (!data) return;
       if (data.title && data.title !== 'In attesa dell\'avvio del film...') {
         filmTitleEl.textContent = data.title;
+        document.title = data.title + ' - Watch Party';
       }
 
       if (data.streamUrl) {
-        loadStream(data.streamUrl, data.isEmbed);
+        const isEmbed = data.isEmbed ?? (data.streamUrl.includes('embed') || data.streamUrl.includes('vixcloud') || data.streamUrl.includes('watch'));
+        loadStream(data.streamUrl, isEmbed);
       }
 
       if (player && data.time !== undefined && !data.isEmbed) {
@@ -432,6 +475,7 @@ function renderPlayerPage(req, res) {
           iframe = document.createElement('iframe');
           iframe.id = 'web-embed-iframe';
           iframe.allow = "autoplay; fullscreen; encrypted-media; picture-in-picture";
+          iframe.style.cssText = "width: 100%; height: 100%; border: none; position: absolute; inset: 0; z-index: 2; background: #000;";
           videoWrapper.appendChild(iframe);
         }
         iframe.style.display = 'block';
