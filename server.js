@@ -44,10 +44,17 @@ app.get('/health', (req, res) => {
 
 app.get('/api/room/:code', (req, res) => {
   const code = (req.params.code || '').toUpperCase().trim();
-  const room = rooms[code];
-  if (!room) {
-    return res.status(404).json({ success: false, error: "Stanza non trovata" });
-  }
+  const room = rooms[code] || {
+    code,
+    title: 'In attesa dell\'avvio del film...',
+    streamUrl: '',
+    time: 0,
+    isPlaying: true,
+    host: 'Host',
+    createdAt: Date.now(),
+    updatedAt: Date.now(),
+    participants: {}
+  };
   res.json({ success: true, room });
 });
 
@@ -88,9 +95,9 @@ app.post('/api/room/:code/sync', (req, res) => {
 });
 
 // -------------------------------------------------------------
-// WEB APP & SYNC PLAYER PAGE (SERVED ON /)
+// WEB APP & SYNC PLAYER PAGE
 // -------------------------------------------------------------
-app.get('/', (req, res) => {
+function renderPlayerPage(req, res) {
   res.send(`<!DOCTYPE html>
 <html lang="it">
 <head>
@@ -275,39 +282,6 @@ app.get('/', (req, res) => {
       0% { opacity: 1; transform: translateY(0) scale(0.8); }
       100% { opacity: 0; transform: translateY(-200px) scale(1.6); }
     }
-    .join-card {
-      text-align: center;
-      padding: 30px;
-    }
-    .input-code {
-      background: rgba(0,0,0,0.4);
-      border: 1px solid rgba(168, 85, 247, 0.4);
-      color: #fff;
-      padding: 12px 18px;
-      border-radius: 12px;
-      font-size: 1.1rem;
-      font-weight: 700;
-      text-align: center;
-      text-transform: uppercase;
-      outline: none;
-      width: 200px;
-      margin-right: 10px;
-    }
-    .btn-join {
-      background: linear-gradient(135deg, #a855f7 0%, #6366f1 100%);
-      color: #fff;
-      border: none;
-      padding: 12px 24px;
-      border-radius: 12px;
-      font-weight: 700;
-      cursor: pointer;
-      font-size: 1rem;
-      transition: all 0.2s;
-    }
-    .btn-join:hover {
-      transform: translateY(-2px);
-      box-shadow: 0 6px 20px rgba(168, 85, 247, 0.4);
-    }
   </style>
 </head>
 <body>
@@ -353,8 +327,24 @@ app.get('/', (req, res) => {
   </div>
 
   <script>
-    const urlParams = new URLSearchParams(window.location.search);
-    let roomCode = (urlParams.get('party') || urlParams.get('room') || '').toUpperCase().trim();
+    function extractRoomCode() {
+      const urlParams = new URLSearchParams(window.location.search);
+      let code = urlParams.get('party') || urlParams.get('room');
+      if (code) return code.toUpperCase().trim();
+
+      const path = window.location.pathname.replace(/^\\/+/, '').trim();
+      if (path && !path.startsWith('api') && path !== 'health') {
+        const segments = path.split('/');
+        return segments[segments.length - 1].toUpperCase().trim();
+      }
+      return '';
+    }
+
+    let roomCode = extractRoomCode();
+    if (!roomCode) {
+      roomCode = 'SC-' + Math.floor(1000 + Math.random() * 9000);
+      window.history.replaceState({}, '', '/?party=' + roomCode);
+    }
 
     const filmTitleEl = document.getElementById('film-title');
     const roomCodeTxt = document.getElementById('room-code-txt');
@@ -365,16 +355,11 @@ app.get('/', (req, res) => {
     const emojiContainer = document.getElementById('emoji-container');
     const syncStatus = document.getElementById('sync-status');
 
+    roomCodeTxt.textContent = roomCode;
+
     let hls = null;
     let isRemoteUpdate = false;
     const socket = io();
-
-    if (!roomCode) {
-      roomCode = 'SC-' + Math.floor(1000 + Math.random() * 9000);
-      window.history.replaceState({}, '', '/?party=' + roomCode);
-    }
-
-    roomCodeTxt.textContent = roomCode;
 
     socket.on('connect', () => {
       syncStatus.textContent = '🟢 Connesso al Cloud';
@@ -400,9 +385,17 @@ app.get('/', (req, res) => {
       spawnEmoji(data.emoji);
     });
 
+    // Also poll state once immediately via REST
+    fetch('/api/room/' + roomCode)
+      .then(r => r.json())
+      .then(res => {
+        if (res && res.room) handleSyncState(res.room);
+      })
+      .catch(() => {});
+
     function handleSyncState(data) {
       if (!data) return;
-      if (data.title) {
+      if (data.title && data.title !== 'In attesa dell\'avvio del film...') {
         filmTitleEl.textContent = data.title;
       }
 
@@ -519,6 +512,22 @@ app.get('/', (req, res) => {
   </script>
 </body>
 </html>`);
+}
+
+// Support all possible routes
+app.get('/', renderPlayerPage);
+app.get('/party/:code', renderPlayerPage);
+app.get('/room/:code', renderPlayerPage);
+app.get('/watch/:code', renderPlayerPage);
+app.get('/:code', (req, res, next) => {
+  if (req.params.code.startsWith('api') || req.params.code === 'health') return next();
+  renderPlayerPage(req, res);
+});
+
+// Wildcard fallback for any other path
+app.get('*', (req, res, next) => {
+  if (req.path.startsWith('/api/') || req.path === '/health') return next();
+  renderPlayerPage(req, res);
 });
 
 // -------------------------------------------------------------
