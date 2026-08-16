@@ -1065,16 +1065,16 @@
 
           <div class="modal-options-title">Opzioni di Riproduzione & Social:</div>
           <div class="modal-actions-row">
-            <!-- OPTION 1: OPEN EXTERNAL PLAYER ACTION SHEET -->
+            <!-- OPTION 1: DIRECT VIXCLOUD M3U8 STREAM -->
             <button id="btn-modal-player-open" class="btn btn-primary">
               <svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor"><polygon points="5 3 19 12 5 21 5 3"></polygon></svg>
-              📱 Apri nel Lettore Esterno (Oppo / iOS)
+              📱 Apri Link Vixcloud (.m3u8)
             </button>
 
-            <!-- OPTION 2: DIRECT VIXCLOUD EMBED PLAYER (ZERO POPUP) -->
+            <!-- OPTION 2: CHOOSER / EMBED -->
             <button id="btn-modal-vix-embed" class="btn btn-vix">
               <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polygon points="5 3 19 12 5 21 5 3"></polygon></svg>
-              🎬 Vixcloud Player Diretto (Zero Popup)
+              🎬 Scegli Lettore Esterno / Web
             </button>
 
             <!-- OPTION 3: SHARE FILM WITH FRIEND -->
@@ -2011,22 +2011,31 @@
         }
       }
 
-      // -------------------------------------------------------------
-      // EXTERNAL PLAYER SYSTEM & INTENTS (NO GOOGLE PHOTOS INTERCEPTION)
-      // -------------------------------------------------------------
-      async function startExternalPlayer(item) {
+      // DIRECT SIGNED M3U8 STREAM OPENER
+      async function openDirectM3u8Stream(item) {
         const target = item || currentActiveItem;
         const extraction = await resolveExtraction(target);
-        const title = target.current_ep_title ? `${target.name} - ${target.current_ep_title}` : target.name;
+        const m3u8Url = extraction.master_m3u8 || extraction.vix_url;
+        if (!m3u8Url) {
+          showToast("Impossibile recuperare il flusso Vixcloud.");
+          return;
+        }
+        showToast("Apertura flusso Vixcloud M3U8...");
+        
+        // Directly navigate to the signed Vixcloud M3U8 playlist URL
+        const link = document.createElement('a');
+        link.href = m3u8Url;
+        link.target = '_self';
+        document.body.appendChild(link);
+        link.click();
+        document.body.removeChild(link);
+      }
 
-        pendingExtraction = {
-          m3u8: extraction.master_m3u8,
-          embed: extraction.embed_url,
-          title: title
-        };
-
-        closeDetails();
-        playerChooserModal.classList.remove('hidden');
+      // -------------------------------------------------------------
+      // EXTERNAL PLAYER SYSTEM & INTENTS
+      // -------------------------------------------------------------
+      async function startExternalPlayer(item) {
+        await openDirectM3u8Stream(item);
       }
 
       function openPlayerChooser(extraction, title) {
@@ -2040,22 +2049,12 @@
 
       btnCloseChooser.onclick = () => playerChooserModal.classList.add('hidden');
 
-      // 1. ANDROID VIDEO INTENT (OPPO / SAMSUNG / GENERIC VIDEO PLAYERS - SPECIFYING HLS MIME TO BYPASS GOOGLE PHOTOS)
+      // 1. DIRECT VIXCLOUD M3U8 PLAYLIST (SYSTEM NATIVE PLAYER)
       choiceAndroidIntent.onclick = () => {
         if (!pendingExtraction || !pendingExtraction.m3u8) return;
         playerChooserModal.classList.add('hidden');
-        const cleanUrl = pendingExtraction.m3u8.replace(/^https?:\/\//, '');
-        
-        // Use application/x-mpegURL or video/mp4 intent to trigger true video players (Oppo Video, Samsung Video, MX, VLC) instead of Google Photos
-        const intentUrl = `intent://${cleanUrl}#Intent;action=android.intent.action.VIEW;type=application/x-mpegURL;scheme=https;end;`;
-        showToast("Apertura nel lettore video...");
-        
-        const a = document.createElement('a');
-        a.href = intentUrl;
-        a.target = '_blank';
-        document.body.appendChild(a);
-        a.click();
-        document.body.removeChild(a);
+        showToast("Apertura link M3U8 nel player di sistema...");
+        window.location.href = pendingExtraction.m3u8;
       };
 
       // 2. VLC MEDIA PLAYER
@@ -2101,12 +2100,12 @@
       btnModalPlayerOpen.onclick = () => startExternalPlayer(currentActiveItem);
       btnHeroPlayer.onclick = () => startExternalPlayer(currentActiveItem);
 
-      // DIRECT VIXCLOUD EMBED BUTTON IN DETAILS MODAL
+      // CHOOSER MODAL BUTTON IN DETAILS MODAL
       btnModalVixEmbed.onclick = async () => {
         const extraction = await resolveExtraction(currentActiveItem);
         const title = currentActiveItem.current_ep_title ? `${currentActiveItem.name} - ${currentActiveItem.current_ep_title}` : currentActiveItem.name;
         closeDetails();
-        playCleanEmbed(extraction.embed_url || extraction.master_m3u8, title);
+        openPlayerChooser(extraction, title);
       };
 
       function playCleanEmbed(embedUrl, title) {
