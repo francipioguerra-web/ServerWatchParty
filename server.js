@@ -65,14 +65,16 @@ app.post('/api/room/:code/sync', (req, res) => {
   const data = req.body || {};
 
   const vixUrl = data.vixUrl || data.vix_url || data.embedUrl || data.embed_url || data.streamUrl || '';
+  const watchUrl = data.watchUrl || data.watch_url || '';
   const title = data.title || 'Film Sincronizzato';
 
-  console.log(`[HTTP POST SYNC] Stanza: ${code} | Titolo: ${title} | VixURL: ${vixUrl ? vixUrl.substring(0, 60) + '...' : 'NESSUNO'} | Play: ${data.isPlaying} | Time: ${data.time}`);
+  console.log(`[HTTP POST SYNC] Stanza: ${code} | Titolo: ${title} | Watch: ${watchUrl ? watchUrl.substring(0, 40) + '...' : 'NESSUNO'} | Play: ${data.isPlaying} | Time: ${data.time}`);
 
   if (!rooms[code]) {
     rooms[code] = {
       code,
       title: title,
+      watchUrl: watchUrl,
       vixUrl: vixUrl,
       embedUrl: vixUrl,
       streamUrl: vixUrl,
@@ -85,6 +87,7 @@ app.post('/api/room/:code/sync', (req, res) => {
     };
   } else {
     if (data.title) rooms[code].title = data.title;
+    if (watchUrl) rooms[code].watchUrl = watchUrl;
     if (vixUrl) {
       rooms[code].vixUrl = vixUrl;
       rooms[code].embedUrl = vixUrl;
