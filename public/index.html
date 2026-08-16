@@ -2035,29 +2035,38 @@
       }
 
       // -------------------------------------------------------------
-      // EXTERNAL PLAYER SYSTEM & INTENTS (ANDROID CHOOSER & IOS)
+      // EXTERNAL PLAYER SYSTEM & INTENTS (ANDROID CHOOSER & IOS AVPLAYER)
       // -------------------------------------------------------------
       async function startExternalPlayer(item) {
         const target = item || currentActiveItem;
         const extraction = await resolveExtraction(target);
         const title = target.current_ep_title ? `${target.name} - ${target.current_ep_title}` : target.name;
 
-        // Universal proxy URL that never fails with 403 in Oppo / external players
         const proxyStreamUrl = `${window.location.origin}/api/stream/master.m3u8?titleId=${target.id}${target.current_episode_id ? `&e=${target.current_episode_id}` : ''}&slug=${encodeURIComponent(target.slug || '')}`;
+        const streamUrl = extraction.master_m3u8 || proxyStreamUrl;
 
         pendingExtraction = {
-          m3u8: extraction.master_m3u8 || proxyStreamUrl,
+          m3u8: streamUrl,
           proxyUrl: proxyStreamUrl,
           embed: extraction.embed_url,
           title: title
         };
 
+        const isIOS = /iPhone|iPad|iPod/i.test(navigator.userAgent) || (navigator.platform === 'MacIntel' && navigator.maxTouchPoints > 1);
         const isAndroid = /Android/i.test(navigator.userAgent);
+
         closeDetails();
 
-        // On Android, automatically trigger the native system app chooser intent with the universal stream URL
+        // 1. APPLE IOS / IPADOS NATIVE AVPLAYER FULLSCREEN
+        if (isIOS) {
+          showToast("Apertura nel Player Nativo Apple...");
+          playInWebPlayer(streamUrl, title, true);
+          return;
+        }
+
+        // 2. ANDROID SYSTEM APP CHOOSER
         if (isAndroid) {
-          triggerAndroidChooser(proxyStreamUrl, title);
+          triggerAndroidChooser(streamUrl, title);
         }
 
         playerChooserModal.classList.remove('hidden');
@@ -2094,7 +2103,7 @@
       choiceAndroidIntent.onclick = () => {
         if (!pendingExtraction) return;
         playerChooserModal.classList.add('hidden');
-        triggerAndroidChooser(pendingExtraction.proxyUrl || pendingExtraction.m3u8, pendingExtraction.title);
+        triggerAndroidChooser(pendingExtraction.m3u8 || pendingExtraction.proxyUrl, pendingExtraction.title);
       };
 
       // 2. VLC MEDIA PLAYER
@@ -2165,18 +2174,28 @@
         webIframe.src = 'about:blank';
         webVideo.classList.remove('hidden');
 
-        if (webVideo.canPlayType('application/vnd.apple.mpegurl') || isAppleNative) {
-          webVideo.src = streamUrl;
-          webVideo.play().then(() => {
-            if (webVideo.webkitEnterFullscreen) webVideo.webkitEnterFullscreen();
-          }).catch(() => {});
-        } else if (Hls.isSupported()) {
-          if (currentHls) currentHls.destroy();
-          currentHls = new Hls();
-          currentHls.loadSource(streamUrl);
-          currentHls.attachMedia(webVideo);
-          currentHls.on(Hls.Events.MANIFEST_PARSED, () => {
-            webVideo.play().catch(() => {});
+        webVideo.src = streamUrl;
+        webVideo.load();
+        const playPromise = webVideo.play();
+        if (playPromise !== undefined) {
+          playPromise.then(() => {
+            if (isAppleNative || /iPhone|iPad|iPod/i.test(navigator.userAgent) || (navigator.platform === 'MacIntel' && navigator.maxTouchPoints > 1)) {
+              if (webVideo.webkitEnterFullscreen) {
+                webVideo.webkitEnterFullscreen();
+              } else if (webVideo.requestFullscreen) {
+                webVideo.requestFullscreen();
+              }
+            }
+          }).catch(() => {
+            if (Hls.isSupported()) {
+              if (currentHls) currentHls.destroy();
+              currentHls = new Hls({ enableWorker: true, lowLatencyMode: true });
+              currentHls.loadSource(streamUrl);
+              currentHls.attachMedia(webVideo);
+              currentHls.on(Hls.Events.MANIFEST_PARSED, () => {
+                webVideo.play().catch(() => {});
+              });
+            }
           });
         }
       }
