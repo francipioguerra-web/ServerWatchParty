@@ -509,16 +509,26 @@ app.get('/api/sc/season/:id/:num', async (req, res) => {
 });
 
 app.post('/api/vixcloud/extract', async (req, res) => {
-  const { url, titleId, episodeId, lang } = req.body || {};
+  const { url, titleId, slug, episodeId, lang } = req.body || {};
   let targetWatchUrl = url;
 
   if (!targetWatchUrl && titleId) {
-    targetWatchUrl = `${activeScDomain}/it/watch/${titleId}${episodeId ? `?e=${episodeId}` : ''}`;
+    if (episodeId) {
+      targetWatchUrl = `${activeScDomain}/it/watch/${titleId}?e=${episodeId}`;
+    } else {
+      targetWatchUrl = slug ? `${activeScDomain}/it/titles/${titleId}-${slug}` : `${activeScDomain}/it/titles/${titleId}`;
+    }
   }
 
   if (!targetWatchUrl) {
     return res.status(400).json({ success: false, error: 'Nessun URL fornito' });
   }
+
+  // Ensure targetWatchUrl uses active domain
+  try {
+    const parsed = new URL(targetWatchUrl);
+    targetWatchUrl = `${activeScDomain}${parsed.pathname}${parsed.search}`;
+  } catch (e) {}
 
   const headers = {
     'User-Agent': 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/122.0.0.0 Safari/537.36',
@@ -526,10 +536,10 @@ app.post('/api/vixcloud/extract', async (req, res) => {
   };
 
   try {
+    let embedUrl = '';
     const resWatch = await fetch(targetWatchUrl, { headers, redirect: 'follow' });
     const htmlWatch = await resWatch.text();
 
-    let embedUrl = '';
     const matchDp = htmlWatch.match(/data-page=["'](.*?)["']/);
     if (matchDp) {
       try {
@@ -540,12 +550,12 @@ app.post('/api/vixcloud/extract', async (req, res) => {
 
     if (!embedUrl) {
       const matchIfr = htmlWatch.match(/<iframe[^>]+src=["'](https?:\/\/[^"']+)["']/);
-      if (matchIfr) embedUrl = matchIfr[1];
+      if (matchIfr) embedUrl = unescapeHtml(matchIfr[1]);
     }
 
-    if (!embedUrl) {
-      const scwsMatch = htmlWatch.match(/\/(?:iframe|embed)\/(\d+)/);
-      if (scwsMatch) embedUrl = `${activeScDomain}/it/iframe/${scwsMatch[1]}`;
+    // Direct fallback to /it/iframe/:titleId
+    if (!embedUrl && titleId) {
+      embedUrl = `${activeScDomain}/it/iframe/${titleId}${episodeId ? `?episode_id=${episodeId}` : ''}`;
     }
 
     if (!embedUrl) {
@@ -557,27 +567,43 @@ app.post('/api/vixcloud/extract', async (req, res) => {
       });
     }
 
-    const resIfr = await fetch(embedUrl, { headers: { ...headers, 'Referer': targetWatchUrl }, redirect: 'follow' });
-    const htmlIfr = await resIfr.text();
     let vixEmbed = embedUrl;
-    const matchVix = htmlIfr.match(/<iframe[^>]+src=["'](https?:\/\/[^"']+)["']/);
-    if (matchVix) vixEmbed = unescapeHtml(matchVix[1]);
 
+    // If embedUrl points to an internal SC iframe, resolve the inner Vixcloud iframe
+    if (!vixEmbed.includes('vixcloud.co')) {
+      const resIfr = await fetch(embedUrl, { headers: { ...headers, 'Referer': targetWatchUrl }, redirect: 'follow' });
+      const htmlIfr = await resIfr.text();
+      const matchVix = htmlIfr.match(/<iframe[^>]+src=["'](https?:\/\/[^"']+)["']/);
+      if (matchVix) vixEmbed = unescapeHtml(matchVix[1]);
+    }
+
+    // Now fetch the real Vixcloud embed page
     const resVix = await fetch(vixEmbed, { headers: { ...headers, 'Referer': embedUrl }, redirect: 'follow' });
     const htmlVix = await resVix.text();
 
     const tokenM = htmlVix.match(/['"]token['"]\s*:\s*['"]([^'"]+)['"]/);
     const expM = htmlVix.match(/['"]expires['"]\s*:\s*['"]?(\d+)['"]?/);
     const plM = htmlVix.match(/url\s*:\s*['"]([^'"]+)['"]/);
+    const idM = vixEmbed.match(/\/(?:embed|playlist)\/(\d+)/);
 
-    if (tokenM && expM && plM) {
-      let playlistUrl = plM[1];
-      if (!playlistUrl.endsWith('.m3u8')) playlistUrl += '.m3u8';
-
+    if (tokenM && expM) {
       const token = tokenM[1];
       const expires = expM[1];
       const audioLang = lang === 'orig' ? 'orig' : 'it';
-      const signedM3u8 = `${playlistUrl}?b=1&token=${token}&expires=${expires}&h=1&scz=1&lang=${audioLang}`;
+
+      let basePl = '';
+      if (plM) {
+        basePl = plM[1].split('?')[0];
+      }
+      if (!basePl && idM) {
+        basePl = `https://vixcloud.co/playlist/${idM[1]}`;
+      }
+
+      if (basePl && !basePl.endsWith('.m3u8')) {
+        basePl += '.m3u8';
+      }
+
+      const signedM3u8 = `${basePl}?b=1&token=${token}&expires=${expires}&h=1&scz=1&lang=${audioLang}`;
 
       return res.json({
         success: true,
