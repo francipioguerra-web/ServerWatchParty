@@ -391,7 +391,7 @@
       font-size: 0.85rem;
     }
 
-    /* MAIN CONTENT */
+    /* MAIN CONTAINER */
     .main-container {
       max-width: 1440px;
       margin: 0 auto;
@@ -1068,13 +1068,13 @@
             <!-- OPTION 1: OPEN EXTERNAL PLAYER ACTION SHEET -->
             <button id="btn-modal-player-open" class="btn btn-primary">
               <svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor"><polygon points="5 3 19 12 5 21 5 3"></polygon></svg>
-              📱 Apri nel Lettore del Telefono / Tablet
+              📱 Apri nel Lettore Esterno (Oppo / iOS)
             </button>
 
-            <!-- OPTION 2: ORIGINAL SIGNED VIXCLOUD PLAYLIST LINK -->
-            <button id="btn-modal-vix-open" class="btn btn-vix">
-              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"></path><polyline points="15 3 21 3 21 9"></polyline><line x1="10" y1="14" x2="21" y2="3"></line></svg>
-              Apri Link Vixcloud
+            <!-- OPTION 2: DIRECT VIXCLOUD EMBED PLAYER (ZERO POPUP) -->
+            <button id="btn-modal-vix-embed" class="btn btn-vix">
+              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polygon points="5 3 19 12 5 21 5 3"></polygon></svg>
+              🎬 Vixcloud Player Diretto (Zero Popup)
             </button>
 
             <!-- OPTION 3: SHARE FILM WITH FRIEND -->
@@ -1090,18 +1090,18 @@
 
   <!-- EXTERNAL PLAYER CHOOSER MODAL (OPPO / SAMSUNG / VLC / MX PLAYER / NATIVE) -->
   <div id="player-chooser-modal" class="modal-overlay hidden">
-    <div class="modal-card" style="max-width: 460px; padding: 22px;">
+    <div class="modal-card" style="max-width: 480px; padding: 22px;">
       <button id="btn-close-chooser" class="modal-close-btn">&times;</button>
       <h3 style="font-size: 1.2rem; font-weight: 800; margin-bottom: 4px;">📱 Scegli Lettore Esterno</h3>
-      <p style="font-size: 0.82rem; color: var(--text-muted); margin-bottom: 16px;">Seleziona dove vuoi aprire il flusso video del tuo dispositivo:</p>
+      <p style="font-size: 0.82rem; color: var(--text-muted); margin-bottom: 16px;">Seleziona l'applicazione esterna con cui riprodurre il video:</p>
 
       <div style="display: flex; flex-direction: column; gap: 10px;">
-        <!-- OPTION 1: ANDROID POPUP / SYSTEM CHOOSER -->
+        <!-- OPTION 1: ANDROID POPUP (OPPO / SAMSUNG / SYSTEM VIDEO PLAYERS) -->
         <button id="choice-android-intent" class="player-option-card">
           <div class="player-icon-box" style="background: rgba(34, 197, 94, 0.2); color: #22c55e;">🤖</div>
           <div>
-            <div style="font-weight: 800; font-size: 0.92rem;">Lettore Predefinito di Sistema (Oppo / Samsung / Android)</div>
-            <div style="font-size: 0.75rem; color: var(--text-dim);">Apre il popup di Android per scegliere il player installato</div>
+            <div style="font-weight: 800; font-size: 0.92rem;">Lettore Video Oppo / Samsung / Android</div>
+            <div style="font-size: 0.75rem; color: var(--text-dim);">Apre il popup di Android escludendo Google Foto</div>
           </div>
         </button>
 
@@ -1123,21 +1123,21 @@
           </div>
         </button>
 
-        <!-- OPTION 4: INFUSE / OUTPLAYER / IOS QUICKTIME -->
+        <!-- OPTION 4: VIXCLOUD DIRECT CLEAN EMBED -->
+        <button id="choice-vix-clean" class="player-option-card">
+          <div class="player-icon-box" style="background: rgba(99, 102, 241, 0.2); color: #6366f1;">🌐</div>
+          <div>
+            <div style="font-weight: 800; font-size: 0.92rem;">Vixcloud Player Diretto (Zero Pubblicità / No Popup)</div>
+            <div style="font-size: 0.75rem; color: var(--text-dim);">Player ufficiale Vixcloud incorporato pulito</div>
+          </div>
+        </button>
+
+        <!-- OPTION 5: APPLE QUICKTIME / AVPLAYER (IOS / IPADOS) -->
         <button id="choice-ios" class="player-option-card">
           <div class="player-icon-box" style="background: rgba(168, 85, 247, 0.2); color: #a855f7;">🍏</div>
           <div>
             <div style="font-weight: 800; font-size: 0.92rem;">Player Nativo Apple (iOS / iPadOS)</div>
             <div style="font-size: 0.75rem; color: var(--text-dim);">Schermo intero nativo con AirPlay e PiP</div>
-          </div>
-        </button>
-
-        <!-- OPTION 5: IN-BROWSER WEB PLAYER -->
-        <button id="choice-web" class="player-option-card">
-          <div class="player-icon-box" style="background: rgba(229, 9, 20, 0.2); color: #e50914;">🌐</div>
-          <div>
-            <div style="font-weight: 800; font-size: 0.92rem;">Guarda nel Browser Web</div>
-            <div style="font-size: 0.75rem; color: var(--text-dim);">Riproduci in streaming direttamente nella pagina</div>
           </div>
         </button>
 
@@ -1239,12 +1239,12 @@
       </button>
       <span id="player-active-title" style="font-weight: 700; font-size: 0.95rem; color: #fff; text-align: center; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; max-width: 60%;">Riproduzione</span>
       <button id="btn-player-vix-direct" class="btn btn-vix" style="padding: 7px 12px; font-size: 0.8rem;">
-        Vixcloud
+        Apri Vixcloud
       </button>
     </div>
 
     <video id="web-video" class="player-video" controls playsinline webkit-playsinline x-webkit-airplay="allow"></video>
-    <iframe id="web-iframe" class="player-iframe hidden" allowfullscreen allow="autoplay; fullscreen; picture-in-picture"></iframe>
+    <iframe id="web-iframe" class="player-iframe hidden" sandbox="allow-scripts allow-same-origin allow-presentation allow-forms" allowfullscreen allow="autoplay; fullscreen; picture-in-picture"></iframe>
   </div>
 
   <!-- FLOATING BOTTOM NAVBAR -->
@@ -1281,7 +1281,7 @@
       let currentFriends = [];
       let notifPollingInterval = null;
       let googleTokenClient = null;
-      let pendingStreamData = null;
+      let pendingExtraction = null;
 
       // DOM ELEMENTS
       const catalogGrid = document.getElementById('catalog-grid');
@@ -1301,7 +1301,7 @@
       const seasonsContainer = document.getElementById('seasons-container');
       const seasonsTabs = document.getElementById('seasons-tabs');
       const episodesGrid = document.getElementById('episodes-grid');
-      const btnModalVixOpen = document.getElementById('btn-modal-vix-open');
+      const btnModalVixEmbed = document.getElementById('btn-modal-vix-embed');
       const btnModalPlayerOpen = document.getElementById('btn-modal-player-open');
       const btnModalShareFriend = document.getElementById('btn-modal-share-friend');
       const playerChooserModal = document.getElementById('player-chooser-modal');
@@ -1309,8 +1309,8 @@
       const choiceAndroidIntent = document.getElementById('choice-android-intent');
       const choiceVlc = document.getElementById('choice-vlc');
       const choiceMx = document.getElementById('choice-mx');
+      const choiceVixClean = document.getElementById('choice-vix-clean');
       const choiceIos = document.getElementById('choice-ios');
-      const choiceWeb = document.getElementById('choice-web');
       const choiceCopy = document.getElementById('choice-copy');
       const playerModal = document.getElementById('player-modal');
       const btnPlayerBack = document.getElementById('btn-player-back');
@@ -1694,7 +1694,7 @@
             `;
             card.querySelector('.notif-btn-play').onclick = () => {
               notifDropdown.classList.add('hidden');
-              openPlayerChooser(n.streamUrl, n.filmTitle);
+              openPlayerChooser({ master_m3u8: n.streamUrl, embed_url: n.streamUrl }, n.filmTitle);
             };
           } else if (n.type === 'friend_request') {
             const senderTag = n.fromNickname ? `@${n.fromNickname}` : (n.fromName || n.fromEmail);
@@ -1818,7 +1818,8 @@
         shareModal.classList.add('hidden');
 
         try {
-          const streamUrl = await resolveStream(currentActiveItem);
+          const extraction = await resolveExtraction(currentActiveItem);
+          const streamUrl = extraction.master_m3u8 || extraction.embed_url;
           const res = await fetch('/api/share/film', {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
@@ -1987,8 +1988,8 @@
       btnCloseDetails.onclick = closeDetails;
       detailsModal.onclick = (e) => { if (e.target === detailsModal) closeDetails(); };
 
-      // RESOLVE STREAM
-      async function resolveStream(item) {
+      // RESOLVE STREAM & VIX EMBED
+      async function resolveExtraction(item) {
         showToast("Risoluzione flusso Vixcloud...");
         try {
           const res = await fetch('/api/vixcloud/extract', {
@@ -2000,48 +2001,54 @@
             })
           });
           const data = await res.json();
-          return data.master_m3u8 || data.vix_url || data.embed_url || '';
+          return {
+            master_m3u8: data.master_m3u8 || '',
+            embed_url: data.embed_url || data.vix_url || '',
+            vix_url: data.vix_url || ''
+          };
         } catch (e) {
-          return '';
+          return { master_m3u8: '', embed_url: '', vix_url: '' };
         }
       }
 
       // -------------------------------------------------------------
-      // EXTERNAL PLAYER SYSTEM & INTENTS
+      // EXTERNAL PLAYER SYSTEM & INTENTS (NO GOOGLE PHOTOS INTERCEPTION)
       // -------------------------------------------------------------
       async function startExternalPlayer(item) {
         const target = item || currentActiveItem;
-        const streamUrl = await resolveStream(target);
-        if (!streamUrl) {
-          showToast("Errore nella risoluzione del flusso video.");
-          return;
-        }
-
-        const isAndroid = /Android/i.test(navigator.userAgent);
-        const isIOS = /iPhone|iPad|iPod/i.test(navigator.userAgent) || (navigator.platform === 'MacIntel' && navigator.maxTouchPoints > 1);
+        const extraction = await resolveExtraction(target);
         const title = target.current_ep_title ? `${target.name} - ${target.current_ep_title}` : target.name;
 
-        pendingStreamData = { url: streamUrl, title: title };
+        pendingExtraction = {
+          m3u8: extraction.master_m3u8,
+          embed: extraction.embed_url,
+          title: title
+        };
 
-        // If on Android or iOS, show chooser dialog with Oppo / Samsung / VLC / iOS options
         closeDetails();
         playerChooserModal.classList.remove('hidden');
       }
 
-      function openPlayerChooser(streamUrl, title) {
-        pendingStreamData = { url: streamUrl, title: title };
+      function openPlayerChooser(extraction, title) {
+        pendingExtraction = {
+          m3u8: extraction.master_m3u8,
+          embed: extraction.embed_url,
+          title: title
+        };
         playerChooserModal.classList.remove('hidden');
       }
 
       btnCloseChooser.onclick = () => playerChooserModal.classList.add('hidden');
 
-      // 1. ANDROID POPUP INTENT (OPPO / SAMSUNG / MX / DEFAULT SYSTEM APPS)
+      // 1. ANDROID VIDEO INTENT (OPPO / SAMSUNG / GENERIC VIDEO PLAYERS - SPECIFYING HLS MIME TO BYPASS GOOGLE PHOTOS)
       choiceAndroidIntent.onclick = () => {
-        if (!pendingStreamData) return;
+        if (!pendingExtraction || !pendingExtraction.m3u8) return;
         playerChooserModal.classList.add('hidden');
-        const cleanUrl = pendingStreamData.url.replace(/^https?:\/\//, '');
-        const intentUrl = `intent://${cleanUrl}#Intent;action=android.intent.action.VIEW;type=video/*;end;`;
-        showToast("Apertura nel lettore di sistema...");
+        const cleanUrl = pendingExtraction.m3u8.replace(/^https?:\/\//, '');
+        
+        // Use application/x-mpegURL or video/mp4 intent to trigger true video players (Oppo Video, Samsung Video, MX, VLC) instead of Google Photos
+        const intentUrl = `intent://${cleanUrl}#Intent;action=android.intent.action.VIEW;type=application/x-mpegURL;scheme=https;end;`;
+        showToast("Apertura nel lettore video...");
         
         const a = document.createElement('a');
         a.href = intentUrl;
@@ -2053,90 +2060,105 @@
 
       // 2. VLC MEDIA PLAYER
       choiceVlc.onclick = () => {
-        if (!pendingStreamData) return;
+        if (!pendingExtraction || !pendingExtraction.m3u8) return;
         playerChooserModal.classList.add('hidden');
         showToast("Apertura in VLC...");
-        window.location.href = `vlc://${pendingStreamData.url}`;
+        window.location.href = `vlc://${pendingExtraction.m3u8}`;
       };
 
       // 3. MX PLAYER
       choiceMx.onclick = () => {
-        if (!pendingStreamData) return;
+        if (!pendingExtraction || !pendingExtraction.m3u8) return;
         playerChooserModal.classList.add('hidden');
         showToast("Apertura in MX Player...");
-        const cleanUrl = pendingStreamData.url.replace(/^https?:\/\//, '');
+        const cleanUrl = pendingExtraction.m3u8.replace(/^https?:\/\//, '');
         const mxIntent = `intent://${cleanUrl}#Intent;package=com.mxtech.videoplayer.ad;type=video/*;action=android.intent.action.VIEW;end;`;
         window.location.href = mxIntent;
       };
 
-      // 4. APPLE QUICKTIME / AVPLAYER (IOS / IPADOS)
-      choiceIos.onclick = () => {
-        if (!pendingStreamData) return;
+      // 4. VIXCLOUD CLEAN EMBED (ZERO POPUPS / DIRECT VIXCLOUD)
+      choiceVixClean.onclick = () => {
+        if (!pendingExtraction) return;
         playerChooserModal.classList.add('hidden');
-        showToast("Apertura nel player nativo Apple...");
-        playInWebPlayer(pendingStreamData.url, pendingStreamData.title, true);
+        playCleanEmbed(pendingExtraction.embed || pendingExtraction.m3u8, pendingExtraction.title);
       };
 
-      // 5. IN-BROWSER WEB PLAYER
-      choiceWeb.onclick = () => {
-        if (!pendingStreamData) return;
+      // 5. APPLE QUICKTIME / AVPLAYER (IOS / IPADOS)
+      choiceIos.onclick = () => {
+        if (!pendingExtraction || !pendingExtraction.m3u8) return;
         playerChooserModal.classList.add('hidden');
-        playInWebPlayer(pendingStreamData.url, pendingStreamData.title, false);
+        showToast("Apertura nel player nativo Apple...");
+        playInWebPlayer(pendingExtraction.m3u8, pendingExtraction.title, true);
       };
 
       // 6. COPY STREAM URL
       choiceCopy.onclick = () => {
-        if (!pendingStreamData) return;
-        navigator.clipboard.writeText(pendingStreamData.url);
+        if (!pendingExtraction || !pendingExtraction.m3u8) return;
+        navigator.clipboard.writeText(pendingExtraction.m3u8);
         showToast("📋 Link flusso M3U8 copiato negli appunti!");
       };
 
       btnModalPlayerOpen.onclick = () => startExternalPlayer(currentActiveItem);
       btnHeroPlayer.onclick = () => startExternalPlayer(currentActiveItem);
 
+      // DIRECT VIXCLOUD EMBED BUTTON IN DETAILS MODAL
+      btnModalVixEmbed.onclick = async () => {
+        const extraction = await resolveExtraction(currentActiveItem);
+        const title = currentActiveItem.current_ep_title ? `${currentActiveItem.name} - ${currentActiveItem.current_ep_title}` : currentActiveItem.name;
+        closeDetails();
+        playCleanEmbed(extraction.embed_url || extraction.master_m3u8, title);
+      };
+
+      function playCleanEmbed(embedUrl, title) {
+        playerActiveTitle.textContent = title || 'Vixcloud Player';
+        playerModal.classList.remove('hidden');
+        webVideo.classList.add('hidden');
+        webVideo.pause();
+
+        webIframe.classList.remove('hidden');
+        webIframe.src = embedUrl;
+      }
+
       function playInWebPlayer(streamUrl, title, isAppleNative) {
         playerActiveTitle.textContent = title || 'Riproduzione';
         playerModal.classList.remove('hidden');
+        webIframe.classList.add('hidden');
+        webIframe.src = 'about:blank';
+        webVideo.classList.remove('hidden');
 
-        if (streamUrl.includes('.m3u8')) {
-          webIframe.classList.add('hidden');
-          webVideo.classList.remove('hidden');
-
-          if (webVideo.canPlayType('application/vnd.apple.mpegurl') || isAppleNative) {
-            webVideo.src = streamUrl;
-            webVideo.play().then(() => {
-              if (webVideo.webkitEnterFullscreen) webVideo.webkitEnterFullscreen();
-            }).catch(() => {});
-          } else if (Hls.isSupported()) {
-            if (currentHls) currentHls.destroy();
-            currentHls = new Hls();
-            currentHls.loadSource(streamUrl);
-            currentHls.attachMedia(webVideo);
-            currentHls.on(Hls.Events.MANIFEST_PARSED, () => {
-              webVideo.play().catch(() => {});
-            });
-          }
-        } else {
-          webVideo.classList.add('hidden');
-          webVideo.pause();
-          webIframe.classList.remove('hidden');
-          webIframe.src = streamUrl;
+        if (webVideo.canPlayType('application/vnd.apple.mpegurl') || isAppleNative) {
+          webVideo.src = streamUrl;
+          webVideo.play().then(() => {
+            if (webVideo.webkitEnterFullscreen) webVideo.webkitEnterFullscreen();
+          }).catch(() => {});
+        } else if (Hls.isSupported()) {
+          if (currentHls) currentHls.destroy();
+          currentHls = new Hls();
+          currentHls.loadSource(streamUrl);
+          currentHls.attachMedia(webVideo);
+          currentHls.on(Hls.Events.MANIFEST_PARSED, () => {
+            webVideo.play().catch(() => {});
+          });
         }
       }
 
       // OPEN VIXCLOUD DIRECT LINK
       async function openVixDirect(item) {
         const target = item || currentActiveItem;
-        const streamUrl = await resolveStream(target);
-        if (streamUrl) {
-          window.open(streamUrl, '_blank');
+        const extraction = await resolveExtraction(target);
+        const url = extraction.master_m3u8 || extraction.embed_url;
+        if (url) {
+          window.open(url, '_blank');
           showToast("Apertura link Vixcloud...");
         }
       }
 
-      btnModalVixOpen.onclick = () => openVixDirect(currentActiveItem);
       btnHeroVix.onclick = () => openVixDirect(currentActiveItem);
-      btnPlayerVixDirect.onclick = () => openVixDirect(currentActiveItem);
+      btnPlayerVixDirect.onclick = () => {
+        if (pendingExtraction) {
+          window.open(pendingExtraction.m3u8 || pendingExtraction.embed, '_blank');
+        }
+      };
 
       btnPlayerBack.onclick = () => {
         playerModal.classList.add('hidden');
