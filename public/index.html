@@ -880,20 +880,20 @@
     /* FLOATING BOTTOM NAVBAR (PURE BLUR / MONOCHROME) */
     .bottom-navbar {
       position: fixed;
-      bottom: 16px;
+      bottom: 18px;
       left: 50%;
       transform: translateX(-50%);
       z-index: 90;
       background: rgba(12, 12, 15, 0.65);
       backdrop-filter: blur(28px) saturate(180%);
       -webkit-backdrop-filter: blur(28px) saturate(180%);
-      border: 1px solid rgba(255, 255, 255, 0.12);
+      border: 1px solid rgba(255, 255, 255, 0.14);
       border-radius: 999px;
-      padding: 6px 14px;
+      padding: 8px 18px;
       display: flex;
       align-items: center;
-      gap: 6px;
-      box-shadow: 0 16px 36px rgba(0, 0, 0, 0.65);
+      gap: 8px;
+      box-shadow: 0 16px 40px rgba(0, 0, 0, 0.7);
       transition: transform 0.35s cubic-bezier(0.16, 1, 0.3, 1), opacity 0.35s ease;
     }
 
@@ -910,23 +910,47 @@
       display: flex;
       flex-direction: column;
       align-items: center;
-      gap: 3px;
-      padding: 6px 12px;
+      gap: 4px;
+      padding: 8px 16px;
       border-radius: 999px;
-      font-size: 0.72rem;
+      font-size: 0.78rem;
       font-weight: 700;
       cursor: pointer;
-      transition: all 0.2s;
+      transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1);
     }
 
     .nav-item:hover, .nav-item.active {
       color: #fff;
-      background: rgba(255, 255, 255, 0.1);
+      background: rgba(255, 255, 255, 0.12);
+      transform: translateY(-1px);
     }
 
     .nav-item svg {
-      width: 18px;
-      height: 18px;
+      width: 20px;
+      height: 20px;
+    }
+
+    /* DESKTOP ENLARGED NAVBAR (BIGGER & MORE SPACIOUS) */
+    @media (min-width: 768px) {
+      .bottom-navbar {
+        bottom: 24px;
+        padding: 10px 24px;
+        gap: 12px;
+        border: 1.5px solid rgba(255, 255, 255, 0.16);
+        box-shadow: 0 20px 48px rgba(0, 0, 0, 0.8);
+      }
+
+      .nav-item {
+        flex-direction: row;
+        gap: 8px;
+        padding: 10px 20px;
+        font-size: 0.92rem;
+      }
+
+      .nav-item svg {
+        width: 22px;
+        height: 22px;
+      }
     }
 
     .toast {
@@ -2048,26 +2072,32 @@
         const effectiveUrl = proxyUrl || streamUrl;
         const cleanEffectiveUrl = effectiveUrl.replace(/^https?:\/\//, '');
 
-        const isIOS = /iPhone|iPad|iPod/i.test(navigator.userAgent) || (navigator.platform === 'MacIntel' && navigator.maxTouchPoints > 1);
+        const isIOS = /iPhone|iPad|iPod/i.test(navigator.userAgent);
+        const isMac = (/Macintosh|Mac OS X/i.test(navigator.userAgent) || (navigator.platform === 'MacIntel' && !navigator.maxTouchPoints));
+        const isAndroid = /Android/i.test(navigator.userAgent);
 
         // 1. Android System Intent ("Apri con...")
         choiceAndroidIntent.href = `intent://${cleanEffectiveUrl}#Intent;type=video/*;scheme=https;action=android.intent.action.VIEW;S.title=${encodeURIComponent(title || '')};end;`;
 
-        // 2. Apple Native Player (Plays in AVPlayer fullscreen on iOS/iPadOS)
+        // 2. Apple Native Player (Plays in AVPlayer fullscreen on iOS/iPadOS/macOS)
         choiceIos.onclick = (e) => {
           e.preventDefault();
           playerChooserModal.classList.add('hidden');
           playInWebPlayer(effectiveUrl, title, true);
         };
 
-        // 3. VLC Media Player (Official iOS x-callback and Android Intent)
+        // 3. VLC Media Player (macOS, iOS, Android, Windows)
         if (isIOS) {
           choiceVlc.href = `vlc-x-callback://x-callback-url/stream?url=${encodeURIComponent(effectiveUrl)}`;
-        } else {
+        } else if (isMac) {
+          choiceVlc.href = `vlc://${cleanEffectiveUrl}`;
+        } else if (isAndroid) {
           choiceVlc.href = `intent://${cleanEffectiveUrl}#Intent;package=org.videolan.vlc;type=video/*;scheme=https;action=android.intent.action.VIEW;end;`;
+        } else {
+          choiceVlc.href = `vlc://${cleanEffectiveUrl}`;
         }
 
-        // 4. Infuse (iOS)
+        // 4. Infuse (iOS & macOS)
         choiceInfuse.href = `infuse://control/play?url=${encodeURIComponent(effectiveUrl)}`;
 
         // 5. MX Player (Android)
