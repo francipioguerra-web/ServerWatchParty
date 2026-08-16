@@ -48,7 +48,6 @@ app.get('/api/room/:code', (req, res) => {
     code,
     title: 'In attesa dell\'avvio del film...',
     embedUrl: '',
-    streamUrl: '',
     time: 0,
     isPlaying: true,
     host: 'Host',
@@ -63,15 +62,13 @@ app.post('/api/room/:code/sync', (req, res) => {
   const code = (req.params.code || '').toUpperCase().trim();
   const data = req.body || {};
 
-  const embedUrl = data.vixUrl || data.embedUrl || data.embed_url || (data.streamUrl && data.streamUrl.includes('embed') ? data.streamUrl : '') || data.streamUrl || '';
-  const streamUrl = data.streamUrl || embedUrl;
+  const embedUrl = data.embedUrl || data.embed_url || data.vixUrl || data.vix_url || data.streamUrl || '';
 
   if (!rooms[code]) {
     rooms[code] = {
       code,
       title: data.title || 'Film Sincronizzato',
       embedUrl: embedUrl,
-      streamUrl: streamUrl,
       time: data.time || 0,
       isPlaying: data.isPlaying ?? true,
       host: data.user || 'Host',
@@ -82,16 +79,18 @@ app.post('/api/room/:code/sync', (req, res) => {
   } else {
     if (data.title) rooms[code].title = data.title;
     if (embedUrl) rooms[code].embedUrl = embedUrl;
-    if (streamUrl) rooms[code].streamUrl = streamUrl;
     if (data.time !== undefined) rooms[code].time = data.time;
     if (data.isPlaying !== undefined) rooms[code].isPlaying = data.isPlaying;
     rooms[code].updatedAt = Date.now();
   }
 
-  // Broadcast via Socket.IO
+  // Broadcast via Socket.IO to all participants in this room
   io.to(code).emit('sync_event', {
-    type: 'stream_sync',
+    type: data.type || 'stream_sync',
     ...rooms[code],
+    action: data.action || data.type,
+    time: data.time !== undefined ? data.time : rooms[code].time,
+    isPlaying: data.isPlaying !== undefined ? data.isPlaying : rooms[code].isPlaying,
     senderId: data.senderId || 'server'
   });
 
@@ -307,9 +306,10 @@ function renderPlayerPage(req, res) {
       background: rgba(59, 130, 246, 0.2);
       border: 1px solid rgba(59, 130, 246, 0.4);
       color: #60a5fa;
-      padding: 3px 10px;
-      border-radius: 10px;
+      padding: 4px 12px;
+      border-radius: 12px;
       font-weight: 700;
+      transition: all 0.3s ease;
     }
   </style>
 </head>
@@ -338,9 +338,9 @@ function renderPlayerPage(req, res) {
       <div class="waiting-screen" id="waiting-screen">
         <div class="waiting-spinner"></div>
         <h3 style="margin:0 0 8px;" id="waiting-headline">Connesso alla Stanza Sincronizzata</h3>
-        <p style="color:var(--muted); margin:0;" id="waiting-desc">Non appena avvii o selezioni il film nell'app, il lettore Vixcloud apparirà qui in streaming simultaneo.</p>
+        <p style="color:var(--muted); margin:0;" id="waiting-desc">Non appena clicchi sull'icona 🔗 o avvii il film nell'app, il lettore Vixcloud verrà iniettato qui automaticamente.</p>
       </div>
-      <iframe id="vix-iframe" allow="autoplay; fullscreen; encrypted-media; picture-in-picture" referrerpolicy="no-referrer" style="display:none;"></iframe>
+      <div id="iframe-container" style="width:100%; height:100%; position:absolute; inset:0; z-index:5; display:none;"></div>
       <div id="emoji-container"></div>
     </div>
 
@@ -383,7 +383,7 @@ function renderPlayerPage(req, res) {
     const filmTitleEl = document.getElementById('film-title');
     const roomCodeTxt = document.getElementById('room-code-txt');
     const waitingScreen = document.getElementById('waiting-screen');
-    const vixIframe = document.getElementById('vix-iframe');
+    const iframeContainer = document.getElementById('iframe-container');
     const emojiContainer = document.getElementById('emoji-container');
     const syncStatus = document.getElementById('sync-status');
     const btnChangeRoom = document.getElementById('btn-change-room');
@@ -391,6 +391,7 @@ function renderPlayerPage(req, res) {
     const syncDetailsTxt = document.getElementById('sync-details-txt');
 
     roomCodeTxt.textContent = roomCode;
+    let currentInjectedUrl = null;
 
     if (btnChangeRoom) {
       btnChangeRoom.addEventListener('click', () => {
@@ -428,12 +429,12 @@ function renderPlayerPage(req, res) {
       spawnEmoji(data.emoji);
     });
 
-    // Auto-poll state every 2.5 seconds
+    // Auto-poll state every 2 seconds for instant sync backup
     function pollRoomState() {
       fetch('/api/room/' + roomCode)
         .then(r => r.json())
         .then(res => {
-          if (res && res.room && (res.room.embedUrl || res.room.streamUrl)) {
+          if (res && res.room && res.room.embedUrl) {
             handleSyncState(res.room);
           }
         })
@@ -441,7 +442,7 @@ function renderPlayerPage(req, res) {
     }
 
     pollRoomState();
-    setInterval(pollRoomState, 2500);
+    setInterval(pollRoomState, 2000);
 
     function handleSyncState(data) {
       if (!data) return;
@@ -451,52 +452,60 @@ function renderPlayerPage(req, res) {
         document.title = data.title + ' - Watch Party';
       }
 
-      const targetEmbed = data.embedUrl || data.vixUrl || data.streamUrl;
+      const targetEmbed = data.embedUrl || data.vixUrl || (data.streamUrl && data.streamUrl.includes('embed') ? data.streamUrl : '');
       if (targetEmbed) {
-        loadEmbed(targetEmbed);
+        injectVixcloudIframe(targetEmbed);
       }
 
-      if (data.isPlaying !== undefined) {
-        if (data.isPlaying) {
+      const isPlaying = data.isPlaying;
+      if (isPlaying !== undefined) {
+        if (isPlaying) {
           syncStateBadge.textContent = '▶️ In Riproduzione';
           syncStateBadge.style.color = '#4ade80';
           syncStateBadge.style.borderColor = 'rgba(34, 197, 94, 0.4)';
+          syncStateBadge.style.background = 'rgba(34, 197, 94, 0.15)';
         } else {
           syncStateBadge.textContent = '⏸ In Pausa';
           syncStateBadge.style.color = '#f87171';
           syncStateBadge.style.borderColor = 'rgba(248, 113, 113, 0.4)';
+          syncStateBadge.style.background = 'rgba(248, 113, 113, 0.15)';
         }
       }
 
       if (data.time !== undefined && data.time > 0) {
         const mins = Math.floor(data.time / 60);
         const secs = Math.floor(data.time % 60).toString().padStart(2, '0');
-        syncDetailsTxt.textContent = '⏱ Posizione film: ' + mins + ':' + secs + ' (Sincronizzato)';
+        syncDetailsTxt.textContent = '⏱ Posizione: ' + mins + ':' + secs + ' (Sincronizzato)';
       }
 
-      // Forward sync actions to iframe
-      try {
-        if (vixIframe && vixIframe.contentWindow) {
-          if (data.type === 'play' || data.isPlaying === true) {
-            vixIframe.contentWindow.postMessage({ type: 'play', action: 'play' }, '*');
-          } else if (data.type === 'pause' || data.isPlaying === false) {
-            vixIframe.contentWindow.postMessage({ type: 'pause', action: 'pause' }, '*');
+      // Dispatch postMessage events to the embedded Vixcloud iframe
+      const iframe = document.getElementById('vix-injected-frame');
+      if (iframe && iframe.contentWindow) {
+        try {
+          if (data.type === 'play' || isPlaying === true) {
+            iframe.contentWindow.postMessage({ type: 'play', action: 'play' }, '*');
+            iframe.contentWindow.postMessage('{"event":"command","func":"playVideo","args":""}', '*');
+          } else if (data.type === 'pause' || isPlaying === false) {
+            iframe.contentWindow.postMessage({ type: 'pause', action: 'pause' }, '*');
+            iframe.contentWindow.postMessage('{"event":"command","func":"pauseVideo","args":""}', '*');
           }
           if (data.time !== undefined) {
-            vixIframe.contentWindow.postMessage({ type: 'seek', time: data.time }, '*');
+            iframe.contentWindow.postMessage({ type: 'seek', time: data.time }, '*');
           }
-        }
-      } catch (e) {}
+        } catch (e) {}
+      }
     }
 
-    function loadEmbed(url) {
+    function injectVixcloudIframe(url) {
       if (!url) return;
-      waitingScreen.style.display = 'none';
-      vixIframe.style.display = 'block';
+      if (currentInjectedUrl === url) return;
+      currentInjectedUrl = url;
 
-      if (vixIframe.src !== url) {
-        vixIframe.src = url;
-      }
+      waitingScreen.style.display = 'none';
+      iframeContainer.style.display = 'block';
+
+      // Clean injection of the Vixcloud embed player iframe
+      iframeContainer.innerHTML = '<iframe id="vix-injected-frame" src="' + url + '" allow="autoplay; fullscreen; encrypted-media; picture-in-picture" allowfullscreen frameborder="0" style="width:100%; height:100%; border:none; position:absolute; inset:0; z-index:10; border-radius:18px;"></iframe>';
     }
 
     function sendEmoji(emoji) {
@@ -544,8 +553,7 @@ io.on('connection', (socket) => {
       rooms[code] = {
         code,
         title: data.title || 'Film Sincronizzato',
-        embedUrl: data.embedUrl || data.streamUrl || '',
-        streamUrl: data.streamUrl || '',
+        embedUrl: data.embedUrl || data.vixUrl || '',
         time: data.time || 0,
         isPlaying: data.isPlaying ?? true,
         host: currentUser,
@@ -576,14 +584,13 @@ io.on('connection', (socket) => {
     const code = (payload.roomCode || currentRoom || '').toUpperCase().trim();
     if (!code) return;
 
-    const embedUrl = payload.vixUrl || payload.embedUrl || payload.embed_url || payload.streamUrl || '';
+    const embedUrl = payload.embedUrl || payload.vixUrl || payload.vix_url || '';
 
     if (!rooms[code]) {
       rooms[code] = {
         code,
         title: payload.title || 'Film Sincronizzato',
         embedUrl: embedUrl,
-        streamUrl: payload.streamUrl || embedUrl,
         time: payload.time || 0,
         isPlaying: payload.isPlaying ?? true,
         host: currentUser || 'Host',
@@ -594,7 +601,6 @@ io.on('connection', (socket) => {
     } else {
       if (payload.title) rooms[code].title = payload.title;
       if (embedUrl) rooms[code].embedUrl = embedUrl;
-      if (payload.streamUrl) rooms[code].streamUrl = payload.streamUrl;
       if (payload.time !== undefined) rooms[code].time = payload.time;
       if (payload.isPlaying !== undefined) rooms[code].isPlaying = payload.isPlaying;
       rooms[code].updatedAt = Date.now();
