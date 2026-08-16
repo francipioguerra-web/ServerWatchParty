@@ -1075,7 +1075,7 @@
       background: #000;
     }
 
-    /* FLOATING BOTTOM NAVBAR (ICON-ONLY / PURE BLUR / RESPONSIVE) */
+    /* FLOATING BOTTOM NAVBAR (ICON-ONLY / PURE BLUR / ULTRA SMOOTH MORPH) */
     .bottom-navbar {
       position: fixed;
       bottom: 14px;
@@ -1092,9 +1092,10 @@
       align-items: center;
       gap: 6px;
       box-shadow: 0 16px 36px rgba(0, 0, 0, 0.75), inset 0 1px 0 rgba(255, 255, 255, 0.12);
-      transition: all 0.45s cubic-bezier(0.16, 1, 0.3, 1);
+      transition: all 0.85s cubic-bezier(0.19, 1, 0.22, 1);
       max-width: calc(100vw - 24px);
       overflow: hidden;
+      will-change: width, height, padding, border-radius, background, box-shadow, transform;
     }
 
     /* MORPH COLLAPSED STATE: EMPTY FLOATING BLUR DOT */
@@ -1107,20 +1108,21 @@
       gap: 0 !important;
       border-radius: 50% !important;
       border: 1.5px solid rgba(255, 255, 255, 0.35);
-      background: rgba(255, 255, 255, 0.18);
-      box-shadow: 0 10px 28px rgba(0, 0, 0, 0.6), 0 0 14px rgba(255, 255, 255, 0.25);
+      background: rgba(255, 255, 255, 0.2);
+      box-shadow: 0 10px 28px rgba(0, 0, 0, 0.6), 0 0 16px rgba(255, 255, 255, 0.25);
       cursor: pointer;
     }
 
     .bottom-navbar.collapsed-dot .nav-item {
       opacity: 0;
-      transform: scale(0.3);
+      transform: scale(0.2);
       pointer-events: none;
       width: 0;
       height: 0;
       padding: 0;
       margin: 0;
       overflow: hidden;
+      transition: opacity 0.45s cubic-bezier(0.19, 1, 0.22, 1), transform 0.7s cubic-bezier(0.19, 1, 0.22, 1);
     }
 
     .nav-item {
@@ -1133,7 +1135,7 @@
       padding: 8px 10px;
       border-radius: 999px;
       cursor: pointer;
-      transition: opacity 0.32s ease, transform 0.32s ease, color 0.2s ease, background 0.2s ease;
+      transition: opacity 0.6s cubic-bezier(0.19, 1, 0.22, 1), transform 0.8s cubic-bezier(0.19, 1, 0.22, 1), color 0.25s ease, background 0.25s ease;
       position: relative;
     }
 
@@ -2793,18 +2795,18 @@
         // Reset idle timer
         if (scrollIdleTimer) clearTimeout(scrollIdleTimer);
 
-        if (diff > 8 && currentScrollY > 60) {
+        if (diff > 12 && currentScrollY > 70) {
           // Scrolling down: smoothly morph navbar into empty floating blur circle
           collapseNavbar();
-        } else if (diff < -6 || currentScrollY <= 40) {
+        } else if (diff < -8 || currentScrollY <= 40) {
           // Scrolling up: smoothly expand navbar back
           expandNavbar();
         }
 
-        // When scrolling stops, smoothly return to normal after short pause
+        // When scrolling stops, smoothly return to normal after a calm pause
         scrollIdleTimer = setTimeout(() => {
           expandNavbar();
-        }, 600);
+        }, 800);
 
         lastScrollY = currentScrollY;
       }, { passive: true });
