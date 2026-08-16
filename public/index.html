@@ -267,12 +267,103 @@
       .app-header {
         padding: 8px 10px;
         gap: 6px;
-      }
-      .user-name-mini {
-        display: none;
-      }
-      .user-profile-badge {
-        padding: 3px;
+    /* FLOATING SEARCH BAR (EMERGES SMOOTHLY FROM MAGNIFYING GLASS) */
+    .floating-search-bar {
+      position: fixed;
+      bottom: 64px;
+      left: 50%;
+      transform: translateX(-50%) translateY(0) scale(1);
+      transform-origin: bottom 38%;
+      z-index: 95;
+      width: 420px;
+      max-width: calc(100vw - 28px);
+      height: 48px;
+      background: rgba(14, 14, 18, 0.78);
+      backdrop-filter: blur(36px) saturate(190%);
+      -webkit-backdrop-filter: blur(36px) saturate(190%);
+      border: 1.5px solid rgba(255, 255, 255, 0.18);
+      border-radius: 999px;
+      padding: 0 12px 0 16px;
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      box-shadow: 0 20px 48px rgba(0, 0, 0, 0.85), 0 0 24px rgba(99, 102, 241, 0.2), inset 0 1px 0 rgba(255, 255, 255, 0.15);
+      transition: opacity 0.55s cubic-bezier(0.19, 1, 0.22, 1), transform 0.55s cubic-bezier(0.19, 1, 0.22, 1);
+      opacity: 1;
+    }
+
+    .floating-search-bar.hidden {
+      opacity: 0;
+      transform: translateX(-50%) translateY(24px) scale(0.2);
+      pointer-events: none;
+    }
+
+    .floating-search-icon {
+      color: rgba(255, 255, 255, 0.65);
+      flex-shrink: 0;
+    }
+
+    .floating-search-input {
+      flex: 1;
+      background: transparent;
+      border: none;
+      outline: none;
+      color: #fff;
+      font-size: 0.95rem;
+      font-weight: 600;
+      font-family: inherit;
+    }
+
+    .floating-search-input::placeholder {
+      color: rgba(255, 255, 255, 0.4);
+      font-weight: 500;
+    }
+
+    .floating-search-clear {
+      background: rgba(255, 255, 255, 0.12);
+      border: none;
+      color: #fff;
+      width: 22px;
+      height: 22px;
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      cursor: pointer;
+      font-size: 1rem;
+      transition: all 0.2s ease;
+    }
+
+    .floating-search-clear:hover {
+      background: rgba(255, 255, 255, 0.25);
+    }
+
+    .floating-search-close {
+      background: rgba(255, 255, 255, 0.08);
+      border: 1px solid rgba(255, 255, 255, 0.12);
+      color: var(--text-muted);
+      width: 28px;
+      height: 28px;
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      cursor: pointer;
+      transition: all 0.2s ease;
+      flex-shrink: 0;
+    }
+
+    .floating-search-close:hover {
+      background: rgba(239, 68, 68, 0.25);
+      border-color: rgba(239, 68, 68, 0.5);
+      color: #fff;
+    }
+
+    @media (min-width: 768px) {
+      .floating-search-bar {
+        bottom: 76px;
+        width: 460px;
+        height: 50px;
       }
     }
 
@@ -1217,21 +1308,20 @@
     </div>
   </header>
 
-  <!-- SEARCH MODAL (PURE BLUR / FLOATING FULL MODAL) -->
-  <div id="search-modal" class="modal-overlay hidden">
-    <div class="modal-card" style="max-width: 540px; padding: 22px;">
-      <button id="btn-close-search-modal" class="modal-close-btn">&times;</button>
-      <h3 style="font-size: 1.2rem; font-weight: 800; margin-bottom: 4px;">🔍 Cerca Film e Serie TV</h3>
-      <p style="font-size: 0.82rem; color: var(--text-muted); margin-bottom: 14px;">Cerca per titolo, attore, regista o genere:</p>
-      <div class="search-wrapper" style="width: 100%; margin-bottom: 16px; background: rgba(255,255,255,0.08); border-radius: 12px; height: 46px; border: 1px solid rgba(255,255,255,0.14);">
-        <svg class="search-icon" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><circle cx="11" cy="11" r="8"></circle><line x1="21" y1="21" x2="16.65" y2="16.65"></line></svg>
-        <input type="text" id="main-search-input" class="search-input" placeholder="Digita per cercare..." autocomplete="off" style="font-size: 0.95rem;">
-        <button id="search-clear-btn" class="search-clear-btn hidden">&times;</button>
-      </div>
-      <div id="search-modal-results" style="display: flex; flex-direction: column; gap: 8px; max-height: 320px; overflow-y: auto;">
-        <div style="color: var(--text-dim); text-align: center; padding: 20px; font-size: 0.88rem;">Inizia a digitare per cercare nel catalogo...</div>
-      </div>
-    </div>
+  <!-- FLOATING SEARCH BAR (EMERGES FROM MAGNIFYING GLASS / PURE BLUR) -->
+  <div id="floating-search-bar" class="floating-search-bar hidden">
+    <svg class="floating-search-icon" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+      <circle cx="11" cy="11" r="8"></circle>
+      <line x1="21" y1="21" x2="16.65" y2="16.65"></line>
+    </svg>
+    <input type="text" id="main-search-input" class="floating-search-input" placeholder="Cerca film o serie tv..." autocomplete="off" />
+    <button id="search-clear-btn" class="floating-search-clear hidden">&times;</button>
+    <button id="btn-close-floating-search" class="floating-search-close" title="Chiudi Ricerca">
+      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+        <line x1="18" y1="6" x2="6" y2="18"></line>
+        <line x1="6" y1="6" x2="18" y2="18"></line>
+      </svg>
+    </button>
   </div>
 
   <!-- NOTIFICATIONS MODAL OVERLAY (PURE BLUR / SAME AS FILM DETAILS) -->
@@ -1586,9 +1676,8 @@
 
       // DOM ELEMENTS
       const catalogGrid = document.getElementById('catalog-grid');
-      const searchModal = document.getElementById('search-modal');
-      const btnCloseSearchModal = document.getElementById('btn-close-search-modal');
-      const searchModalResults = document.getElementById('search-modal-results');
+      const floatingSearchBar = document.getElementById('floating-search-bar');
+      const btnCloseFloatingSearch = document.getElementById('btn-close-floating-search');
       const mainSearchInput = document.getElementById('main-search-input');
       const searchClearBtn = document.getElementById('search-clear-btn');
       const heroBanner = document.getElementById('hero-banner');
@@ -2658,44 +2747,14 @@
         pickRandomTitle();
       };
 
-      // LIVE SEARCH ENGINE (TOUCH & DESKTOP COMPATIBLE)
+      // LIVE SEARCH ENGINE (DIRECTLY RENDERS LARGE CARDS ON HOME GRID)
       let searchTimeout = null;
-
-      function renderSearchResults(titles) {
-        if (!searchModalResults) return;
-        searchModalResults.innerHTML = '';
-        if (!titles || titles.length === 0) {
-          searchModalResults.innerHTML = '<div style="color:var(--text-dim); text-align:center; padding:20px; font-size:0.88rem;">Nessun risultato trovato.</div>';
-          return;
-        }
-
-        titles.forEach(item => {
-          const row = document.createElement('div');
-          row.className = 'player-option-card';
-          const cleanName = decodeHtml(item.name);
-          row.innerHTML = `
-            <img src="${item.poster || 'https://via.placeholder.com/80x120'}" style="width:42px; height:58px; object-fit:cover; border-radius:6px; flex-shrink:0;" />
-            <div style="flex:1; overflow:hidden;">
-              <div style="font-weight:700; font-size:0.92rem; color:#fff; white-space:nowrap; overflow:hidden; text-overflow:ellipsis;">${cleanName}</div>
-              <div style="font-size:0.75rem; color:var(--text-dim); margin-top:2px;">${item.release_date || ''} • ${item.type === 'tv' ? 'Serie TV' : 'Film'}</div>
-            </div>
-          `;
-          row.onclick = () => {
-            searchModal.classList.add('hidden');
-            openDetails(item);
-          };
-          searchModalResults.appendChild(row);
-        });
-      }
 
       async function performSearch(query) {
         const q = (query || '').trim();
         if (!q) {
           gridSectionHeading.textContent = '🔥 Film & Serie TV in Evidenza';
           renderCards(loadedCatalog);
-          if (searchModalResults) {
-            searchModalResults.innerHTML = '<div style="color:var(--text-dim); text-align:center; padding:20px; font-size:0.88rem;">Inizia a digitare per cercare nel catalogo...</div>';
-          }
           return;
         }
 
@@ -2703,18 +2762,15 @@
         try {
           const res = await fetch(`/api/sc/search?q=${encodeURIComponent(q)}`);
           const data = await res.json();
-          if (data.success && data.titles) {
+          if (data.success && data.titles && data.titles.length > 0) {
             renderCards(data.titles);
-            renderSearchResults(data.titles);
           } else {
             const filtered = loadedCatalog.filter(t => t.name.toLowerCase().includes(q.toLowerCase()));
             renderCards(filtered);
-            renderSearchResults(filtered);
           }
         } catch (e) {
           const filtered = loadedCatalog.filter(t => t.name.toLowerCase().includes(q.toLowerCase()));
           renderCards(filtered);
-          renderSearchResults(filtered);
         }
       }
 
@@ -2724,7 +2780,16 @@
         else searchClearBtn.classList.add('hidden');
 
         if (searchTimeout) clearTimeout(searchTimeout);
-        searchTimeout = setTimeout(() => performSearch(q), 300);
+        searchTimeout = setTimeout(() => {
+          performSearch(q);
+          const gridEl = document.getElementById('grid-section-heading');
+          if (gridEl) {
+            const rect = gridEl.getBoundingClientRect();
+            if (rect.top < 0 || rect.top > window.innerHeight * 0.6) {
+              gridEl.scrollIntoView({ behavior: 'smooth', block: 'start' });
+            }
+          }
+        }, 250);
       });
 
       mainSearchInput.addEventListener('search', () => {
@@ -2738,8 +2803,14 @@
         mainSearchInput.focus();
       };
 
-      btnCloseSearchModal.onclick = () => searchModal.classList.add('hidden');
-      searchModal.onclick = (e) => { if (e.target === searchModal) searchModal.classList.add('hidden'); };
+      if (btnCloseFloatingSearch) {
+        btnCloseFloatingSearch.onclick = () => {
+          floatingSearchBar.classList.add('hidden');
+          mainSearchInput.value = '';
+          searchClearBtn.classList.add('hidden');
+          performSearch('');
+        };
+      }
 
       // NAVBAR CONTROLS
       function setActiveNav(btn) {
@@ -2749,6 +2820,7 @@
 
       btnBrandHome.onclick = () => {
         setActiveNav(navHome);
+        if (floatingSearchBar) floatingSearchBar.classList.add('hidden');
         mainSearchInput.value = '';
         searchClearBtn.classList.add('hidden');
         performSearch('');
@@ -2757,16 +2829,24 @@
 
       navHome.onclick = () => {
         setActiveNav(navHome);
+        if (floatingSearchBar) floatingSearchBar.classList.add('hidden');
         mainSearchInput.value = '';
         searchClearBtn.classList.add('hidden');
         performSearch('');
         window.scrollTo({ top: 0, behavior: 'smooth' });
       };
 
-      navSearch.onclick = () => {
+      navSearch.onclick = (e) => {
+        e.stopPropagation();
         setActiveNav(navSearch);
-        searchModal.classList.remove('hidden');
-        setTimeout(() => mainSearchInput.focus(), 100);
+        if (floatingSearchBar) {
+          if (floatingSearchBar.classList.contains('hidden')) {
+            floatingSearchBar.classList.remove('hidden');
+            setTimeout(() => mainSearchInput.focus(), 150);
+          } else {
+            mainSearchInput.focus();
+          }
+        }
       };
 
       // -------------------------------------------------------------
