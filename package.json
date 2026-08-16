@@ -1,0 +1,24 @@
+{
+  "name": "server-watchparty",
+  "version": "1.0.0",
+  "description": "Real-time Watch Party Synchronization Server for StreamingCommunity",
+  "main": "server.js",
+  "scripts": {
+    "start": "node server.js",
+    "dev": "nodemon server.js"
+  },
+  "keywords": [
+    "watchparty",
+    "streaming",
+    "sync",
+    "socket.io",
+    "render"
+  ],
+  "author": "francipioguerra-web",
+  "license": "MIT",
+  "dependencies": {
+    "cors": "^2.8.5",
+    "express": "^4.21.2",
+    "socket.io": "^4.8.1"
+  }
+}
