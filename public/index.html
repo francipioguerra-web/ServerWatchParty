@@ -57,7 +57,7 @@
       z-index: 50;
       backdrop-filter: blur(20px);
       -webkit-backdrop-filter: blur(20px);
-      background: rgba(9, 9, 11, 0.92);
+      background: rgba(9, 9, 11, 0.94);
       border-bottom: 1px solid var(--border);
       padding: 10px 16px;
       display: flex;
@@ -96,7 +96,7 @@
     .header-center {
       flex: 1;
       max-width: 440px;
-      min-width: 120px;
+      min-width: 110px;
     }
 
     .search-wrapper {
@@ -203,25 +203,59 @@
       display: none;
     }
 
-    .user-avatar-btn {
-      width: 36px;
-      height: 36px;
-      border-radius: 50%;
-      border: 2px solid rgba(255, 255, 255, 0.2);
-      overflow: hidden;
+    .btn-header-login {
+      background: linear-gradient(135deg, #6366f1, #4f46e5);
+      color: #fff;
+      font-weight: 700;
+      font-size: 0.82rem;
+      padding: 6px 14px;
+      border-radius: 999px;
+      border: none;
       cursor: pointer;
-      background: var(--accent-indigo);
       display: flex;
       align-items: center;
-      justify-content: center;
-      font-weight: 800;
-      font-size: 0.85rem;
+      gap: 6px;
+      box-shadow: 0 2px 10px rgba(99, 102, 241, 0.35);
+      transition: all 0.2s;
     }
 
-    .user-avatar-img {
-      width: 100%;
-      height: 100%;
+    .btn-header-login:hover {
+      opacity: 0.95;
+      transform: translateY(-1px);
+    }
+
+    .user-profile-badge {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      background: rgba(255, 255, 255, 0.08);
+      border: 1px solid var(--border);
+      padding: 3px 10px 3px 4px;
+      border-radius: 999px;
+      cursor: pointer;
+      transition: all 0.2s;
+    }
+
+    .user-profile-badge:hover {
+      background: rgba(255, 255, 255, 0.15);
+    }
+
+    .user-avatar-mini {
+      width: 28px;
+      height: 28px;
+      border-radius: 50%;
+      background: var(--accent-indigo);
       object-fit: cover;
+    }
+
+    .user-name-mini {
+      font-size: 0.8rem;
+      font-weight: 700;
+      color: #fff;
+      max-width: 90px;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
     }
 
     @media (max-width: 600px) {
@@ -232,19 +266,25 @@
         padding: 8px 10px;
         gap: 6px;
       }
+      .user-name-mini {
+        display: none;
+      }
+      .user-profile-badge {
+        padding: 3px;
+      }
     }
 
-    /* DROPDOWN NOTIFICATIONS MENU */
+    /* DROPDOWN NOTIFICATIONS & USER MENUS */
     .dropdown-menu {
       position: absolute;
       top: 56px;
-      right: 16px;
+      right: 14px;
       width: 330px;
-      max-width: calc(100vw - 32px);
+      max-width: calc(100vw - 28px);
       background: #14141a;
       border: 1px solid rgba(255, 255, 255, 0.14);
       border-radius: var(--radius-md);
-      box-shadow: 0 16px 40px rgba(0, 0, 0, 0.8);
+      box-shadow: 0 16px 40px rgba(0, 0, 0, 0.85);
       z-index: 100;
       overflow: hidden;
       display: flex;
@@ -896,10 +936,11 @@
         <span id="notif-badge" class="notif-badge hidden">0</span>
       </button>
 
-      <!-- USER PROFILE / LOGIN BUTTON -->
+      <!-- USER PROFILE / LOGIN WIDGET BUTTON -->
       <div id="user-profile-widget">
-        <button id="btn-login-open" class="btn btn-secondary" style="padding: 6px 12px; font-size: 0.8rem; border-radius: 999px;">
-          Accedi
+        <button id="btn-login-open" class="btn-header-login">
+          <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path><circle cx="12" cy="7" r="4"></circle></svg>
+          <span>Accedi</span>
         </button>
       </div>
     </div>
@@ -1160,7 +1201,6 @@
       const btnCloseNotifDropdown = document.getElementById('btn-close-notif-dropdown');
       const notifList = document.getElementById('notif-list');
       const userProfileWidget = document.getElementById('user-profile-widget');
-      const btnLoginOpen = document.getElementById('btn-login-open');
       const userDropdown = document.getElementById('user-dropdown');
       const btnCloseUserDropdown = document.getElementById('btn-close-user-dropdown');
       const dropdownUserName = document.getElementById('dropdown-user-name');
@@ -1194,8 +1234,9 @@
       function updateAuthUI() {
         if (currentUser && currentUser.email) {
           userProfileWidget.innerHTML = `
-            <div class="user-avatar-btn" id="btn-user-avatar" title="${currentUser.name}">
-              <img class="user-avatar-img" src="${currentUser.avatar || ''}" alt="${currentUser.name}" onerror="this.src='https://ui-avatars.com/api/?name=${encodeURIComponent(currentUser.name)}&background=6366f1&color=fff'" />
+            <div class="user-profile-badge" id="btn-user-avatar" title="${currentUser.name}">
+              <img class="user-avatar-mini" src="${currentUser.avatar || ''}" alt="${currentUser.name}" onerror="this.src='https://ui-avatars.com/api/?name=${encodeURIComponent(currentUser.name)}&background=6366f1&color=fff'" />
+              <span class="user-name-mini">${currentUser.name}</span>
             </div>
           `;
           document.getElementById('btn-user-avatar').onclick = () => {
@@ -1208,8 +1249,9 @@
           startNotificationPolling();
         } else {
           userProfileWidget.innerHTML = `
-            <button id="btn-login-open" class="btn btn-secondary" style="padding: 6px 12px; font-size: 0.8rem; border-radius: 999px;">
-              Accedi
+            <button id="btn-login-open" class="btn-header-login">
+              <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path><circle cx="12" cy="7" r="4"></circle></svg>
+              <span>Accedi</span>
             </button>
           `;
           document.getElementById('btn-login-open').onclick = () => loginModal.classList.remove('hidden');
