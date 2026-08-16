@@ -613,11 +613,36 @@ app.post('/api/vixcloud/extract', async (req, res) => {
     const htmlWatch = await resWatch.text();
 
     const matchDp = htmlWatch.match(/data-page=["'](.*?)["']/);
+    let dp = null;
     if (matchDp) {
       try {
-        const dp = JSON.parse(unescapeHtml(matchDp[1]));
+        dp = JSON.parse(unescapeHtml(matchDp[1]));
         embedUrl = dp.props?.embedUrl || '';
       } catch (e) {}
+    }
+
+    if (!embedUrl && dp && dp.props?.title?.seasons && dp.props.title.seasons.length > 0) {
+      const s1 = dp.props.title.seasons[0];
+      const ep1 = (s1.episodes && s1.episodes[0]) || (dp.props.loadedSeason && dp.props.loadedSeason.episodes && dp.props.loadedSeason.episodes[0]);
+      if (ep1) {
+        const epWatchUrl = `${activeScDomain}/it/watch/${titleId}?e=${ep1.id}`;
+        try {
+          const resEp = await fetch(epWatchUrl, { headers: { ...headers, 'Referer': activeScDomain }, redirect: 'follow' });
+          const htmlEp = await resEp.text();
+          const matchDpEp = htmlEp.match(/data-page=["'](.*?)["']/);
+          if (matchDpEp) {
+            const dpEp = JSON.parse(unescapeHtml(matchDpEp[1]));
+            embedUrl = dpEp.props?.embedUrl || '';
+          }
+          if (!embedUrl) {
+            const matchIfrEp = htmlEp.match(/<iframe[^>]+src=["'](https?:\/\/[^"']+)["']/);
+            if (matchIfrEp) embedUrl = unescapeHtml(matchIfrEp[1]);
+          }
+          if (!embedUrl) {
+            embedUrl = `${activeScDomain}/it/iframe/${titleId}?episode_id=${ep1.id}`;
+          }
+        } catch (e) {}
+      }
     }
 
     if (!embedUrl) {

@@ -2451,17 +2451,21 @@
         }
       }
 
-      // DIRECT PLAY WITH VIXCLOUD EMBED
+      // DIRECT PLAY WITH VIXCLOUD M3U8 STREAM
       async function playDirectly(item) {
         const target = item || currentActiveItem;
         if (!target) return;
-        showToast("Caricamento player Vixcloud...");
+        showToast("Risoluzione flusso Vixcloud...");
         const extraction = await resolveExtraction(target);
-        const title = target.current_ep_title ? `${decodeHtml(target.name)} - ${target.current_ep_title}` : decodeHtml(target.name);
-        // Prioritize embed_url so Vixcloud embed loads securely in iframe without CORS block!
-        const embedUrl = extraction.embed_url || extraction.vix_url || extraction.master_m3u8;
+        const streamUrl = extraction.master_m3u8 || extraction.vix_url || extraction.embed_url;
         closeDetails();
-        playInWebPlayer(embedUrl, title, false);
+
+        if (streamUrl) {
+          window.open(streamUrl, '_blank');
+          showToast("🚀 Apertura flusso Vixcloud...");
+        } else {
+          showToast("Errore: flusso non disponibile.");
+        }
       }
 
       // -------------------------------------------------------------
