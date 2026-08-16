@@ -98,6 +98,7 @@ app.post('/api/room/:code/sync', (req, res) => {
 // WEB APP & SYNC PLAYER PAGE
 // -------------------------------------------------------------
 function renderPlayerPage(req, res) {
+  res.setHeader('Content-Type', 'text/html; charset=utf-8');
   res.send(`<!DOCTYPE html>
 <html lang="it">
 <head>
@@ -514,20 +515,12 @@ function renderPlayerPage(req, res) {
 </html>`);
 }
 
-// Support all possible routes
-app.get('/', renderPlayerPage);
-app.get('/party/:code', renderPlayerPage);
-app.get('/room/:code', renderPlayerPage);
-app.get('/watch/:code', renderPlayerPage);
-app.get('/:code', (req, res, next) => {
-  if (req.params.code.startsWith('api') || req.params.code === 'health') return next();
-  renderPlayerPage(req, res);
-});
-
-// Wildcard fallback for any other path
-app.get('*', (req, res, next) => {
-  if (req.path.startsWith('/api/') || req.path === '/health') return next();
-  renderPlayerPage(req, res);
+// Intercept all GET requests (except /health and /api) to render the player page
+app.use((req, res, next) => {
+  if (req.method === 'GET' && !req.path.startsWith('/api') && req.path !== '/health') {
+    return renderPlayerPage(req, res);
+  }
+  next();
 });
 
 // -------------------------------------------------------------
