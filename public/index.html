@@ -2453,21 +2453,53 @@
         }
       }
 
-      // DIRECT PLAY WITH VIXCLOUD M3U8 STREAM
+      // DIRECT PLAY (APPLE NATIVE AVPLAYER ON IOS/IPADOS, OR DIRECT STREAM OPEN)
       async function playDirectly(item) {
         const target = item || currentActiveItem;
         if (!target) return;
-        showToast("Risoluzione flusso Vixcloud...");
+        showToast("Risoluzione flusso in corso...");
         const extraction = await resolveExtraction(target);
         const streamUrl = extraction.master_m3u8 || extraction.vix_url || extraction.embed_url;
         closeDetails();
 
-        if (streamUrl) {
-          window.open(streamUrl, '_blank');
-          showToast("🚀 Apertura flusso Vixcloud...");
-        } else {
+        if (!streamUrl) {
           showToast("Errore: flusso non disponibile.");
+          return;
         }
+
+        const isAppleDevice = /iPhone|iPad|iPod/i.test(navigator.userAgent) || (navigator.platform === 'MacIntel' && navigator.maxTouchPoints > 1);
+
+        if (isAppleDevice) {
+          const title = target.current_ep_title ? `${decodeHtml(target.name)} - ${target.current_ep_title}` : decodeHtml(target.name);
+          showToast("🎬 Apertura lettore Apple AVPlayer...");
+          
+          playerActiveTitle.textContent = title;
+          playerModal.classList.remove('hidden');
+          webIframe.classList.add('hidden');
+          webIframe.src = 'about:blank';
+          webVideo.classList.remove('hidden');
+
+          webVideo.src = streamUrl;
+          webVideo.load();
+          const playPromise = webVideo.play();
+          if (playPromise !== undefined) {
+            playPromise.then(() => {
+              if (webVideo.webkitEnterFullscreen) {
+                webVideo.webkitEnterFullscreen();
+              } else if (webVideo.requestFullscreen) {
+                webVideo.requestFullscreen();
+              }
+            }).catch(() => {
+              if (webVideo.webkitEnterFullscreen) {
+                webVideo.webkitEnterFullscreen();
+              }
+            });
+          }
+          return;
+        }
+
+        window.open(streamUrl, '_blank');
+        showToast("🚀 Apertura flusso Vixcloud...");
       }
 
       // -------------------------------------------------------------
@@ -2488,7 +2520,24 @@
         choiceIos.onclick = (e) => {
           e.preventDefault();
           playerChooserModal.classList.add('hidden');
-          playInWebPlayer(effectiveUrl, title, true);
+          playerActiveTitle.textContent = title || 'Riproduzione';
+          playerModal.classList.remove('hidden');
+          webIframe.classList.add('hidden');
+          webIframe.src = 'about:blank';
+          webVideo.classList.remove('hidden');
+          webVideo.src = effectiveUrl;
+          webVideo.load();
+          webVideo.play().then(() => {
+            if (webVideo.webkitEnterFullscreen) {
+              webVideo.webkitEnterFullscreen();
+            } else if (webVideo.requestFullscreen) {
+              webVideo.requestFullscreen();
+            }
+          }).catch(() => {
+            if (webVideo.webkitEnterFullscreen) {
+              webVideo.webkitEnterFullscreen();
+            }
+          });
         };
 
         // 3. VLC Media Player (macOS, iOS, Android, Windows)
