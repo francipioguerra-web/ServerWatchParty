@@ -627,6 +627,183 @@ app.post('/api/vixcloud/extract', async (req, res) => {
   }
 });
 
+// -------------------------------------------------------------
+// UNIVERSAL HLS STREAM PROXY (OPPO / SAMSUNG / VLC / SMART TV)
+// Solves 403 Forbidden for external players lacking custom headers
+// -------------------------------------------------------------
+app.get('/api/stream/master.m3u8', async (req, res) => {
+  const { url, titleId, slug, e: episodeId, lang } = req.query || {};
+  let targetWatchUrl = url;
+
+  if (!targetWatchUrl && titleId) {
+    if (episodeId) {
+      targetWatchUrl = `${activeScDomain}/it/watch/${titleId}?e=${episodeId}`;
+    } else {
+      targetWatchUrl = slug ? `${activeScDomain}/it/titles/${titleId}-${slug}` : `${activeScDomain}/it/titles/${titleId}`;
+    }
+  }
+
+  if (!targetWatchUrl) {
+    return res.status(400).send('Parametro mancante');
+  }
+
+  try {
+    const headers = {
+      'User-Agent': 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/122.0.0.0 Safari/537.36',
+      'Referer': activeScDomain
+    };
+
+    let embedUrl = '';
+    const resWatch = await fetch(targetWatchUrl, { headers, redirect: 'follow' });
+    const htmlWatch = await resWatch.text();
+
+    const matchDp = htmlWatch.match(/data-page=["'](.*?)["']/);
+    if (matchDp) {
+      try {
+        const dp = JSON.parse(unescapeHtml(matchDp[1]));
+        embedUrl = dp.props?.embedUrl || '';
+      } catch (err) {}
+    }
+
+    if (!embedUrl) {
+      const matchIfr = htmlWatch.match(/<iframe[^>]+src=["'](https?:\/\/[^"']+)["']/);
+      if (matchIfr) embedUrl = unescapeHtml(matchIfr[1]);
+    }
+
+    if (!embedUrl && titleId) {
+      embedUrl = `${activeScDomain}/it/iframe/${titleId}${episodeId ? `?episode_id=${episodeId}` : ''}`;
+    }
+
+    let vixEmbed = embedUrl || targetWatchUrl;
+    if (!vixEmbed.includes('vixcloud.co')) {
+      const resIfr = await fetch(embedUrl, { headers: { ...headers, 'Referer': targetWatchUrl }, redirect: 'follow' });
+      const htmlIfr = await resIfr.text();
+      const matchVix = htmlIfr.match(/<iframe[^>]+src=["'](https?:\/\/[^"']+)["']/);
+      if (matchVix) vixEmbed = unescapeHtml(matchVix[1]);
+    }
+
+    const resVix = await fetch(vixEmbed, { headers: { ...headers, 'Referer': embedUrl }, redirect: 'follow' });
+    const htmlVix = await resVix.text();
+
+    const tokenM = htmlVix.match(/['"]token['"]\s*:\s*['"]([^'"]+)['"]/);
+    const expM = htmlVix.match(/['"]expires['"]\s*:\s*['"]?(\d+)['"]?/);
+    const plM = htmlVix.match(/url\s*:\s*['"]([^'"]+)['"]/);
+    const idM = vixEmbed.match(/\/(?:embed|playlist)\/(\d+)/);
+
+    let signedM3u8 = '';
+    if (tokenM && expM) {
+      const token = tokenM[1];
+      const expires = expM[1];
+      const audioLang = lang === 'orig' ? 'orig' : 'it';
+      let basePl = plM ? plM[1].split('?')[0] : (idM ? `https://vixcloud.co/playlist/${idM[1]}` : '');
+      if (basePl && !basePl.endsWith('.m3u8')) basePl += '.m3u8';
+      signedM3u8 = `${basePl}?b=1&token=${token}&expires=${expires}&h=1&scz=1&lang=${audioLang}`;
+    } else {
+      signedM3u8 = vixEmbed;
+    }
+
+    // Fetch the actual master playlist content from Vixcloud
+    const resM3u8 = await fetch(signedM3u8, {
+      headers: {
+        'User-Agent': 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/122.0.0.0 Safari/537.36',
+        'Referer': vixEmbed
+      }
+    });
+
+    const m3u8Text = await resM3u8.text();
+    const lines = m3u8Text.split('\n');
+    const hostUrl = `${req.protocol}://${req.get('host')}`;
+
+    const rewritten = lines.map(line => {
+      const trimmed = line.trim();
+      if (!trimmed) return line;
+
+      // Handle URI="..." in audio / subtitle tags
+      if (trimmed.includes('URI=')) {
+        return trimmed.replace(/URI=["']([^"']+)["']/g, (m, uri) => {
+          const absoluteUri = uri.startsWith('http') ? uri : new URL(uri, signedM3u8).toString();
+          const proxyUri = `${hostUrl}/api/stream/segment?url=${encodeURIComponent(absoluteUri)}&ref=${encodeURIComponent(vixEmbed)}`;
+          return `URI="${proxyUri}"`;
+        });
+      }
+
+      // Handle stream resolution playlist links
+      if (!trimmed.startsWith('#')) {
+        const absoluteUri = trimmed.startsWith('http') ? trimmed : new URL(trimmed, signedM3u8).toString();
+        return `${hostUrl}/api/stream/segment?url=${encodeURIComponent(absoluteUri)}&ref=${encodeURIComponent(vixEmbed)}`;
+      }
+
+      return line;
+    });
+
+    res.setHeader('Content-Type', 'application/vnd.apple.mpegurl');
+    res.setHeader('Access-Control-Allow-Origin', '*');
+    res.send(rewritten.join('\n'));
+
+  } catch (err) {
+    res.status(500).send(`Errore stream: ${err.message}`);
+  }
+});
+
+// Segment proxy for child playlists and .ts video chunks
+app.get('/api/stream/segment', async (req, res) => {
+  const { url, ref } = req.query || {};
+  if (!url) return res.status(400).send('URL mancante');
+
+  const refHeader = ref || 'https://vixcloud.co/';
+  const headers = {
+    'User-Agent': 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/122.0.0.0 Safari/537.36',
+    'Referer': refHeader,
+    'Origin': 'https://vixcloud.co'
+  };
+
+  try {
+    const upstreamRes = await fetch(url, { headers });
+    const contentType = upstreamRes.headers.get('content-type') || '';
+
+    // If it's a child playlist (m3u8), rewrite its TS segment URLs
+    if (url.includes('.m3u8') || url.includes('playlist') || contentType.includes('mpegurl')) {
+      const text = await upstreamRes.text();
+      const lines = text.split('\n');
+      const hostUrl = `${req.protocol}://${req.get('host')}`;
+
+      const rewritten = lines.map(line => {
+        const trimmed = line.trim();
+        if (!trimmed) return line;
+
+        if (trimmed.includes('URI=')) {
+          return trimmed.replace(/URI=["']([^"']+)["']/g, (m, uri) => {
+            const absoluteUri = uri.startsWith('http') ? uri : new URL(uri, url).toString();
+            return `URI="${hostUrl}/api/stream/segment?url=${encodeURIComponent(absoluteUri)}&ref=${encodeURIComponent(refHeader)}"`;
+          });
+        }
+
+        if (!trimmed.startsWith('#')) {
+          const absoluteUri = trimmed.startsWith('http') ? trimmed : new URL(trimmed, url).toString();
+          return `${hostUrl}/api/stream/segment?url=${encodeURIComponent(absoluteUri)}&ref=${encodeURIComponent(refHeader)}`;
+        }
+
+        return line;
+      });
+
+      res.setHeader('Content-Type', 'application/vnd.apple.mpegurl');
+      res.setHeader('Access-Control-Allow-Origin', '*');
+      return res.send(rewritten.join('\n'));
+    }
+
+    // Otherwise stream binary video chunk (TS / MP4)
+    res.setHeader('Content-Type', contentType || 'video/MP2T');
+    res.setHeader('Access-Control-Allow-Origin', '*');
+    res.setHeader('Cache-Control', 'public, max-age=3600');
+
+    const arrayBuffer = await upstreamRes.arrayBuffer();
+    res.send(Buffer.from(arrayBuffer));
+
+  } catch (err) {
+    res.status(500).send(`Errore segmento: ${err.message}`);
+  }
+});
+
 // Fallback index route
 app.get('*', (req, res) => {
   res.sendFile(path.join(__dirname, 'public', 'index.html'));

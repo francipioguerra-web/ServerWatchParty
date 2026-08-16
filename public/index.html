@@ -1974,6 +1974,7 @@
             episodesGrid.querySelectorAll('.episode-btn').forEach(b => b.classList.remove('active'));
             epBtn.classList.add('active');
             item.current_watch_url = ep.watch_url;
+            item.current_episode_id = ep.id;
             item.current_ep_title = `S${seasonNum}E${ep.number} - ${ep.name || 'Episodio'}`;
             showToast(`Selezionato Ep. ${ep.number}: premi Riproduci`);
           };
@@ -1997,7 +1998,9 @@
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({
               url: item.current_watch_url,
-              titleId: item.id
+              titleId: item.id,
+              episodeId: item.current_episode_id,
+              slug: item.slug
             })
           });
           const data = await res.json();
@@ -2039,8 +2042,12 @@
         const extraction = await resolveExtraction(target);
         const title = target.current_ep_title ? `${target.name} - ${target.current_ep_title}` : target.name;
 
+        // Universal proxy URL that never fails with 403 in Oppo / external players
+        const proxyStreamUrl = `${window.location.origin}/api/stream/master.m3u8?titleId=${target.id}${target.current_episode_id ? `&e=${target.current_episode_id}` : ''}&slug=${encodeURIComponent(target.slug || '')}`;
+
         pendingExtraction = {
-          m3u8: extraction.master_m3u8,
+          m3u8: extraction.master_m3u8 || proxyStreamUrl,
+          proxyUrl: proxyStreamUrl,
           embed: extraction.embed_url,
           title: title
         };
@@ -2048,9 +2055,9 @@
         const isAndroid = /Android/i.test(navigator.userAgent);
         closeDetails();
 
-        // On Android, automatically trigger the native system app chooser intent, and also display the chooser
-        if (isAndroid && pendingExtraction.m3u8) {
-          triggerAndroidChooser(pendingExtraction.m3u8, title);
+        // On Android, automatically trigger the native system app chooser intent with the universal stream URL
+        if (isAndroid) {
+          triggerAndroidChooser(proxyStreamUrl, title);
         }
 
         playerChooserModal.classList.remove('hidden');
@@ -2070,8 +2077,11 @@
       }
 
       function openPlayerChooser(extraction, title) {
+        const target = currentActiveItem || {};
+        const proxyStreamUrl = `${window.location.origin}/api/stream/master.m3u8?titleId=${target.id || ''}${target.current_episode_id ? `&e=${target.current_episode_id}` : ''}&slug=${encodeURIComponent(target.slug || '')}`;
         pendingExtraction = {
-          m3u8: extraction.master_m3u8,
+          m3u8: extraction.master_m3u8 || proxyStreamUrl,
+          proxyUrl: proxyStreamUrl,
           embed: extraction.embed_url,
           title: title
         };
@@ -2082,9 +2092,9 @@
 
       // 1. ANDROID SYSTEM APP CHOOSER (OPPO / SAMSUNG / ALL INSTALLED APPS)
       choiceAndroidIntent.onclick = () => {
-        if (!pendingExtraction || !pendingExtraction.m3u8) return;
+        if (!pendingExtraction) return;
         playerChooserModal.classList.add('hidden');
-        triggerAndroidChooser(pendingExtraction.m3u8, pendingExtraction.title);
+        triggerAndroidChooser(pendingExtraction.proxyUrl || pendingExtraction.m3u8, pendingExtraction.title);
       };
 
       // 2. VLC MEDIA PLAYER
