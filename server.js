@@ -20,11 +20,11 @@ const io = new Server(server, {
 // In-memory rooms repository
 const rooms = {};
 
-// Clean up inactive rooms older than 12 hours
+// Clean up inactive rooms older than 24 hours
 setInterval(() => {
   const now = Date.now();
   for (const [code, room] of Object.entries(rooms)) {
-    if (now - (room.updatedAt || 0) > 12 * 60 * 60 * 1000 && Object.keys(room.participants || {}).length === 0) {
+    if (now - (room.updatedAt || 0) > 24 * 60 * 60 * 1000 && Object.keys(room.participants || {}).length === 0) {
       delete rooms[code];
     }
   }
@@ -60,6 +60,7 @@ app.post('/api/room/:code/sync', (req, res) => {
       code,
       title: data.title || 'Film Sincronizzato',
       streamUrl: data.streamUrl || '',
+      isEmbed: data.isEmbed || false,
       time: data.time || 0,
       isPlaying: data.isPlaying ?? true,
       host: data.user || 'Host',
@@ -70,13 +71,15 @@ app.post('/api/room/:code/sync', (req, res) => {
   } else {
     if (data.title) rooms[code].title = data.title;
     if (data.streamUrl) rooms[code].streamUrl = data.streamUrl;
+    if (data.isEmbed !== undefined) rooms[code].isEmbed = data.isEmbed;
     if (data.time !== undefined) rooms[code].time = data.time;
     if (data.isPlaying !== undefined) rooms[code].isPlaying = data.isPlaying;
     rooms[code].updatedAt = Date.now();
   }
 
   // Broadcast via Socket.IO
-  io.to(code).emit('state_updated', {
+  io.to(code).emit('sync_event', {
+    type: 'stream_sync',
     ...rooms[code],
     senderId: data.senderId || 'server'
   });
@@ -84,48 +87,63 @@ app.post('/api/room/:code/sync', (req, res) => {
   res.json({ success: true, room: rooms[code] });
 });
 
-// HTML Landing & Status Page
+// -------------------------------------------------------------
+// WEB APP & SYNC PLAYER PAGE (SERVED ON /)
+// -------------------------------------------------------------
 app.get('/', (req, res) => {
-  const partyParam = req.query.party || req.query.room;
   res.send(`<!DOCTYPE html>
 <html lang="it">
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>StreamingCommunity Watch Party Cloud Server</title>
+  <title>StreamingCommunity Watch Party Sincronizzato</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@400;600;700;800&display=swap" rel="stylesheet">
+  <script src="https://cdn.jsdelivr.net/npm/hls.js@latest"></script>
+  <script src="/socket.io/socket.io.js"></script>
   <style>
     :root {
       --primary: #3b82f6;
       --accent: #a855f7;
-      --bg: #0b0f19;
-      --card: #131b2e;
+      --bg: #090d16;
+      --card: rgba(19, 27, 46, 0.85);
+      --border: rgba(255, 255, 255, 0.1);
       --text: #f8fafc;
       --muted: #94a3b8;
     }
+    * { box-sizing: border-box; }
     body {
       margin: 0;
       padding: 0;
-      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
-      background: radial-gradient(circle at 50% 20%, #1e1b4b 0%, var(--bg) 80%);
+      font-family: 'Outfit', -apple-system, BlinkMacSystemFont, sans-serif;
+      background: radial-gradient(circle at 50% 10%, #1e1b4b 0%, var(--bg) 80%);
       color: var(--text);
+      min-height: 100vh;
       display: flex;
+      flex-direction: column;
       align-items: center;
       justify-content: center;
-      min-height: 100vh;
     }
-    .container {
-      max-width: 580px;
-      margin: 20px;
-      padding: 36px 32px;
-      background: rgba(19, 27, 46, 0.85);
-      backdrop-filter: blur(24px);
-      -webkit-backdrop-filter: blur(24px);
-      border: 1px solid rgba(255, 255, 255, 0.1);
-      border-radius: 24px;
-      box-shadow: 0 20px 50px rgba(0, 0, 0, 0.6);
-      text-align: center;
+    .header {
+      width: 100%;
+      max-width: 1000px;
+      padding: 16px 20px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
     }
-    .badge {
+    .logo-badge {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      font-weight: 800;
+      font-size: 1.1rem;
+      background: linear-gradient(135deg, #fff 0%, #cbd5e1 100%);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+    }
+    .status-pill {
       display: inline-flex;
       align-items: center;
       gap: 8px;
@@ -134,93 +152,371 @@ app.get('/', (req, res) => {
       border: 1px solid rgba(34, 197, 94, 0.3);
       padding: 6px 14px;
       border-radius: 20px;
-      font-size: 0.85rem;
+      font-size: 0.82rem;
       font-weight: 700;
-      margin-bottom: 20px;
     }
-    .pulse {
+    .status-dot {
       width: 8px;
       height: 8px;
       background: #22c55e;
       border-radius: 50%;
       box-shadow: 0 0 10px #22c55e;
     }
-    h1 {
-      margin: 0 0 10px;
-      font-size: 1.8rem;
-      font-weight: 800;
-      background: linear-gradient(135deg, #fff 0%, #cbd5e1 100%);
-      -webkit-background-clip: text;
-      -webkit-text-fill-color: transparent;
+    .main-box {
+      width: 94%;
+      max-width: 1000px;
+      background: var(--card);
+      backdrop-filter: blur(24px);
+      -webkit-backdrop-filter: blur(24px);
+      border: 1px solid var(--border);
+      border-radius: 24px;
+      padding: 24px;
+      box-shadow: 0 25px 60px rgba(0,0,0,0.7);
+      margin-bottom: 30px;
     }
-    p {
-      color: var(--muted);
-      font-size: 0.95rem;
-      line-height: 1.6;
-      margin: 0 0 24px;
-    }
-    .stats-grid {
-      display: grid;
-      grid-template-columns: 1fr 1fr;
+    .player-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      margin-bottom: 16px;
+      flex-wrap: wrap;
       gap: 12px;
-      margin-bottom: 24px;
     }
-    .stat-card {
-      background: rgba(15, 23, 42, 0.6);
-      border: 1px solid rgba(255, 255, 255, 0.06);
-      padding: 16px;
-      border-radius: 14px;
-    }
-    .stat-val {
+    .movie-title {
       font-size: 1.4rem;
       font-weight: 800;
-      color: #a855f7;
+      margin: 0;
+      color: #fff;
     }
-    .stat-lbl {
-      font-size: 0.78rem;
-      color: var(--muted);
-      margin-top: 4px;
+    .room-badge {
+      background: linear-gradient(135deg, rgba(168, 85, 247, 0.25) 0%, rgba(59, 130, 246, 0.25) 100%);
+      border: 1px solid rgba(168, 85, 247, 0.4);
+      color: #c084fc;
+      padding: 6px 14px;
+      border-radius: 12px;
+      font-weight: 700;
+      font-size: 0.88rem;
     }
-    .party-banner {
-      background: linear-gradient(135deg, rgba(168, 85, 247, 0.15) 0%, rgba(59, 130, 246, 0.15) 100%);
-      border: 1px dashed rgba(168, 85, 247, 0.4);
-      padding: 16px;
-      border-radius: 14px;
-      margin-top: 10px;
-      font-size: 0.9rem;
+    .video-wrapper {
+      position: relative;
+      width: 100%;
+      aspect-ratio: 16 / 9;
+      background: #000;
+      border-radius: 18px;
+      overflow: hidden;
+      box-shadow: 0 10px 35px rgba(0,0,0,0.8);
+      border: 1px solid rgba(255,255,255,0.08);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+    video {
+      width: 100%;
+      height: 100%;
+      object-fit: contain;
+      outline: none;
+    }
+    iframe {
+      width: 100%;
+      height: 100%;
+      border: none;
+      position: absolute;
+      inset: 0;
+    }
+    .waiting-screen {
+      text-align: center;
+      padding: 40px 20px;
+    }
+    .waiting-spinner {
+      width: 48px;
+      height: 48px;
+      border: 4px solid rgba(168, 85, 247, 0.2);
+      border-top-color: #a855f7;
+      border-radius: 50%;
+      animation: spin 1s infinite linear;
+      margin: 0 auto 16px;
+    }
+    @keyframes spin { 100% { transform: rotate(360deg); } }
+    .controls-bar {
+      margin-top: 16px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      flex-wrap: wrap;
+      gap: 12px;
+    }
+    .reactions {
+      display: flex;
+      gap: 8px;
+    }
+    .react-btn {
+      background: rgba(255,255,255,0.06);
+      border: 1px solid rgba(255,255,255,0.1);
+      color: #fff;
+      font-size: 1.2rem;
+      padding: 6px 12px;
+      border-radius: 12px;
+      cursor: pointer;
+      transition: all 0.2s ease;
+    }
+    .react-btn:hover {
+      transform: scale(1.15);
+      background: rgba(168, 85, 247, 0.25);
+    }
+    .floating-emoji {
+      position: absolute;
+      bottom: 20px;
+      font-size: 2.2rem;
+      animation: floatUp 2.5s forwards cubic-bezier(0.1, 0.8, 0.3, 1);
+      pointer-events: none;
+      z-index: 10;
+    }
+    @keyframes floatUp {
+      0% { opacity: 1; transform: translateY(0) scale(0.8); }
+      100% { opacity: 0; transform: translateY(-200px) scale(1.6); }
+    }
+    .join-card {
+      text-align: center;
+      padding: 30px;
+    }
+    .input-code {
+      background: rgba(0,0,0,0.4);
+      border: 1px solid rgba(168, 85, 247, 0.4);
+      color: #fff;
+      padding: 12px 18px;
+      border-radius: 12px;
+      font-size: 1.1rem;
+      font-weight: 700;
+      text-align: center;
+      text-transform: uppercase;
+      outline: none;
+      width: 200px;
+      margin-right: 10px;
+    }
+    .btn-join {
+      background: linear-gradient(135deg, #a855f7 0%, #6366f1 100%);
+      color: #fff;
+      border: none;
+      padding: 12px 24px;
+      border-radius: 12px;
+      font-weight: 700;
+      cursor: pointer;
+      font-size: 1rem;
+      transition: all 0.2s;
+    }
+    .btn-join:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 6px 20px rgba(168, 85, 247, 0.4);
     }
   </style>
 </head>
 <body>
-  <div class="container">
-    <div class="badge">
-      <span class="pulse"></span> Server Cloud Online
+  <div class="header">
+    <div class="logo-badge">
+      <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#a855f7" stroke-width="2.5"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"></path><circle cx="9" cy="7" r="4"></circle><path d="M23 21v-2a4 4 0 0 0-3-3.87"></path><path d="M16 3.13a4 4 0 0 1 0 7.75"></path></svg>
+      <span>StreamingCommunity Watch Party</span>
     </div>
-    <h1>Watch Party Sync Hub</h1>
-    <p>Server di sincronizzazione in tempo reale per lo streaming sincronizzato a distanza di film e serie TV.</p>
-    
-    <div class="stats-grid">
-      <div class="stat-card">
-        <div class="stat-val" id="room-count">${Object.keys(rooms).length}</div>
-        <div class="stat-lbl">Stanze Attive</div>
-      </div>
-      <div class="stat-card">
-        <div class="stat-val">WebSocket & REST</div>
-        <div class="stat-lbl">Protocollo Sync</div>
-      </div>
+    <div class="status-pill">
+      <span class="status-dot"></span>
+      <span id="sync-status">Cloud Sync Attivo</span>
+    </div>
+  </div>
+
+  <div class="main-box" id="main-container">
+    <div class="player-header">
+      <h1 class="movie-title" id="film-title">In attesa dell'avvio del film...</h1>
+      <div class="room-badge" id="room-badge">Stanza: <span id="room-code-txt">--</span></div>
     </div>
 
-    ${partyParam ? `
-    <div class="party-banner">
-      🎉 <strong>Sei stato invitato alla stanza: <span style="color:#a855f7; font-size:1.1rem;">${partyParam}</span></strong><br>
-      <span style="color: var(--muted); font-size:0.82rem;">Apri l'app StreamingCommunity su Mac/PC o telefono per unirti alla sincronizzazione automatica!</span>
+    <div class="video-wrapper" id="video-wrapper">
+      <div class="waiting-screen" id="waiting-screen">
+        <div class="waiting-spinner"></div>
+        <h3 style="margin:0 0 8px;">Connesso alla Stanza Sincronizzata</h3>
+        <p style="color:var(--muted); margin:0;" id="waiting-desc">Non appena l'host avvia il film dall'app, il video partirà in sincronia automatica.</p>
+      </div>
+      <video id="player" controls playsinline style="display:none;"></video>
+      <div id="emoji-container"></div>
     </div>
-    ` : `
-    <div class="party-banner">
-      ⚡ Connessione WebSocket e Socket.io pronta per StreamingCommunity App.
+
+    <div class="controls-bar">
+      <div style="font-size: 0.88rem; color: var(--muted);" id="user-info-bar">
+        ⚡ Sincronizzazione real-time attiva via WebSocket
+      </div>
+      <div class="reactions">
+        <button class="react-btn" onclick="sendEmoji('🍿')">🍿</button>
+        <button class="react-btn" onclick="sendEmoji('🔥')">🔥</button>
+        <button class="react-btn" onclick="sendEmoji('😂')">😂</button>
+        <button class="react-btn" onclick="sendEmoji('❤️')">❤️</button>
+        <button class="react-btn" onclick="sendEmoji('😱')">😱</button>
+      </div>
     </div>
-    `}
   </div>
+
+  <script>
+    const urlParams = new URLSearchParams(window.location.search);
+    let roomCode = (urlParams.get('party') || urlParams.get('room') || '').toUpperCase().trim();
+
+    const filmTitleEl = document.getElementById('film-title');
+    const roomCodeTxt = document.getElementById('room-code-txt');
+    const waitingScreen = document.getElementById('waiting-screen');
+    const waitingDesc = document.getElementById('waiting-desc');
+    const player = document.getElementById('player');
+    const videoWrapper = document.getElementById('video-wrapper');
+    const emojiContainer = document.getElementById('emoji-container');
+    const syncStatus = document.getElementById('sync-status');
+
+    let hls = null;
+    let isRemoteUpdate = false;
+    const socket = io();
+
+    if (!roomCode) {
+      roomCode = 'SC-' + Math.floor(1000 + Math.random() * 9000);
+      window.history.replaceState({}, '', '/?party=' + roomCode);
+    }
+
+    roomCodeTxt.textContent = roomCode;
+
+    socket.on('connect', () => {
+      syncStatus.textContent = '🟢 Connesso al Cloud';
+      socket.emit('join_room', {
+        roomCode: roomCode,
+        user: 'Ospite Web ' + Math.floor(Math.random() * 100)
+      });
+    });
+
+    socket.on('initial_state', (data) => {
+      handleSyncState(data);
+    });
+
+    socket.on('sync_event', (data) => {
+      handleSyncState(data);
+    });
+
+    socket.on('state_updated', (data) => {
+      handleSyncState(data);
+    });
+
+    socket.on('reaction', (data) => {
+      spawnEmoji(data.emoji);
+    });
+
+    function handleSyncState(data) {
+      if (!data) return;
+      if (data.title) {
+        filmTitleEl.textContent = data.title;
+      }
+
+      if (data.streamUrl) {
+        loadStream(data.streamUrl, data.isEmbed);
+      }
+
+      if (player && data.time !== undefined && !data.isEmbed) {
+        if (Math.abs(player.currentTime - data.time) > 1.5) {
+          isRemoteUpdate = true;
+          player.currentTime = data.time;
+          setTimeout(() => { isRemoteUpdate = false; }, 400);
+        }
+      }
+
+      if (player && !data.isEmbed) {
+        if (data.isPlaying && player.paused) {
+          player.play().catch(() => {});
+        } else if (data.isPlaying === false && !player.paused) {
+          player.pause();
+        }
+      }
+    }
+
+    function loadStream(url, isEmbed) {
+      if (!url) return;
+      waitingScreen.style.display = 'none';
+
+      if (isEmbed) {
+        let iframe = document.getElementById('web-embed-iframe');
+        if (!iframe) {
+          player.style.display = 'none';
+          iframe = document.createElement('iframe');
+          iframe.id = 'web-embed-iframe';
+          iframe.allow = "autoplay; fullscreen; encrypted-media; picture-in-picture";
+          videoWrapper.appendChild(iframe);
+        }
+        iframe.style.display = 'block';
+        if (iframe.src !== url) iframe.src = url;
+        return;
+      }
+
+      // HLS / Direct Video
+      player.style.display = 'block';
+      const existingIframe = document.getElementById('web-embed-iframe');
+      if (existingIframe) existingIframe.style.display = 'none';
+
+      if (Hls.isSupported() && url.includes('.m3u8')) {
+        if (!hls || hls.url !== url) {
+          if (hls) hls.destroy();
+          hls = new Hls({
+            enableWorker: true,
+            lowLatencyMode: true
+          });
+          hls.loadSource(url);
+          hls.attachMedia(player);
+          hls.on(Hls.Events.MANIFEST_PARSED, () => {
+            player.play().catch(() => {});
+          });
+        }
+      } else if (player.src !== url) {
+        player.src = url;
+        player.play().catch(() => {});
+      }
+    }
+
+    // Video events -> emit sync
+    player.addEventListener('play', () => {
+      if (!isRemoteUpdate) {
+        socket.emit('sync_event', {
+          roomCode: roomCode,
+          type: 'play',
+          isPlaying: true,
+          time: player.currentTime
+        });
+      }
+    });
+
+    player.addEventListener('pause', () => {
+      if (!isRemoteUpdate) {
+        socket.emit('sync_event', {
+          roomCode: roomCode,
+          type: 'pause',
+          isPlaying: false,
+          time: player.currentTime
+        });
+      }
+    });
+
+    player.addEventListener('seeked', () => {
+      if (!isRemoteUpdate) {
+        socket.emit('sync_event', {
+          roomCode: roomCode,
+          type: 'seek',
+          isPlaying: !player.paused,
+          time: player.currentTime
+        });
+      }
+    });
+
+    function sendEmoji(emoji) {
+      spawnEmoji(emoji);
+      socket.emit('reaction', { roomCode: roomCode, emoji: emoji });
+    }
+
+    function spawnEmoji(emoji) {
+      const el = document.createElement('div');
+      el.className = 'floating-emoji';
+      el.textContent = emoji;
+      el.style.left = Math.floor(20 + Math.random() * 60) + '%';
+      emojiContainer.appendChild(el);
+      setTimeout(() => el.remove(), 2500);
+    }
+  </script>
 </body>
 </html>`);
 });
@@ -245,6 +541,7 @@ io.on('connection', (socket) => {
         code,
         title: data.title || 'Film Sincronizzato',
         streamUrl: data.streamUrl || '',
+        isEmbed: data.isEmbed || false,
         time: data.time || 0,
         isPlaying: data.isPlaying ?? true,
         host: currentUser,
@@ -272,24 +569,43 @@ io.on('connection', (socket) => {
   });
 
   socket.on('sync_event', (payload) => {
-    if (!currentRoom || !rooms[currentRoom]) return;
+    const code = (payload.roomCode || currentRoom || '').toUpperCase().trim();
+    if (!code) return;
 
-    if (payload.title) rooms[currentRoom].title = payload.title;
-    if (payload.streamUrl) rooms[currentRoom].streamUrl = payload.streamUrl;
-    if (payload.time !== undefined) rooms[currentRoom].time = payload.time;
-    if (payload.isPlaying !== undefined) rooms[currentRoom].isPlaying = payload.isPlaying;
-    rooms[currentRoom].updatedAt = Date.now();
+    if (!rooms[code]) {
+      rooms[code] = {
+        code,
+        title: payload.title || 'Film Sincronizzato',
+        streamUrl: payload.streamUrl || '',
+        isEmbed: payload.isEmbed || false,
+        time: payload.time || 0,
+        isPlaying: payload.isPlaying ?? true,
+        host: currentUser || 'Host',
+        createdAt: Date.now(),
+        updatedAt: Date.now(),
+        participants: {}
+      };
+    } else {
+      if (payload.title) rooms[code].title = payload.title;
+      if (payload.streamUrl) rooms[code].streamUrl = payload.streamUrl;
+      if (payload.isEmbed !== undefined) rooms[code].isEmbed = payload.isEmbed;
+      if (payload.time !== undefined) rooms[code].time = payload.time;
+      if (payload.isPlaying !== undefined) rooms[code].isPlaying = payload.isPlaying;
+      rooms[code].updatedAt = Date.now();
+    }
 
     // Broadcast event to other participants in the room
-    socket.to(currentRoom).emit('sync_event', {
+    socket.to(code).emit('sync_event', {
+      ...rooms[code],
       ...payload,
       senderId: socket.id
     });
   });
 
   socket.on('chat_message', (msg) => {
-    if (!currentRoom) return;
-    io.to(currentRoom).emit('chat_message', {
+    const code = (msg.roomCode || currentRoom || '').toUpperCase().trim();
+    if (!code) return;
+    io.to(code).emit('chat_message', {
       user: currentUser,
       text: msg.text || '',
       time: Date.now(),
@@ -298,8 +614,9 @@ io.on('connection', (socket) => {
   });
 
   socket.on('reaction', (reaction) => {
-    if (!currentRoom) return;
-    socket.to(currentRoom).emit('reaction', {
+    const code = (reaction.roomCode || currentRoom || '').toUpperCase().trim();
+    if (!code) return;
+    socket.to(code).emit('reaction', {
       emoji: reaction.emoji || '❤️',
       user: currentUser
     });
