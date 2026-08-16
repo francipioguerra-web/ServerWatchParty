@@ -22,6 +22,7 @@
       --accent: #e50914;
       --accent-glow: rgba(229, 9, 20, 0.4);
       --accent-indigo: #6366f1;
+      --accent-green: #22c55e;
       --text-main: #ffffff;
       --text-muted: #94a3b8;
       --text-dim: #64748b;
@@ -45,7 +46,7 @@
       font-family: var(--font-family);
       overflow-x: hidden;
       min-height: 100vh;
-      padding-bottom: 80px; /* Space for floating bottom navbar */
+      padding-bottom: 84px;
       -webkit-font-smoothing: antialiased;
     }
 
@@ -56,13 +57,13 @@
       z-index: 50;
       backdrop-filter: blur(20px);
       -webkit-backdrop-filter: blur(20px);
-      background: rgba(9, 9, 11, 0.9);
+      background: rgba(9, 9, 11, 0.92);
       border-bottom: 1px solid var(--border);
       padding: 10px 16px;
       display: flex;
       align-items: center;
       justify-content: space-between;
-      gap: 12px;
+      gap: 10px;
     }
 
     .brand-section {
@@ -94,8 +95,8 @@
 
     .header-center {
       flex: 1;
-      max-width: 480px;
-      min-width: 140px;
+      max-width: 440px;
+      min-width: 120px;
     }
 
     .search-wrapper {
@@ -110,7 +111,7 @@
       background: var(--bg-card);
       border: 1px solid var(--border);
       color: var(--text-main);
-      padding: 8px 34px 8px 36px;
+      padding: 8px 32px 8px 34px;
       border-radius: 999px;
       font-size: 0.88rem;
       outline: none;
@@ -125,7 +126,7 @@
 
     .search-icon {
       position: absolute;
-      left: 12px;
+      left: 11px;
       top: 50%;
       transform: translateY(-50%);
       color: var(--text-dim);
@@ -140,10 +141,10 @@
       background: rgba(255, 255, 255, 0.15);
       border: none;
       color: #fff;
-      width: 20px;
-      height: 20px;
+      width: 18px;
+      height: 18px;
       border-radius: 50%;
-      font-size: 0.75rem;
+      font-size: 0.72rem;
       cursor: pointer;
       display: flex;
       align-items: center;
@@ -161,39 +162,191 @@
       flex-shrink: 0;
     }
 
-    .btn-header-random {
+    .icon-btn {
       background: rgba(255, 255, 255, 0.08);
       border: 1px solid var(--border);
       color: #fff;
-      padding: 7px 12px;
-      border-radius: 999px;
-      font-size: 0.82rem;
-      font-weight: 700;
-      cursor: pointer;
+      width: 36px;
+      height: 36px;
+      border-radius: 50%;
       display: flex;
       align-items: center;
-      gap: 6px;
+      justify-content: center;
+      cursor: pointer;
+      position: relative;
       transition: all 0.2s;
     }
 
-    .btn-header-random:hover {
+    .icon-btn:hover {
       background: rgba(255, 255, 255, 0.18);
+    }
+
+    .notif-badge {
+      position: absolute;
+      top: -2px;
+      right: -2px;
+      background: var(--accent);
+      color: #fff;
+      font-size: 0.68rem;
+      font-weight: 800;
+      min-width: 17px;
+      height: 17px;
+      border-radius: 999px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 0 4px;
+      box-shadow: 0 2px 6px rgba(229, 9, 20, 0.6);
+    }
+
+    .notif-badge.hidden {
+      display: none;
+    }
+
+    .user-avatar-btn {
+      width: 36px;
+      height: 36px;
+      border-radius: 50%;
+      border: 2px solid rgba(255, 255, 255, 0.2);
+      overflow: hidden;
+      cursor: pointer;
+      background: var(--accent-indigo);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-weight: 800;
+      font-size: 0.85rem;
+    }
+
+    .user-avatar-img {
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
     }
 
     @media (max-width: 600px) {
       .brand-title {
         display: none;
       }
-      .btn-header-random span {
-        display: none;
-      }
-      .btn-header-random {
-        padding: 7px 10px;
-      }
       .app-header {
-        padding: 8px 12px;
-        gap: 8px;
+        padding: 8px 10px;
+        gap: 6px;
       }
+    }
+
+    /* DROPDOWN NOTIFICATIONS MENU */
+    .dropdown-menu {
+      position: absolute;
+      top: 56px;
+      right: 16px;
+      width: 330px;
+      max-width: calc(100vw - 32px);
+      background: #14141a;
+      border: 1px solid rgba(255, 255, 255, 0.14);
+      border-radius: var(--radius-md);
+      box-shadow: 0 16px 40px rgba(0, 0, 0, 0.8);
+      z-index: 100;
+      overflow: hidden;
+      display: flex;
+      flex-direction: column;
+    }
+
+    .dropdown-menu.hidden {
+      display: none;
+    }
+
+    .dropdown-header {
+      padding: 12px 16px;
+      border-bottom: 1px solid var(--border);
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      font-size: 0.9rem;
+      font-weight: 800;
+      background: rgba(255, 255, 255, 0.03);
+    }
+
+    .dropdown-body {
+      max-height: 360px;
+      overflow-y: auto;
+      padding: 8px;
+      display: flex;
+      flex-direction: column;
+      gap: 6px;
+    }
+
+    .notif-card {
+      background: rgba(255, 255, 255, 0.04);
+      border: 1px solid var(--border);
+      border-radius: var(--radius-sm);
+      padding: 10px;
+      display: flex;
+      gap: 10px;
+      align-items: flex-start;
+      transition: all 0.2s;
+    }
+
+    .notif-card.unread {
+      background: rgba(99, 102, 241, 0.12);
+      border-color: rgba(99, 102, 241, 0.35);
+    }
+
+    .notif-poster {
+      width: 44px;
+      height: 60px;
+      border-radius: 6px;
+      object-fit: cover;
+      flex-shrink: 0;
+      background: #202028;
+    }
+
+    .notif-info {
+      flex: 1;
+      font-size: 0.8rem;
+    }
+
+    .notif-title {
+      font-weight: 700;
+      color: #fff;
+      margin-bottom: 2px;
+    }
+
+    .notif-sender {
+      color: var(--text-muted);
+      font-size: 0.72rem;
+      margin-bottom: 6px;
+    }
+
+    .notif-btn-play {
+      background: var(--accent);
+      color: #fff;
+      border: none;
+      padding: 4px 10px;
+      border-radius: 6px;
+      font-size: 0.75rem;
+      font-weight: 700;
+      cursor: pointer;
+      display: inline-flex;
+      align-items: center;
+      gap: 4px;
+    }
+
+    .notif-btn-action {
+      background: rgba(255, 255, 255, 0.12);
+      color: #fff;
+      border: none;
+      padding: 4px 8px;
+      border-radius: 6px;
+      font-size: 0.72rem;
+      font-weight: 600;
+      cursor: pointer;
+    }
+
+    .notif-empty {
+      padding: 30px 16px;
+      text-align: center;
+      color: var(--text-dim);
+      font-size: 0.85rem;
     }
 
     /* MAIN CONTENT */
@@ -329,6 +482,17 @@
     }
 
     .btn-vix:hover {
+      opacity: 0.95;
+      transform: translateY(-1px);
+    }
+
+    .btn-share-friend {
+      background: linear-gradient(135deg, #10b981, #059669);
+      color: #fff;
+      box-shadow: 0 4px 14px rgba(16, 185, 129, 0.35);
+    }
+
+    .btn-share-friend:hover {
       opacity: 0.95;
       transform: translateY(-1px);
     }
@@ -645,7 +809,7 @@
       left: 50%;
       transform: translateX(-50%);
       z-index: 90;
-      background: rgba(20, 20, 26, 0.92);
+      background: rgba(20, 20, 26, 0.94);
       backdrop-filter: blur(20px);
       -webkit-backdrop-filter: blur(20px);
       border: 1px solid rgba(255, 255, 255, 0.12);
@@ -653,7 +817,7 @@
       padding: 6px 14px;
       display: flex;
       align-items: center;
-      gap: 8px;
+      gap: 6px;
       box-shadow: 0 12px 32px rgba(0, 0, 0, 0.65);
     }
 
@@ -726,12 +890,48 @@
     </div>
 
     <div class="header-right">
-      <button id="btn-header-random" class="btn-header-random" title="Scegli un film casuale">
-        <span>🎲</span>
-        <span>Casuale</span>
+      <!-- NOTIFICATIONS BELL DROPDOWN BUTTON -->
+      <button id="btn-notif-bell" class="icon-btn" title="Notifiche e inviti">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"></path><path d="M13.73 21a2 2 0 0 1-3.46 0"></path></svg>
+        <span id="notif-badge" class="notif-badge hidden">0</span>
       </button>
+
+      <!-- USER PROFILE / LOGIN BUTTON -->
+      <div id="user-profile-widget">
+        <button id="btn-login-open" class="btn btn-secondary" style="padding: 6px 12px; font-size: 0.8rem; border-radius: 999px;">
+          Accedi
+        </button>
+      </div>
     </div>
   </header>
+
+  <!-- NOTIFICATIONS DROPDOWN MENU -->
+  <div id="notif-dropdown" class="dropdown-menu hidden">
+    <div class="dropdown-header">
+      <span>🔔 Notifiche & Inviti</span>
+      <button id="btn-close-notif-dropdown" style="background:none; border:none; color:var(--text-muted); cursor:pointer; font-size:1.2rem;">&times;</button>
+    </div>
+    <div id="notif-list" class="dropdown-body">
+      <div class="notif-empty">Nessuna notifica ricevuta.</div>
+    </div>
+  </div>
+
+  <!-- USER PROFILE DROPDOWN MENU -->
+  <div id="user-dropdown" class="dropdown-menu hidden" style="width: 260px;">
+    <div class="dropdown-header">
+      <span id="dropdown-user-name">Mio Profilo</span>
+      <button id="btn-close-user-dropdown" style="background:none; border:none; color:var(--text-muted); cursor:pointer; font-size:1.2rem;">&times;</button>
+    </div>
+    <div style="padding: 14px; display: flex; flex-direction: column; gap: 10px;">
+      <div style="font-size: 0.78rem; color: var(--text-dim);" id="dropdown-user-email">email@gmail.com</div>
+      <button id="btn-open-friends-modal" class="btn btn-secondary" style="width:100%; justify-content: flex-start;">
+        👥 Gestisci Amici (<span id="user-friends-count">0</span>)
+      </button>
+      <button id="btn-logout" class="btn btn-secondary" style="width:100%; justify-content: flex-start; color: #ef4444;">
+        🚪 Esci dall'account
+      </button>
+    </div>
+  </div>
 
   <!-- MAIN CONTAINER -->
   <main class="main-container">
@@ -781,7 +981,7 @@
             <div id="episodes-grid" class="episodes-grid"></div>
           </div>
 
-          <div class="modal-options-title">Opzioni di Riproduzione:</div>
+          <div class="modal-options-title">Opzioni di Riproduzione & Social:</div>
           <div class="modal-actions-row">
             <!-- OPTION 1: NATIVE SYSTEM PLAYER (IOS AVPLAYER / ANDROID INTENT) -->
             <button id="btn-modal-player-open" class="btn btn-primary">
@@ -795,13 +995,75 @@
               Apri Link Vixcloud
             </button>
 
-            <!-- OPTION 3: OPEN IN EXTERNAL APP (IPAD/MOBILE VLC, INFUSE) -->
+            <!-- OPTION 3: SHARE FILM WITH FRIEND -->
+            <button id="btn-modal-share-friend" class="btn btn-share-friend" title="Invia film a un amico">
+              <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><circle cx="18" cy="5" r="3"></circle><circle cx="6" cy="12" r="3"></circle><circle cx="18" cy="19" r="3"></circle><line x1="8.59" y1="13.51" x2="15.42" y2="17.49"></line><line x1="15.41" y1="6.51" x2="8.59" y2="10.49"></line></svg>
+              Invia ad un Amico
+            </button>
+
+            <!-- OPTION 4: OPEN IN EXTERNAL APP (VLC) -->
             <button id="btn-modal-external" class="btn btn-secondary" title="Apri in VLC / Infuse">
               <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path><polyline points="7 10 12 15 17 10"></polyline><line x1="12" y1="15" x2="12" y2="3"></line></svg>
               Apri in VLC
             </button>
           </div>
         </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- SHARE FILM TO FRIEND MODAL -->
+  <div id="share-modal" class="modal-overlay hidden">
+    <div class="modal-card" style="max-width: 440px; padding: 22px;">
+      <button id="btn-close-share" class="modal-close-btn">&times;</button>
+      <h3 style="font-size: 1.2rem; font-weight: 800; margin-bottom: 6px;">📤 Invia Film a un Amico</h3>
+      <p style="font-size: 0.82rem; color: var(--text-muted); margin-bottom: 16px;">Seleziona l'amico a cui vuoi inviare il link diretto Vixcloud di questo film:</p>
+      
+      <div id="share-friends-list" style="display: flex; flex-direction: column; gap: 8px; max-height: 240px; overflow-y: auto; margin-bottom: 14px;">
+        <div style="color: var(--text-dim); text-align: center; padding: 20px;">Caricamento lista amici...</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- GOOGLE LOGIN MODAL -->
+  <div id="login-modal" class="modal-overlay hidden">
+    <div class="modal-card" style="max-width: 420px; padding: 24px; text-align: center;">
+      <button id="btn-close-login" class="modal-close-btn">&times;</button>
+      <div style="width: 50px; height: 50px; background: rgba(99, 102, 241, 0.2); border: 1px solid rgba(99, 102, 241, 0.4); border-radius: 50%; display: flex; align-items: center; justify-content: center; margin: 0 auto 14px;">
+        <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="var(--accent-indigo)" stroke-width="2.5"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path><circle cx="12" cy="7" r="4"></circle></svg>
+      </div>
+      <h2 style="font-size: 1.3rem; font-weight: 800; margin-bottom: 6px;">Accedi a StreamingCommunity</h2>
+      <p style="font-size: 0.82rem; color: var(--text-muted); margin-bottom: 20px;">Accedi per aggiungere amici e condividere i film istantaneamente.</p>
+
+      <form id="form-login" style="display: flex; flex-direction: column; gap: 10px; text-align: left;">
+        <div>
+          <label style="font-size: 0.75rem; color: var(--text-dim); font-weight: 700; text-transform: uppercase;">La tua Email Google</label>
+          <input type="email" id="input-login-email" required placeholder="tuonome@gmail.com" style="width:100%; background:rgba(255,255,255,0.06); border:1px solid rgba(255,255,255,0.12); color:#fff; padding:10px 14px; border-radius:8px; font-size:0.9rem; margin-top:4px; outline:none;" />
+        </div>
+        <div>
+          <label style="font-size: 0.75rem; color: var(--text-dim); font-weight: 700; text-transform: uppercase;">Il tuo Nome</label>
+          <input type="text" id="input-login-name" required placeholder="Marco" style="width:100%; background:rgba(255,255,255,0.06); border:1px solid rgba(255,255,255,0.12); color:#fff; padding:10px 14px; border-radius:8px; font-size:0.9rem; margin-top:4px; outline:none;" />
+        </div>
+        <button type="submit" class="btn btn-primary" style="margin-top: 10px; padding: 12px; width: 100%;">Accedi Subito</button>
+      </form>
+    </div>
+  </div>
+
+  <!-- FRIENDS MANAGEMENT MODAL -->
+  <div id="friends-modal" class="modal-overlay hidden">
+    <div class="modal-card" style="max-width: 480px; padding: 22px;">
+      <button id="btn-close-friends" class="modal-close-btn">&times;</button>
+      <h3 style="font-size: 1.2rem; font-weight: 800; margin-bottom: 6px;">👥 Gestione Amici</h3>
+      <p style="font-size: 0.82rem; color: var(--text-muted); margin-bottom: 16px;">Invia richieste di amicizia tramite email per scambiarvi i link dei film.</p>
+
+      <form id="form-add-friend" style="display: flex; gap: 8px; margin-bottom: 20px;">
+        <input type="email" id="input-friend-email" required placeholder="email.amico@gmail.com" style="flex:1; background:rgba(255,255,255,0.06); border:1px solid rgba(255,255,255,0.12); color:#fff; padding:9px 12px; border-radius:8px; font-size:0.88rem; outline:none;" />
+        <button type="submit" class="btn btn-primary" style="padding:9px 16px; font-size:0.85rem;">Invia Invito</button>
+      </form>
+
+      <div class="modal-options-title">I Tuoi Amici:</div>
+      <div id="active-friends-list" style="display: flex; flex-direction: column; gap: 8px; max-height: 200px; overflow-y: auto;">
+        <div style="color: var(--text-dim); text-align: center; padding: 15px;">Nessun amico aggiunto.</div>
       </div>
     </div>
   </div>
@@ -837,9 +1099,9 @@
       <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M16 3h5v5M4 20L21 3M21 16v5h-5M15 15l6 6M4 4l5 5"/></svg>
       <span>Casuale</span>
     </button>
-    <button class="nav-item" id="nav-saved">
-      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M19 21l-7-5-7 5V5a2 2 0 0 1 2-2h10a2 2 0 0 1 2 2z"/></svg>
-      <span>Preferiti</span>
+    <button class="nav-item" id="nav-friends">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"></path><circle cx="9" cy="7" r="4"></circle><path d="M23 21v-2a4 4 0 0 0-3-3.87"></path><path d="M16 3.13a4 4 0 0 1 0 7.75"></path></svg>
+      <span>Amici</span>
     </button>
   </nav>
 
@@ -851,8 +1113,11 @@
       let loadedCatalog = [];
       let currentActiveItem = null;
       let currentHls = null;
-      let savedFavorites = JSON.parse(localStorage.getItem('sc_favs') || '[]');
+      let currentUser = JSON.parse(localStorage.getItem('sc_logged_user') || 'null');
+      let currentFriends = [];
+      let notifPollingInterval = null;
 
+      // DOM ELEMENTS
       const catalogGrid = document.getElementById('catalog-grid');
       const mainSearchInput = document.getElementById('main-search-input');
       const searchClearBtn = document.getElementById('search-clear-btn');
@@ -872,6 +1137,7 @@
       const episodesGrid = document.getElementById('episodes-grid');
       const btnModalVixOpen = document.getElementById('btn-modal-vix-open');
       const btnModalPlayerOpen = document.getElementById('btn-modal-player-open');
+      const btnModalShareFriend = document.getElementById('btn-modal-share-friend');
       const btnModalExternal = document.getElementById('btn-modal-external');
       const playerModal = document.getElementById('player-modal');
       const btnPlayerBack = document.getElementById('btn-player-back');
@@ -881,12 +1147,40 @@
       const webIframe = document.getElementById('web-iframe');
       const toast = document.getElementById('toast');
       const btnBrandHome = document.getElementById('btn-brand-home');
-      const btnHeaderRandom = document.getElementById('btn-header-random');
       const navHome = document.getElementById('nav-home');
       const navSearch = document.getElementById('nav-search');
       const navRandom = document.getElementById('nav-random');
-      const navSaved = document.getElementById('nav-saved');
+      const navFriends = document.getElementById('nav-friends');
       const gridSectionHeading = document.getElementById('grid-section-heading');
+
+      // SOCIAL & NOTIFICATIONS ELEMENTS
+      const btnNotifBell = document.getElementById('btn-notif-bell');
+      const notifBadge = document.getElementById('notif-badge');
+      const notifDropdown = document.getElementById('notif-dropdown');
+      const btnCloseNotifDropdown = document.getElementById('btn-close-notif-dropdown');
+      const notifList = document.getElementById('notif-list');
+      const userProfileWidget = document.getElementById('user-profile-widget');
+      const btnLoginOpen = document.getElementById('btn-login-open');
+      const userDropdown = document.getElementById('user-dropdown');
+      const btnCloseUserDropdown = document.getElementById('btn-close-user-dropdown');
+      const dropdownUserName = document.getElementById('dropdown-user-name');
+      const dropdownUserEmail = document.getElementById('dropdown-user-email');
+      const userFriendsCount = document.getElementById('user-friends-count');
+      const btnOpenFriendsModal = document.getElementById('btn-open-friends-modal');
+      const btnLogout = document.getElementById('btn-logout');
+      const loginModal = document.getElementById('login-modal');
+      const btnCloseLogin = document.getElementById('btn-close-login');
+      const formLogin = document.getElementById('form-login');
+      const inputLoginEmail = document.getElementById('input-login-email');
+      const inputLoginName = document.getElementById('input-login-name');
+      const friendsModal = document.getElementById('friends-modal');
+      const btnCloseFriends = document.getElementById('btn-close-friends');
+      const formAddFriend = document.getElementById('form-add-friend');
+      const inputFriendEmail = document.getElementById('input-friend-email');
+      const activeFriendsList = document.getElementById('active-friends-list');
+      const shareModal = document.getElementById('share-modal');
+      const btnCloseShare = document.getElementById('btn-close-share');
+      const shareFriendsList = document.getElementById('share-friends-list');
 
       function showToast(msg) {
         toast.textContent = msg;
@@ -894,7 +1188,354 @@
         setTimeout(() => toast.classList.add('hidden'), 2800);
       }
 
-      // LOAD HOME CATALOG
+      // -------------------------------------------------------------
+      // USER AUTH & PROFILE
+      // -------------------------------------------------------------
+      function updateAuthUI() {
+        if (currentUser && currentUser.email) {
+          userProfileWidget.innerHTML = `
+            <div class="user-avatar-btn" id="btn-user-avatar" title="${currentUser.name}">
+              <img class="user-avatar-img" src="${currentUser.avatar || ''}" alt="${currentUser.name}" onerror="this.src='https://ui-avatars.com/api/?name=${encodeURIComponent(currentUser.name)}&background=6366f1&color=fff'" />
+            </div>
+          `;
+          document.getElementById('btn-user-avatar').onclick = () => {
+            dropdownUserName.textContent = currentUser.name;
+            dropdownUserEmail.textContent = currentUser.email;
+            userDropdown.classList.toggle('hidden');
+            notifDropdown.classList.add('hidden');
+          };
+          fetchFriends();
+          startNotificationPolling();
+        } else {
+          userProfileWidget.innerHTML = `
+            <button id="btn-login-open" class="btn btn-secondary" style="padding: 6px 12px; font-size: 0.8rem; border-radius: 999px;">
+              Accedi
+            </button>
+          `;
+          document.getElementById('btn-login-open').onclick = () => loginModal.classList.remove('hidden');
+          if (notifPollingInterval) clearInterval(notifPollingInterval);
+          notifBadge.classList.add('hidden');
+        }
+      }
+
+      formLogin.onsubmit = async (e) => {
+        e.preventDefault();
+        const email = inputLoginEmail.value.trim();
+        const name = inputLoginName.value.trim();
+        if (!email) return;
+
+        try {
+          const res = await fetch('/api/auth/login', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ email, name })
+          });
+          const data = await res.json();
+          if (data.success && data.user) {
+            currentUser = data.user;
+            localStorage.setItem('sc_logged_user', JSON.stringify(currentUser));
+            loginModal.classList.add('hidden');
+            updateAuthUI();
+            showToast(`Bentornato, ${currentUser.name}!`);
+          }
+        } catch (err) {
+          showToast('Errore durante l\'accesso.');
+        }
+      };
+
+      btnLogout.onclick = () => {
+        currentUser = null;
+        localStorage.removeItem('sc_logged_user');
+        userDropdown.classList.add('hidden');
+        updateAuthUI();
+        showToast('Disconnesso con successo.');
+      };
+
+      btnCloseLogin.onclick = () => loginModal.classList.add('hidden');
+      btnCloseUserDropdown.onclick = () => userDropdown.classList.add('hidden');
+
+      // -------------------------------------------------------------
+      // FRIENDS MANAGEMENT
+      // -------------------------------------------------------------
+      async function fetchFriends() {
+        if (!currentUser) return;
+        try {
+          const res = await fetch(`/api/friends/list?email=${encodeURIComponent(currentUser.email)}`);
+          const data = await res.json();
+          if (data.success) {
+            currentFriends = data.friends || [];
+            userFriendsCount.textContent = currentFriends.length;
+            renderFriendsList();
+          }
+        } catch (e) {}
+      }
+
+      function renderFriendsList() {
+        activeFriendsList.innerHTML = '';
+        if (currentFriends.length === 0) {
+          activeFriendsList.innerHTML = '<div style="color: var(--text-dim); text-align: center; padding: 15px;">Nessun amico nella tua lista. Invia un invito sopra!</div>';
+          return;
+        }
+
+        currentFriends.forEach(fr => {
+          const item = document.createElement('div');
+          item.style = 'display:flex; align-items:center; justify-content:space-between; background:rgba(255,255,255,0.05); padding:8px 12px; border-radius:8px;';
+          item.innerHTML = `
+            <div style="display:flex; align-items:center; gap:8px;">
+              <img src="${fr.avatar || ''}" style="width:28px; height:28px; border-radius:50%; background:#6366f1;" onerror="this.src='https://ui-avatars.com/api/?name=${encodeURIComponent(fr.name)}&background=6366f1&color=fff'" />
+              <div>
+                <div style="font-size:0.85rem; font-weight:700; color:#fff;">${fr.name}</div>
+                <div style="font-size:0.72rem; color:var(--text-dim);">${fr.email}</div>
+              </div>
+            </div>
+            <span style="font-size:0.72rem; color:#4ade80; font-weight:700;">Amico ✓</span>
+          `;
+          activeFriendsList.appendChild(item);
+        });
+      }
+
+      formAddFriend.onsubmit = async (e) => {
+        e.preventDefault();
+        const toEmail = inputFriendEmail.value.trim();
+        if (!currentUser) {
+          showToast('Accedi prima per inviare richieste.');
+          loginModal.classList.remove('hidden');
+          return;
+        }
+
+        try {
+          const res = await fetch('/api/friends/request', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ fromEmail: currentUser.email, toEmail: toEmail })
+          });
+          const data = await res.json();
+          if (data.success) {
+            inputFriendEmail.value = '';
+            showToast(data.message || 'Richiesta di amicizia inviata!');
+            fetchFriends();
+          } else {
+            showToast(data.error || 'Impossibile inviare la richiesta.');
+          }
+        } catch (e) {
+          showToast('Errore di connessione.');
+        }
+      };
+
+      btnOpenFriendsModal.onclick = () => {
+        userDropdown.classList.add('hidden');
+        friendsModal.classList.remove('hidden');
+        fetchFriends();
+      };
+      btnCloseFriends.onclick = () => friendsModal.classList.add('hidden');
+      navFriends.onclick = () => {
+        if (!currentUser) loginModal.classList.remove('hidden');
+        else {
+          friendsModal.classList.remove('hidden');
+          fetchFriends();
+        }
+      };
+
+      // -------------------------------------------------------------
+      // NOTIFICATIONS ENGINE
+      // -------------------------------------------------------------
+      async function fetchNotifications() {
+        if (!currentUser) return;
+        try {
+          const res = await fetch(`/api/notifications?email=${encodeURIComponent(currentUser.email)}`);
+          const data = await res.json();
+          if (data.success) {
+            const list = data.notifications || [];
+            const unread = data.unreadCount || 0;
+
+            if (unread > 0) {
+              notifBadge.textContent = unread;
+              notifBadge.classList.remove('hidden');
+            } else {
+              notifBadge.classList.add('hidden');
+            }
+
+            renderNotifications(list);
+          }
+        } catch (e) {}
+      }
+
+      function renderNotifications(list) {
+        notifList.innerHTML = '';
+        if (!list || list.length === 0) {
+          notifList.innerHTML = '<div class="notif-empty">Nessuna notifica ricevuta.</div>';
+          return;
+        }
+
+        list.forEach(n => {
+          const card = document.createElement('div');
+          card.className = `notif-card ${!n.read ? 'unread' : ''}`;
+
+          if (n.type === 'film_share') {
+            card.innerHTML = `
+              <img class="notif-poster" src="${n.poster || 'https://via.placeholder.com/100x150'}" alt="${n.filmTitle}" />
+              <div class="notif-info">
+                <div class="notif-title">🎬 ${n.filmTitle}</div>
+                <div class="notif-sender">Inviato da <strong>${n.fromName || n.fromEmail}</strong></div>
+                <button class="notif-btn-play" data-stream="${n.streamUrl || ''}" data-title="${n.filmTitle}">
+                  <svg width="12" height="12" viewBox="0 0 24 24" fill="currentColor"><polygon points="5 3 19 12 5 21 5 3"></polygon></svg>
+                  Guarda Ora
+                </button>
+              </div>
+            `;
+            card.querySelector('.notif-btn-play').onclick = () => {
+              notifDropdown.classList.add('hidden');
+              playDirectStream(n.streamUrl, n.filmTitle);
+            };
+          } else if (n.type === 'friend_request') {
+            card.innerHTML = `
+              <div style="width:36px; height:36px; border-radius:50%; background:#6366f1; display:flex; align-items:center; justify-content:center; font-size:1.1rem; flex-shrink:0;">👤</div>
+              <div class="notif-info">
+                <div class="notif-title">Richiesta di Amicizia</div>
+                <div class="notif-sender">Da: <strong>${n.fromName || n.fromEmail}</strong></div>
+                <div style="display:flex; gap:6px; margin-top:4px;">
+                  <button class="notif-btn-action" style="background:#22c55e;" data-accept="true">Accetta</button>
+                  <button class="notif-btn-action" style="background:#ef4444;" data-accept="false">Rifiuta</button>
+                </div>
+              </div>
+            `;
+            card.querySelector('[data-accept="true"]').onclick = () => respondFriend(n.fromEmail, true);
+            card.querySelector('[data-accept="false"]').onclick = () => respondFriend(n.fromEmail, false);
+          } else if (n.type === 'friend_accepted') {
+            card.innerHTML = `
+              <div style="width:36px; height:36px; border-radius:50%; background:#22c55e; display:flex; align-items:center; justify-content:center; font-size:1.1rem; flex-shrink:0;">🤝</div>
+              <div class="notif-info">
+                <div class="notif-title">Nuovo Amico!</div>
+                <div class="notif-sender"><strong>${n.fromName || n.fromEmail}</strong> ha accettato la tua richiesta.</div>
+              </div>
+            `;
+          }
+
+          notifList.appendChild(card);
+        });
+      }
+
+      async function respondFriend(fromEmail, accept) {
+        try {
+          const res = await fetch('/api/friends/respond', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ userEmail: currentUser.email, fromEmail, accept })
+          });
+          const data = await res.json();
+          if (data.success) {
+            showToast(accept ? 'Amicizia accettata!' : 'Richiesta rifiutata.');
+            fetchNotifications();
+            fetchFriends();
+          }
+        } catch (e) {}
+      }
+
+      function startNotificationPolling() {
+        if (notifPollingInterval) clearInterval(notifPollingInterval);
+        fetchNotifications();
+        notifPollingInterval = setInterval(fetchNotifications, 5000);
+      }
+
+      btnNotifBell.onclick = () => {
+        if (!currentUser) {
+          loginModal.classList.remove('hidden');
+          return;
+        }
+        notifDropdown.classList.toggle('hidden');
+        userDropdown.classList.add('hidden');
+        if (!notifDropdown.classList.contains('hidden')) {
+          fetch('/api/notifications/read', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ email: currentUser.email })
+          });
+          notifBadge.classList.add('hidden');
+        }
+      };
+
+      btnCloseNotifDropdown.onclick = () => notifDropdown.classList.add('hidden');
+
+      // -------------------------------------------------------------
+      // SHARE FILM POPUP & RESOLUTION
+      // -------------------------------------------------------------
+      btnModalShareFriend.onclick = async () => {
+        if (!currentUser) {
+          showToast('Accedi per inviare il film ai tuoi amici.');
+          loginModal.classList.remove('hidden');
+          return;
+        }
+
+        await fetchFriends();
+        shareModal.classList.remove('hidden');
+
+        shareFriendsList.innerHTML = '';
+        if (currentFriends.length === 0) {
+          shareFriendsList.innerHTML = `
+            <div style="text-align:center; padding:16px; color:var(--text-dim);">
+              Non hai ancora amici aggiunti.<br>
+              <button id="btn-add-friend-from-share" class="btn btn-secondary" style="margin-top:10px; font-size:0.8rem;">Aggiungi Amico</button>
+            </div>
+          `;
+          document.getElementById('btn-add-friend-from-share').onclick = () => {
+            shareModal.classList.add('hidden');
+            friendsModal.classList.remove('hidden');
+          };
+          return;
+        }
+
+        currentFriends.forEach(fr => {
+          const item = document.createElement('div');
+          item.style = 'display:flex; align-items:center; justify-content:space-between; background:rgba(255,255,255,0.05); padding:8px 12px; border-radius:8px;';
+          item.innerHTML = `
+            <div style="display:flex; align-items:center; gap:8px;">
+              <img src="${fr.avatar || ''}" style="width:28px; height:28px; border-radius:50%; background:#6366f1;" onerror="this.src='https://ui-avatars.com/api/?name=${encodeURIComponent(fr.name)}&background=6366f1&color=fff'" />
+              <div>
+                <div style="font-size:0.85rem; font-weight:700; color:#fff;">${fr.name}</div>
+                <div style="font-size:0.72rem; color:var(--text-dim);">${fr.email}</div>
+              </div>
+            </div>
+            <button class="btn btn-share-friend" style="padding:6px 12px; font-size:0.75rem;" data-email="${fr.email}">Invia</button>
+          `;
+          item.querySelector('button').onclick = () => sendFilmToFriend(fr.email, fr.name);
+          shareFriendsList.appendChild(item);
+        });
+      };
+
+      async function sendFilmToFriend(friendEmail, friendName) {
+        showToast(`Invio film a ${friendName}...`);
+        shareModal.classList.add('hidden');
+
+        try {
+          const streamUrl = await resolveStream(currentActiveItem);
+          const res = await fetch('/api/share/film', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+              fromEmail: currentUser.email,
+              toEmail: friendEmail,
+              filmTitle: currentActiveItem.current_ep_title ? `${currentActiveItem.name} - ${currentActiveItem.current_ep_title}` : currentActiveItem.name,
+              streamUrl: streamUrl,
+              poster: currentActiveItem.poster || '',
+              watchUrl: currentActiveItem.current_watch_url || ''
+            })
+          });
+          const data = await res.json();
+          if (data.success) {
+            showToast(`✅ Film inviato a ${friendName}!`);
+          } else {
+            showToast('Errore durante l\'invio del film.');
+          }
+        } catch (e) {
+          showToast('Errore di connessione.');
+        }
+      }
+
+      btnCloseShare.onclick = () => shareModal.classList.add('hidden');
+
+      // -------------------------------------------------------------
+      // CATALOG & PLAYER ENGINE
+      // -------------------------------------------------------------
       async function loadHome() {
         try {
           const res = await fetch('/api/sc/home');
@@ -970,7 +1611,6 @@
             const t = data.title;
             if (t.plot) detailPlot.textContent = t.plot;
             
-            // Check if series with seasons
             if (t.seasons && t.seasons.length > 0) {
               seasonsContainer.style.display = 'block';
               seasonsTabs.innerHTML = '';
@@ -987,7 +1627,6 @@
                 seasonsTabs.appendChild(pill);
               });
 
-              // If initial episodes already provided in response
               if (t.episodes && t.episodes.length > 0) {
                 renderEpisodes(item, t.episodes, t.current_season || 1);
               } else {
@@ -1059,14 +1698,17 @@
       // PLAY VIDEO (NATIVE INTENT FOR ANDROID, AVPLAYER FOR IOS)
       async function playVideo(item) {
         const target = item || currentActiveItem;
-        const isAndroid = /Android/i.test(navigator.userAgent);
-        const isIOS = /iPhone|iPad|iPod/i.test(navigator.userAgent) || (navigator.platform === 'MacIntel' && navigator.maxTouchPoints > 1);
-
         const streamUrl = await resolveStream(target);
         if (!streamUrl) {
           showToast("Errore nella risoluzione del flusso video.");
           return;
         }
+        playDirectStream(streamUrl, target.current_ep_title ? `${target.name} - ${target.current_ep_title}` : target.name);
+      }
+
+      function playDirectStream(streamUrl, title) {
+        const isAndroid = /Android/i.test(navigator.userAgent);
+        const isIOS = /iPhone|iPad|iPod/i.test(navigator.userAgent) || (navigator.platform === 'MacIntel' && navigator.maxTouchPoints > 1);
 
         // 1. ANDROID NATIVE SYSTEM PLAYER INTENT
         if (isAndroid && streamUrl.includes('.m3u8')) {
@@ -1080,7 +1722,7 @@
         // 2. IOS / IPADOS AVPLAYER NATIVE FULLSCREEN
         if (isIOS && streamUrl.includes('.m3u8')) {
           closeDetails();
-          playerActiveTitle.textContent = target.current_ep_title ? `${target.name} - ${target.current_ep_title}` : target.name;
+          playerActiveTitle.textContent = title || 'Riproduzione';
           playerModal.classList.remove('hidden');
 
           webIframe.classList.add('hidden');
@@ -1088,7 +1730,7 @@
           webVideo.src = streamUrl;
 
           try {
-            await webVideo.play();
+            webVideo.play();
             if (webVideo.webkitEnterFullscreen) {
               webVideo.webkitEnterFullscreen();
             } else if (webVideo.requestFullscreen) {
@@ -1100,7 +1742,7 @@
 
         // 3. DESKTOP / HTML5 BROWSER PLAYER
         closeDetails();
-        playerActiveTitle.textContent = target.current_ep_title ? `${target.name} - ${target.current_ep_title}` : target.name;
+        playerActiveTitle.textContent = title || 'Riproduzione';
         playerModal.classList.remove('hidden');
 
         if (streamUrl.includes('.m3u8')) {
@@ -1174,7 +1816,6 @@
         openDetails(rand);
       }
 
-      btnHeaderRandom.onclick = pickRandomTitle;
       navRandom.onclick = () => {
         setActiveNav(navRandom);
         pickRandomTitle();
@@ -1198,7 +1839,6 @@
             renderCards(data.titles || []);
           }
         } catch (e) {
-          // Fallback to local filter
           const filtered = loadedCatalog.filter(t => t.name.toLowerCase().includes(q.toLowerCase()));
           renderCards(filtered);
         }
@@ -1251,18 +1891,8 @@
         window.scrollTo({ top: 0, behavior: 'smooth' });
       };
 
-      navSaved.onclick = () => {
-        setActiveNav(navSaved);
-        gridSectionHeading.textContent = '⭐ I tuoi Preferiti';
-        if (savedFavorites.length === 0) {
-          renderCards(loadedCatalog.slice(0, 4));
-          showToast('Nessun preferito salvato: ecco i più popolari.');
-        } else {
-          renderCards(savedFavorites);
-        }
-      };
-
       // INITIALIZE
+      updateAuthUI();
       loadHome();
     })();
   </script>

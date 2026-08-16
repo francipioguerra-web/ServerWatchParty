@@ -17,6 +17,28 @@ const CANDIDATE_DOMAINS = [
 ];
 let activeScDomain = CANDIDATE_DOMAINS[0];
 
+// In-memory data store for Users, Friendships, and Notifications
+const users = {}; // email -> { email, name, avatar, lastSeen }
+const friendships = {}; // email -> { friends: Set of emails, incoming: Set of emails, outgoing: Set of emails }
+const notifications = {}; // email -> Array of { id, type, fromEmail, fromName, filmTitle, streamUrl, poster, timestamp, read }
+
+function getOrCreateUserRelations(email) {
+  const normEmail = (email || '').toLowerCase().trim();
+  if (!normEmail) return null;
+
+  if (!friendships[normEmail]) {
+    friendships[normEmail] = {
+      friends: new Set(),
+      incoming: new Set(),
+      outgoing: new Set()
+    };
+  }
+  if (!notifications[normEmail]) {
+    notifications[normEmail] = [];
+  }
+  return friendships[normEmail];
+}
+
 function unescapeHtml(safe) {
   if (!safe) return '';
   return safe
@@ -51,7 +73,184 @@ async function fetchWithFallback(pathUrl) {
 }
 
 // -------------------------------------------------------------
-// API: HOME CATALOG
+// USER AUTH & PROFILE APIs
+// -------------------------------------------------------------
+app.post('/api/auth/login', (req, res) => {
+  const { email, name, avatar } = req.body || {};
+  const normEmail = (email || '').toLowerCase().trim();
+
+  if (!normEmail) {
+    return res.status(400).json({ success: false, error: 'Email richiesta per il login' });
+  }
+
+  users[normEmail] = {
+    email: normEmail,
+    name: name || normEmail.split('@')[0],
+    avatar: avatar || `https://ui-avatars.com/api/?name=${encodeURIComponent(name || normEmail.split('@')[0])}&background=6366f1&color=fff&size=128`,
+    lastSeen: Date.now()
+  };
+
+  getOrCreateUserRelations(normEmail);
+
+  res.json({
+    success: true,
+    user: users[normEmail]
+  });
+});
+
+// -------------------------------------------------------------
+// FRIENDS MANAGEMENT APIs
+// -------------------------------------------------------------
+app.get('/api/friends/list', (req, res) => {
+  const normEmail = (req.query.email || '').toLowerCase().trim();
+  if (!normEmail) return res.json({ success: true, friends: [], incoming: [], outgoing: [] });
+
+  const rel = getOrCreateUserRelations(normEmail);
+  const friendsList = Array.from(rel.friends).map(e => users[e] || { email: e, name: e.split('@')[0], avatar: '' });
+  const incomingList = Array.from(rel.incoming).map(e => users[e] || { email: e, name: e.split('@')[0], avatar: '' });
+  const outgoingList = Array.from(rel.outgoing).map(e => users[e] || { email: e, name: e.split('@')[0], avatar: '' });
+
+  res.json({
+    success: true,
+    friends: friendsList,
+    incoming: incomingList,
+    outgoing: outgoingList
+  });
+});
+
+app.post('/api/friends/request', (req, res) => {
+  const fromEmail = (req.body.fromEmail || '').toLowerCase().trim();
+  const toEmail = (req.body.toEmail || '').toLowerCase().trim();
+
+  if (!fromEmail || !toEmail) {
+    return res.status(400).json({ success: false, error: 'Email mittente e destinatario richieste' });
+  }
+
+  if (fromEmail === toEmail) {
+    return res.status(400).json({ success: false, error: 'Non puoi inviare una richiesta a te stesso' });
+  }
+
+  const fromRel = getOrCreateUserRelations(fromEmail);
+  const toRel = getOrCreateUserRelations(toEmail);
+
+  if (fromRel.friends.has(toEmail)) {
+    return res.json({ success: false, error: 'Siete già amici!' });
+  }
+
+  fromRel.outgoing.add(toEmail);
+  toRel.incoming.add(fromEmail);
+
+  // Send notification to recipient
+  const fromUser = users[fromEmail] || { name: fromEmail.split('@')[0], email: fromEmail };
+  notifications[toEmail].unshift({
+    id: `notif_${Date.now()}_${Math.random().toString(36).substring(2, 7)}`,
+    type: 'friend_request',
+    fromEmail: fromEmail,
+    fromName: fromUser.name,
+    fromAvatar: fromUser.avatar,
+    timestamp: Date.now(),
+    read: false
+  });
+
+  res.json({ success: true, message: `Richiesta di amicizia inviata a ${toEmail}` });
+});
+
+app.post('/api/friends/respond', (req, res) => {
+  const userEmail = (req.body.userEmail || '').toLowerCase().trim();
+  const fromEmail = (req.body.fromEmail || '').toLowerCase().trim();
+  const accept = Boolean(req.body.accept);
+
+  if (!userEmail || !fromEmail) {
+    return res.status(400).json({ success: false, error: 'Parametri mancanti' });
+  }
+
+  const userRel = getOrCreateUserRelations(userEmail);
+  const fromRel = getOrCreateUserRelations(fromEmail);
+
+  userRel.incoming.delete(fromEmail);
+  fromRel.outgoing.delete(userEmail);
+
+  if (accept) {
+    userRel.friends.add(fromEmail);
+    fromRel.friends.add(userEmail);
+
+    // Notify the other user that request was accepted
+    const userObj = users[userEmail] || { name: userEmail.split('@')[0], email: userEmail };
+    notifications[fromEmail].unshift({
+      id: `notif_${Date.now()}_${Math.random().toString(36).substring(2, 7)}`,
+      type: 'friend_accepted',
+      fromEmail: userEmail,
+      fromName: userObj.name,
+      fromAvatar: userObj.avatar,
+      timestamp: Date.now(),
+      read: false
+    });
+  }
+
+  res.json({ success: true, accepted: accept });
+});
+
+// -------------------------------------------------------------
+// SHARE FILM TO FRIEND API
+// -------------------------------------------------------------
+app.post('/api/share/film', async (req, res) => {
+  const fromEmail = (req.body.fromEmail || '').toLowerCase().trim();
+  const toEmail = (req.body.toEmail || '').toLowerCase().trim();
+  const { filmTitle, streamUrl, vixUrl, poster, watchUrl } = req.body || {};
+
+  if (!fromEmail || !toEmail || !filmTitle) {
+    return res.status(400).json({ success: false, error: 'Dati incompleti per la condivisione' });
+  }
+
+  getOrCreateUserRelations(toEmail);
+  const fromUser = users[fromEmail] || { name: fromEmail.split('@')[0], email: fromEmail };
+
+  const finalStreamUrl = streamUrl || vixUrl || watchUrl || '';
+
+  notifications[toEmail].unshift({
+    id: `film_${Date.now()}_${Math.random().toString(36).substring(2, 7)}`,
+    type: 'film_share',
+    fromEmail: fromEmail,
+    fromName: fromUser.name,
+    fromAvatar: fromUser.avatar,
+    filmTitle: filmTitle,
+    streamUrl: finalStreamUrl,
+    poster: poster || '',
+    timestamp: Date.now(),
+    read: false
+  });
+
+  res.json({ success: true, message: `Film "${filmTitle}" inviato con successo a ${toEmail}!` });
+});
+
+// -------------------------------------------------------------
+// NOTIFICATIONS APIs
+// -------------------------------------------------------------
+app.get('/api/notifications', (req, res) => {
+  const email = (req.query.email || '').toLowerCase().trim();
+  if (!email) return res.json({ success: true, notifications: [], unreadCount: 0 });
+
+  getOrCreateUserRelations(email);
+  const list = notifications[email] || [];
+  const unreadCount = list.filter(n => !n.read).length;
+
+  res.json({
+    success: true,
+    notifications: list,
+    unreadCount: unreadCount
+  });
+});
+
+app.post('/api/notifications/read', (req, res) => {
+  const email = (req.body.email || '').toLowerCase().trim();
+  if (email && notifications[email]) {
+    notifications[email].forEach(n => { n.read = true; });
+  }
+  res.json({ success: true });
+});
+
+// -------------------------------------------------------------
+// STREAMINGCOMMUNITY CATALOG & RESOLVER APIs
 // -------------------------------------------------------------
 app.get('/api/sc/home', async (req, res) => {
   try {
@@ -95,9 +294,6 @@ app.get('/api/sc/home', async (req, res) => {
   }
 });
 
-// -------------------------------------------------------------
-// API: SEARCH
-// -------------------------------------------------------------
 app.get('/api/sc/search', async (req, res) => {
   const query = (req.query.q || '').trim();
   if (!query) return res.json({ success: true, titles: [] });
@@ -131,9 +327,6 @@ app.get('/api/sc/search', async (req, res) => {
   }
 });
 
-// -------------------------------------------------------------
-// API: TITLE DETAILS & INITIAL EPISODES
-// -------------------------------------------------------------
 app.get('/api/sc/title/:id', async (req, res) => {
   const id = req.params.id;
   const slug = req.query.slug || '';
@@ -188,9 +381,6 @@ app.get('/api/sc/title/:id', async (req, res) => {
   }
 });
 
-// -------------------------------------------------------------
-// API: SEASON EPISODES
-// -------------------------------------------------------------
 app.get('/api/sc/season/:id/:num', async (req, res) => {
   const { id, num } = req.params;
   const slug = req.query.slug || '';
@@ -231,9 +421,6 @@ app.get('/api/sc/season/:id/:num', async (req, res) => {
   }
 });
 
-// -------------------------------------------------------------
-// API: VIXCLOUD STREAM EXTRACTION (SIGNED M3U8)
-// -------------------------------------------------------------
 app.post('/api/vixcloud/extract', async (req, res) => {
   const { url, titleId, episodeId, lang } = req.body || {};
   let targetWatchUrl = url;
@@ -252,7 +439,6 @@ app.post('/api/vixcloud/extract', async (req, res) => {
   };
 
   try {
-    // 1. Fetch SC Watch Page
     const resWatch = await fetch(targetWatchUrl, { headers, redirect: 'follow' });
     const htmlWatch = await resWatch.text();
 
@@ -284,14 +470,12 @@ app.post('/api/vixcloud/extract', async (req, res) => {
       });
     }
 
-    // 2. Fetch SC Iframe to get Vixcloud URL
     const resIfr = await fetch(embedUrl, { headers: { ...headers, 'Referer': targetWatchUrl }, redirect: 'follow' });
     const htmlIfr = await resIfr.text();
     let vixEmbed = embedUrl;
     const matchVix = htmlIfr.match(/<iframe[^>]+src=["'](https?:\/\/[^"']+)["']/);
     if (matchVix) vixEmbed = unescapeHtml(matchVix[1]);
 
-    // 3. Fetch Vixcloud embed to get signed token & playlist
     const resVix = await fetch(vixEmbed, { headers: { ...headers, 'Referer': embedUrl }, redirect: 'follow' });
     const htmlVix = await resVix.text();
 
@@ -339,8 +523,8 @@ const PORT = process.env.PORT || 3000;
 const server = http.createServer(app);
 server.listen(PORT, '0.0.0.0', () => {
   console.log(`========================================================`);
-  console.log(` 🚀 STREAMINGCOMMUNITY UNIVERSAL WEB APP ATTIVO`);
+  console.log(` 🚀 STREAMINGCOMMUNITY SOCIAL & UNIVERSAL WEB APP`);
   console.log(` • Porta: ${PORT}`);
-  console.log(` • Pronto per deploy su Render.com`);
+  console.log(` • Google Auth, Friends & Notifications attivi`);
   console.log(`========================================================`);
 });
