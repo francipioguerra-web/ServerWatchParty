@@ -2,6 +2,7 @@ const express = require('express');
 const http = require('http');
 const cors = require('cors');
 const path = require('path');
+const fs = require('fs');
 
 const app = express();
 app.use(cors());
@@ -19,11 +20,53 @@ const CANDIDATE_DOMAINS = [
 ];
 let activeScDomain = CANDIDATE_DOMAINS[0];
 
-// In-memory data store for Users, Friendships, and Notifications
+// Persistent data store for Users, Friendships, and Notifications
+const DB_PATH = path.join(__dirname, 'data_store.json');
 const users = {}; // email -> { email, name, nickname, avatar, lastSeen }
 const nicknames = {}; // lowercase nickname -> email
 const friendships = {}; // email -> { friends: Set of emails, incoming: Set of emails, outgoing: Set of emails }
 const notifications = {}; // email -> Array of { id, type, fromEmail, fromName, fromNickname, filmTitle, streamUrl, poster, timestamp, read }
+
+function loadDatabase() {
+  try {
+    if (fs.existsSync(DB_PATH)) {
+      const raw = JSON.parse(fs.readFileSync(DB_PATH, 'utf8'));
+      if (raw.users) Object.assign(users, raw.users);
+      if (raw.nicknames) Object.assign(nicknames, raw.nicknames);
+      if (raw.notifications) Object.assign(notifications, raw.notifications);
+      if (raw.friendships) {
+        for (const [k, v] of Object.entries(raw.friendships)) {
+          friendships[k] = {
+            friends: new Set(v.friends || []),
+            incoming: new Set(v.incoming || []),
+            outgoing: new Set(v.outgoing || [])
+          };
+        }
+      }
+    }
+  } catch (e) {
+    console.error("Errore caricamento database locale:", e.message);
+  }
+}
+
+function saveDatabase() {
+  try {
+    const exportFriendships = {};
+    for (const [k, v] of Object.entries(friendships)) {
+      exportFriendships[k] = {
+        friends: Array.from(v.friends || []),
+        incoming: Array.from(v.incoming || []),
+        outgoing: Array.from(v.outgoing || [])
+      };
+    }
+    fs.writeFileSync(DB_PATH, JSON.stringify({ users, nicknames, friendships: exportFriendships, notifications }, null, 2));
+  } catch (e) {
+    console.error("Errore salvataggio database locale:", e.message);
+  }
+}
+
+// Initial load
+loadDatabase();
 
 function getOrCreateUserRelations(email) {
   const normEmail = (email || '').toLowerCase().trim();
@@ -45,11 +88,21 @@ function getOrCreateUserRelations(email) {
 function unescapeHtml(safe) {
   if (!safe) return '';
   return safe
-    .replace(/&amp;/g, "&")
-    .replace(/&lt;/g, "<")
-    .replace(/&gt;/g, ">")
-    .replace(/&quot;/g, "\"")
-    .replace(/&#039;/g, "'");
+    .replace(/&#0*39;/g, "'")
+    .replace(/&#x27;/gi, "'")
+    .replace(/&apos;/g, "'")
+    .replace(/&quot;/g, '"')
+    .replace(/&amp;/g, '&')
+    .replace(/&lt;/g, '<')
+    .replace(/&gt;/g, '>')
+    .replace(/&agrave;/g, 'à')
+    .replace(/&egrave;/g, 'è')
+    .replace(/&eacute;/g, 'é')
+    .replace(/&igrave;/g, 'ì')
+    .replace(/&ograve;/g, 'ò')
+    .replace(/&ugrave;/g, 'ù')
+    .replace(/&#(\d+);/g, (match, dec) => String.fromCharCode(dec))
+    .replace(/&#x([0-9a-f]+);/gi, (match, hex) => String.fromCharCode(parseInt(hex, 16)));
 }
 
 async function fetchWithFallback(pathUrl) {
@@ -109,6 +162,7 @@ app.post('/api/auth/google-login', (req, res) => {
   }
 
   getOrCreateUserRelations(normEmail);
+  saveDatabase();
 
   res.json({
     success: true,
@@ -146,6 +200,7 @@ app.post('/api/auth/set-nickname', (req, res) => {
 
   nicknames[nickname] = email;
   users[email].nickname = nickname;
+  saveDatabase();
 
   res.json({
     success: true,
@@ -236,6 +291,8 @@ app.post('/api/friends/request', (req, res) => {
     read: false
   });
 
+  saveDatabase();
+
   res.json({
     success: true,
     message: `Richiesta di amicizia inviata a ${targetUser ? '@' + targetUser.nickname : toEmail}!`
@@ -274,6 +331,8 @@ app.post('/api/friends/respond', (req, res) => {
     });
   }
 
+  saveDatabase();
+
   res.json({ success: true, accepted: accept });
 });
 
@@ -306,6 +365,8 @@ app.post('/api/share/film', async (req, res) => {
     timestamp: Date.now(),
     read: false
   });
+
+  saveDatabase();
 
   res.json({ success: true, message: `Film "${filmTitle}" inviato con successo!` });
 });

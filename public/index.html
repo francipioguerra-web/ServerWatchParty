@@ -721,13 +721,14 @@
       justify-content: space-between;
     }
 
-    /* DETAILS MODAL */
+    /* PURE BLUR MODAL OVERLAYS & CARDS */
     .modal-overlay {
       position: fixed;
       inset: 0;
       z-index: 100;
-      background: rgba(0, 0, 0, 0.85);
-      backdrop-filter: blur(16px);
+      background: rgba(0, 0, 0, 0.65);
+      backdrop-filter: blur(28px) saturate(190%);
+      -webkit-backdrop-filter: blur(28px) saturate(190%);
       display: flex;
       align-items: center;
       justify-content: center;
@@ -739,14 +740,16 @@
     }
 
     .modal-card {
-      background: #131318;
-      border: 1px solid rgba(255, 255, 255, 0.14);
+      background: rgba(18, 18, 24, 0.75);
+      backdrop-filter: blur(36px) saturate(190%);
+      -webkit-backdrop-filter: blur(36px) saturate(190%);
+      border: 1px solid rgba(255, 255, 255, 0.18);
       border-radius: var(--radius-lg);
       width: 100%;
       max-width: 880px;
       max-height: 90vh;
       overflow-y: auto;
-      box-shadow: 0 25px 50px rgba(0, 0, 0, 0.9);
+      box-shadow: 0 30px 70px rgba(0, 0, 0, 0.88);
       position: relative;
     }
 
@@ -754,8 +757,10 @@
       position: absolute;
       top: 14px;
       right: 14px;
-      background: rgba(255, 255, 255, 0.1);
-      border: none;
+      background: rgba(255, 255, 255, 0.12);
+      backdrop-filter: blur(12px);
+      -webkit-backdrop-filter: blur(12px);
+      border: 1px solid rgba(255, 255, 255, 0.18);
       color: #fff;
       width: 34px;
       height: 34px;
@@ -766,6 +771,12 @@
       align-items: center;
       justify-content: center;
       z-index: 10;
+      transition: all 0.2s ease;
+    }
+
+    .modal-close-btn:hover {
+      background: rgba(255, 255, 255, 0.24);
+      transform: scale(1.08);
     }
 
     .modal-layout {
@@ -791,7 +802,7 @@
       height: 320px;
       object-fit: cover;
       border-radius: var(--radius-md);
-      box-shadow: 0 10px 28px rgba(0, 0, 0, 0.7);
+      box-shadow: 0 12px 30px rgba(0, 0, 0, 0.75);
       flex-shrink: 0;
     }
 
@@ -828,91 +839,136 @@
     .modal-actions-row {
       display: flex;
       flex-wrap: wrap;
-      gap: 8px;
+      gap: 10px;
       margin-top: 14px;
     }
 
-    /* SEASONS & EPISODES */
+    /* SEASONS & HOVER EPISODES SYSTEM */
     .seasons-scroll {
       display: flex;
-      gap: 8px;
-      overflow-x: auto;
-      padding-bottom: 6px;
+      gap: 10px;
+      overflow-x: visible;
+      padding-bottom: 8px;
       margin-bottom: 10px;
+      position: relative;
+    }
+
+    .season-pill-container {
+      position: relative;
+      display: inline-block;
     }
 
     .season-pill {
       background: rgba(255, 255, 255, 0.08);
+      backdrop-filter: blur(14px);
+      -webkit-backdrop-filter: blur(14px);
       color: var(--text-muted);
-      border: 1px solid var(--border);
-      padding: 6px 12px;
+      border: 1px solid rgba(255, 255, 255, 0.15);
+      padding: 7px 14px;
       border-radius: 999px;
-      font-size: 0.8rem;
+      font-size: 0.82rem;
       font-weight: 700;
       cursor: pointer;
       white-space: nowrap;
+      transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1);
+      display: flex;
+      align-items: center;
+      gap: 5px;
     }
 
+    .season-pill:hover,
     .season-pill.active {
-      background: #fff;
-      color: #000;
-      border-color: #fff;
+      background: #ffffff;
+      color: #000000;
+      border-color: #ffffff;
+      box-shadow: 0 4px 18px rgba(255, 255, 255, 0.3);
+      transform: translateY(-1px);
     }
 
-    .episodes-grid {
-      display: grid;
-      grid-template-columns: repeat(auto-fill, minmax(120px, 1fr));
-      gap: 8px;
-      max-height: 160px;
+    /* EPISODES HOVER POPOVER */
+    .season-episodes-popover {
+      position: absolute;
+      top: 100%;
+      left: 0;
+      min-width: 270px;
+      max-width: 360px;
+      max-height: 240px;
       overflow-y: auto;
-      margin-top: 6px;
-      padding: 4px;
-      background: rgba(0, 0, 0, 0.25);
-      border-radius: var(--radius-sm);
+      background: rgba(18, 18, 26, 0.88);
+      backdrop-filter: blur(32px) saturate(190%);
+      -webkit-backdrop-filter: blur(32px) saturate(190%);
+      border: 1px solid rgba(255, 255, 255, 0.18);
+      border-radius: var(--radius-md);
+      padding: 8px;
+      box-shadow: 0 20px 40px rgba(0, 0, 0, 0.85);
+      z-index: 220;
+      opacity: 0;
+      pointer-events: none;
+      transform: translateY(6px);
+      transition: opacity 0.2s cubic-bezier(0.16, 1, 0.3, 1), transform 0.2s cubic-bezier(0.16, 1, 0.3, 1);
+      display: flex;
+      flex-direction: column;
+      gap: 6px;
     }
 
-    .episode-btn {
-      background: rgba(255, 255, 255, 0.08);
-      border: 1px solid var(--border);
-      color: #fff;
-      padding: 7px 8px;
-      border-radius: var(--radius-sm);
-      font-size: 0.78rem;
+    .season-pill-container:hover .season-episodes-popover,
+    .season-pill-container.is-open .season-episodes-popover {
+      opacity: 1;
+      pointer-events: auto;
+      transform: translateY(2px);
+    }
+
+    .episode-item {
+      background: rgba(255, 255, 255, 0.06);
+      border: 1px solid rgba(255, 255, 255, 0.1);
+      color: #e2e8f0;
+      padding: 8px 12px;
+      border-radius: 8px;
+      font-size: 0.8rem;
       font-weight: 600;
       cursor: pointer;
-      text-align: center;
-      transition: all 0.2s;
+      text-align: left;
+      transition: all 0.15s ease;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
     }
 
-    .episode-btn:hover {
+    .episode-item:hover {
       background: rgba(255, 255, 255, 0.2);
+      border-color: rgba(255, 255, 255, 0.35);
+      color: #ffffff;
+      transform: translateX(3px);
     }
 
-    .episode-btn.active {
-      background: var(--accent);
-      border-color: var(--accent);
-      color: #fff;
+    .episode-item.active {
+      background: #ffffff;
+      color: #000000;
+      border-color: #ffffff;
+      font-weight: 800;
     }
 
-    /* EXTERNAL PLAYER CHOOSER MODAL */
+    /* EXTERNAL PLAYER CHOOSER MODAL (PURE BLUR) */
     .player-option-card {
-      background: rgba(255, 255, 255, 0.05);
-      border: 1px solid rgba(255, 255, 255, 0.12);
+      background: rgba(255, 255, 255, 0.06);
+      backdrop-filter: blur(16px);
+      -webkit-backdrop-filter: blur(16px);
+      border: 1px solid rgba(255, 255, 255, 0.14);
       border-radius: var(--radius-md);
       padding: 12px 14px;
       display: flex;
       align-items: center;
       gap: 12px;
       cursor: pointer;
-      transition: all 0.2s;
+      transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1);
       text-align: left;
       width: 100%;
       color: #fff;
     }
 
     .player-option-card:hover {
-      background: rgba(255, 255, 255, 0.14);
-      border-color: rgba(255, 255, 255, 0.28);
+      background: rgba(255, 255, 255, 0.16);
+      border-color: rgba(255, 255, 255, 0.32);
       transform: translateY(-1px);
     }
 
@@ -1178,12 +1234,10 @@
           <div id="detail-meta" style="font-size: 0.82rem; color: var(--text-dim); margin-bottom: 10px;">Anno: 2024 • Film / Serie</div>
           <p id="detail-plot" class="modal-plot">Caricamento dettagli...</p>
 
-          <!-- SEASONS & EPISODES (FOR SERIES) -->
-          <div id="seasons-container" style="display:none; margin-bottom: 14px;">
-            <div class="modal-options-title">Seleziona Stagione:</div>
+          <!-- SEASONS WITH HOVER EPISODES (FOR SERIES) -->
+          <div id="seasons-container" style="display:none; margin-bottom: 16px;">
+            <div class="modal-options-title">Stagioni & Episodi (Passa sopra una stagione per vedere gli episodi):</div>
             <div id="seasons-tabs" class="seasons-scroll"></div>
-            <div class="modal-options-title" id="episodes-header-title">Episodi:</div>
-            <div id="episodes-grid" class="episodes-grid"></div>
           </div>
 
           <div class="modal-options-title">Azioni di Riproduzione:</div>
@@ -1402,11 +1456,18 @@
     (function () {
       const GOOGLE_CLIENT_ID = "827422677497-4ohkdeqrl6thm55dqvba6j7q2qmdb6nm.apps.googleusercontent.com";
 
+      // Robust HTML Entity Decoder
+      function decodeHtml(text) {
+        if (!text) return '';
+        const doc = new DOMParser().parseFromString(text, 'text/html');
+        return doc.body.textContent || text;
+      }
+
       let loadedCatalog = [];
       let currentActiveItem = null;
       let currentHls = null;
       let currentUser = JSON.parse(localStorage.getItem('sc_logged_user') || 'null');
-      let currentFriends = [];
+      let currentFriends = JSON.parse(localStorage.getItem('sc_saved_friends') || '[]');
       let notifPollingInterval = null;
       let googleTokenClient = null;
       let pendingExtraction = null;
@@ -1428,7 +1489,6 @@
       const detailPlot = document.getElementById('detail-plot');
       const seasonsContainer = document.getElementById('seasons-container');
       const seasonsTabs = document.getElementById('seasons-tabs');
-      const episodesGrid = document.getElementById('episodes-grid');
       const btnModalVixEmbed = document.getElementById('btn-modal-vix-embed');
       const btnModalPlayerOpen = document.getElementById('btn-modal-player-open');
       const btnModalShareFriend = document.getElementById('btn-modal-share-friend');
@@ -1487,6 +1547,10 @@
       const shareModal = document.getElementById('share-modal');
       const btnCloseShare = document.getElementById('btn-close-share');
       const shareFriendsList = document.getElementById('share-friends-list');
+
+      // Render cached friends on start
+      if (userFriendsCount) userFriendsCount.textContent = currentFriends.length;
+      renderFriendsList();
 
       function showToast(msg) {
         toast.textContent = msg;
@@ -2002,8 +2066,8 @@
       function updateHero(item) {
         currentActiveItem = item;
         heroBanner.style.backgroundImage = `url('${item.backdrop || item.poster}')`;
-        heroTitle.textContent = item.name;
-        heroPlot.textContent = item.plot || 'Nessuna trama disponibile.';
+        heroTitle.textContent = decodeHtml(item.name);
+        heroPlot.textContent = decodeHtml(item.plot || 'Nessuna trama disponibile.');
       }
 
       function renderCards(list) {
@@ -2016,13 +2080,14 @@
         list.forEach(item => {
           const card = document.createElement('div');
           card.className = 'media-card';
+          const cleanName = decodeHtml(item.name);
           card.innerHTML = `
             <div class="card-poster-wrap">
-              <img class="card-poster" src="${item.poster || 'https://via.placeholder.com/300x450'}" alt="${item.name}" loading="lazy">
+              <img class="card-poster" src="${item.poster || 'https://via.placeholder.com/300x450'}" alt="${cleanName}" loading="lazy">
               <div class="card-badge">${item.type === 'tv' ? 'Serie TV' : 'Film'}</div>
             </div>
             <div class="card-info">
-              <div class="card-title">${item.name}</div>
+              <div class="card-title">${cleanName}</div>
               <div class="card-meta">
                 <span>${item.release_date || ''}</span>
                 <span style="color: #4ade80;">HD 1080p</span>
@@ -2034,13 +2099,14 @@
         });
       }
 
-      // DETAILS MODAL WITH SEASONS & EPISODES
+      // DETAILS MODAL WITH HOVER SEASONS & EPISODES
       async function openDetails(item) {
         currentActiveItem = item;
+        const cleanName = decodeHtml(item.name);
         detailPoster.src = item.poster || '';
-        detailTitle.textContent = item.name;
+        detailTitle.textContent = cleanName;
         detailMeta.textContent = `Anno: ${item.release_date || '2024'} • ${item.type === 'tv' ? 'Serie TV' : 'Film'}`;
-        detailPlot.textContent = item.plot || 'Caricamento dettagli in corso...';
+        detailPlot.textContent = decodeHtml(item.plot || 'Caricamento dettagli in corso...');
         seasonsContainer.style.display = 'none';
         detailsModal.classList.remove('hidden');
 
@@ -2049,65 +2115,77 @@
           const data = await res.json();
           if (data.success && data.title) {
             const t = data.title;
-            if (t.plot) detailPlot.textContent = t.plot;
+            if (t.plot) detailPlot.textContent = decodeHtml(t.plot);
             
             if (t.seasons && t.seasons.length > 0) {
               seasonsContainer.style.display = 'block';
               seasonsTabs.innerHTML = '';
 
               t.seasons.forEach((s, idx) => {
+                const container = document.createElement('div');
+                container.className = 'season-pill-container';
+
                 const pill = document.createElement('button');
                 pill.className = `season-pill ${idx === 0 ? 'active' : ''}`;
-                pill.textContent = `Stagione ${s.number}`;
-                pill.onclick = () => {
-                  seasonsTabs.querySelectorAll('.season-pill').forEach(p => p.classList.remove('active'));
-                  pill.classList.add('active');
-                  loadSeasonEpisodes(item, s.number);
-                };
-                seasonsTabs.appendChild(pill);
-              });
+                pill.innerHTML = `<span>Stagione ${s.number}</span> <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="6 9 12 15 18 9"></polyline></svg>`;
 
-              if (t.episodes && t.episodes.length > 0) {
-                renderEpisodes(item, t.episodes, t.current_season || 1);
-              } else {
-                loadSeasonEpisodes(item, t.seasons[0].number);
-              }
+                const popover = document.createElement('div');
+                popover.className = 'season-episodes-popover';
+                popover.innerHTML = '<div style="color:var(--text-dim); text-align:center; padding:10px; font-size:0.75rem;">Caricamento episodi...</div>';
+
+                let loaded = false;
+                async function loadEpisodesForSeason() {
+                  if (loaded) return;
+                  try {
+                    const res = await fetch(`/api/sc/season/${item.id}/${s.number}?slug=${encodeURIComponent(item.slug || '')}`);
+                    const sData = await res.json();
+                    if (sData.success && sData.episodes && sData.episodes.length > 0) {
+                      popover.innerHTML = '';
+                      sData.episodes.forEach(ep => {
+                        const epItem = document.createElement('div');
+                        epItem.className = 'episode-item';
+                        epItem.textContent = `Ep. ${ep.number} - ${decodeHtml(ep.name || 'Episodio')}`;
+                        epItem.onclick = (e) => {
+                          e.stopPropagation();
+                          seasonsTabs.querySelectorAll('.episode-item').forEach(b => b.classList.remove('active'));
+                          epItem.classList.add('active');
+                          seasonsTabs.querySelectorAll('.season-pill').forEach(p => p.classList.remove('active'));
+                          pill.classList.add('active');
+
+                          item.current_watch_url = ep.watch_url;
+                          item.current_episode_id = ep.id;
+                          item.current_ep_title = `S${s.number}E${ep.number} - ${decodeHtml(ep.name || 'Episodio')}`;
+                          showToast(`✅ Selezionato: S${s.number} Ep. ${ep.number}`);
+                        };
+                        popover.appendChild(epItem);
+                      });
+                      loaded = true;
+                    } else {
+                      popover.innerHTML = '<div style="color:var(--text-dim); text-align:center; padding:10px; font-size:0.75rem;">Nessun episodio trovato.</div>';
+                    }
+                  } catch (err) {
+                    popover.innerHTML = '<div style="color:var(--text-dim); text-align:center; padding:10px; font-size:0.75rem;">Errore caricamento episodi.</div>';
+                  }
+                }
+
+                container.onmouseenter = () => loadEpisodesForSeason();
+                pill.onclick = () => {
+                  loadEpisodesForSeason();
+                  container.classList.toggle('is-open');
+                };
+
+                // Preload first season
+                if (idx === 0) {
+                  loadEpisodesForSeason();
+                }
+
+                container.appendChild(pill);
+                container.appendChild(popover);
+                seasonsTabs.appendChild(container);
+              });
             }
           }
         } catch (e) {}
-      }
-
-      async function loadSeasonEpisodes(item, seasonNum) {
-        episodesGrid.innerHTML = '<div style="grid-column:1/-1; color:var(--text-dim); text-align:center; padding:10px;">Caricamento episodi...</div>';
-        try {
-          const res = await fetch(`/api/sc/season/${item.id}/${seasonNum}?slug=${encodeURIComponent(item.slug || '')}`);
-          const data = await res.json();
-          if (data.success && data.episodes && data.episodes.length > 0) {
-            renderEpisodes(item, data.episodes, seasonNum);
-          } else {
-            episodesGrid.innerHTML = '<div style="grid-column:1/-1; color:var(--text-dim); text-align:center; padding:10px;">Nessun episodio trovato.</div>';
-          }
-        } catch (e) {
-          episodesGrid.innerHTML = '<div style="grid-column:1/-1; color:var(--text-dim); text-align:center; padding:10px;">Errore nel caricamento episodi.</div>';
-        }
-      }
-
-      function renderEpisodes(item, episodes, seasonNum) {
-        episodesGrid.innerHTML = '';
-        episodes.forEach(ep => {
-          const epBtn = document.createElement('button');
-          epBtn.className = 'episode-btn';
-          epBtn.textContent = `Ep. ${ep.number} - ${ep.name || 'Episodio'}`;
-          epBtn.onclick = () => {
-            episodesGrid.querySelectorAll('.episode-btn').forEach(b => b.classList.remove('active'));
-            epBtn.classList.add('active');
-            item.current_watch_url = ep.watch_url;
-            item.current_episode_id = ep.id;
-            item.current_ep_title = `S${seasonNum}E${ep.number} - ${ep.name || 'Episodio'}`;
-            showToast(`Selezionato Ep. ${ep.number}: premi Riproduci`);
-          };
-          episodesGrid.appendChild(epBtn);
-        });
       }
 
       function closeDetails() {
@@ -2142,24 +2220,16 @@
         }
       }
 
-      // DIRECT SIGNED M3U8 STREAM OPENER
-      async function openDirectM3u8Stream(item) {
+      // DIRECT PLAY WITH VIXCLOUD
+      async function playDirectly(item) {
         const target = item || currentActiveItem;
+        if (!target) return;
+        showToast("Avvio riproduzione diretta...");
         const extraction = await resolveExtraction(target);
-        const m3u8Url = extraction.master_m3u8 || extraction.vix_url;
-        if (!m3u8Url) {
-          showToast("Impossibile recuperare il flusso Vixcloud.");
-          return;
-        }
-        showToast("Apertura flusso Vixcloud M3U8...");
-        
-        // Directly navigate to the signed Vixcloud M3U8 playlist URL
-        const link = document.createElement('a');
-        link.href = m3u8Url;
-        link.target = '_self';
-        document.body.appendChild(link);
-        link.click();
-        document.body.removeChild(link);
+        const title = target.current_ep_title ? `${decodeHtml(target.name)} - ${target.current_ep_title}` : decodeHtml(target.name);
+        const streamUrl = extraction.embed_url || extraction.master_m3u8 || extraction.vix_url || `${window.location.origin}/api/stream/master.m3u8?titleId=${target.id}${target.current_episode_id ? `&e=${target.current_episode_id}` : ''}&slug=${encodeURIComponent(target.slug || '')}`;
+        closeDetails();
+        playInWebPlayer(streamUrl, title, false);
       }
 
       // -------------------------------------------------------------
@@ -2225,7 +2295,7 @@
       async function startExternalPlayer(item) {
         const target = item || currentActiveItem;
         const extraction = await resolveExtraction(target);
-        const title = target.current_ep_title ? `${target.name} - ${target.current_ep_title}` : target.name;
+        const title = target.current_ep_title ? `${decodeHtml(target.name)} - ${target.current_ep_title}` : decodeHtml(target.name);
 
         const proxyStreamUrl = `${window.location.origin}/api/stream/master.m3u8?titleId=${target.id}${target.current_episode_id ? `&e=${target.current_episode_id}` : ''}&slug=${encodeURIComponent(target.slug || '')}`;
         const streamUrl = extraction.master_m3u8 || proxyStreamUrl;
@@ -2267,13 +2337,20 @@
         showToast("📋 Link flusso M3U8 copiato negli appunti!");
       };
 
-      btnModalPlayerOpen.onclick = () => startExternalPlayer(currentActiveItem);
-      btnHeroPlayer.onclick = () => startExternalPlayer(currentActiveItem);
+      // RIPRODUCI SUBITO -> PLAYS DIRECTLY WITH VIXCLOUD
+      btnHeroPlayer.onclick = () => playDirectly(currentActiveItem);
+      btnModalPlayerOpen.onclick = () => playDirectly(currentActiveItem);
 
-      // CHOOSER MODAL BUTTON IN DETAILS MODAL
+      // CHOOSER BUTTONS -> OPENS EXTERNAL PLAYER CHOOSER
+      btnHeroVix.onclick = async () => {
+        const extraction = await resolveExtraction(currentActiveItem);
+        const title = decodeHtml(currentActiveItem.name);
+        openPlayerChooser(extraction, title);
+      };
+
       btnModalVixEmbed.onclick = async () => {
         const extraction = await resolveExtraction(currentActiveItem);
-        const title = currentActiveItem.current_ep_title ? `${currentActiveItem.name} - ${currentActiveItem.current_ep_title}` : currentActiveItem.name;
+        const title = currentActiveItem.current_ep_title ? `${decodeHtml(currentActiveItem.name)} - ${currentActiveItem.current_ep_title}` : decodeHtml(currentActiveItem.name);
         closeDetails();
         openPlayerChooser(extraction, title);
       };
@@ -2369,7 +2446,6 @@
         }
       }
 
-      btnHeroVix.onclick = () => openVixDirect(currentActiveItem);
       btnPlayerVixDirect.onclick = () => {
         if (pendingExtraction) {
           window.open(pendingExtraction.m3u8 || pendingExtraction.embed, '_blank');
@@ -2394,7 +2470,7 @@
           return;
         }
         const rand = loadedCatalog[Math.floor(Math.random() * loadedCatalog.length)];
-        showToast(`🎲 Scelto per te: ${rand.name}`);
+        showToast(`🎲 Scelto per te: ${decodeHtml(rand.name)}`);
         openDetails(rand);
       }
 
