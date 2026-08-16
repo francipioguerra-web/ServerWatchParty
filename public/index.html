@@ -2133,6 +2133,16 @@
       function playInWebPlayer(streamUrl, title, isAppleNative) {
         playerActiveTitle.textContent = title || 'Riproduzione';
         playerModal.classList.remove('hidden');
+
+        // If it's an embed URL (Vixcloud / VidSrc)
+        if (streamUrl.includes('/embed/') || streamUrl.includes('vixcloud.co/embed')) {
+          webVideo.classList.add('hidden');
+          webVideo.pause();
+          webIframe.classList.remove('hidden');
+          webIframe.src = streamUrl;
+          return;
+        }
+
         webIframe.classList.add('hidden');
         webIframe.src = 'about:blank';
         webVideo.classList.remove('hidden');
@@ -2158,6 +2168,18 @@
               currentHls.on(Hls.Events.MANIFEST_PARSED, () => {
                 webVideo.play().catch(() => {});
               });
+              currentHls.on(Hls.Events.ERROR, () => {
+                // Fallback to clean embed if raw m3u8 fails
+                if (pendingExtraction && pendingExtraction.embed) {
+                  webVideo.classList.add('hidden');
+                  webIframe.classList.remove('hidden');
+                  webIframe.src = pendingExtraction.embed;
+                }
+              });
+            } else if (pendingExtraction && pendingExtraction.embed) {
+              webVideo.classList.add('hidden');
+              webIframe.classList.remove('hidden');
+              webIframe.src = pendingExtraction.embed;
             }
           });
         }
