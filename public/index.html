@@ -1075,24 +1075,25 @@
       background: #000;
     }
 
-    /* FLOATING BOTTOM NAVBAR (PURE BLUR / ENLARGED / MONOCHROME) */
+    /* FLOATING BOTTOM NAVBAR (ICON-ONLY / PURE BLUR / RESPONSIVE) */
     .bottom-navbar {
       position: fixed;
-      bottom: 22px;
+      bottom: 14px;
       left: 50%;
       transform: translateX(-50%);
       z-index: 90;
-      background: rgba(14, 14, 18, 0.65);
+      background: rgba(14, 14, 18, 0.68);
       backdrop-filter: blur(32px) saturate(190%);
       -webkit-backdrop-filter: blur(32px) saturate(190%);
-      border: 1.5px solid rgba(255, 255, 255, 0.16);
+      border: 1px solid rgba(255, 255, 255, 0.16);
       border-radius: 999px;
-      padding: 10px 22px;
+      padding: 6px 12px;
       display: flex;
       align-items: center;
-      gap: 10px;
-      box-shadow: 0 20px 48px rgba(0, 0, 0, 0.75), inset 0 1px 0 rgba(255, 255, 255, 0.12);
+      gap: 6px;
+      box-shadow: 0 16px 36px rgba(0, 0, 0, 0.75), inset 0 1px 0 rgba(255, 255, 255, 0.12);
       transition: transform 0.35s cubic-bezier(0.16, 1, 0.3, 1), opacity 0.35s ease;
+      max-width: calc(100vw - 24px);
     }
 
     .bottom-navbar.nav-hidden {
@@ -1106,15 +1107,13 @@
       border: none;
       color: var(--text-muted);
       display: flex;
-      flex-direction: column;
       align-items: center;
-      gap: 5px;
-      padding: 9px 18px;
+      justify-content: center;
+      padding: 8px 10px;
       border-radius: 999px;
-      font-size: 0.82rem;
-      font-weight: 700;
       cursor: pointer;
       transition: all 0.22s cubic-bezier(0.16, 1, 0.3, 1);
+      position: relative;
     }
 
     .nav-item:hover, .nav-item.active {
@@ -1124,30 +1123,27 @@
     }
 
     .nav-item svg {
-      width: 22px;
-      height: 22px;
+      width: 20px;
+      height: 20px;
     }
 
-    /* DESKTOP ENLARGED NAVBAR (BIGGER & MORE SPACIOUS) */
+    /* DESKTOP RESPONSIVE SIZING */
     @media (min-width: 768px) {
       .bottom-navbar {
-        bottom: 28px;
-        padding: 12px 28px;
-        gap: 14px;
+        bottom: 22px;
+        padding: 8px 18px;
+        gap: 10px;
         border: 1.5px solid rgba(255, 255, 255, 0.18);
-        box-shadow: 0 24px 56px rgba(0, 0, 0, 0.85);
+        box-shadow: 0 20px 48px rgba(0, 0, 0, 0.85);
       }
 
       .nav-item {
-        flex-direction: row;
-        gap: 9px;
-        padding: 11px 22px;
-        font-size: 0.94rem;
+        padding: 9px 14px;
       }
 
       .nav-item svg {
-        width: 22px;
-        height: 22px;
+        width: 21px;
+        height: 21px;
       }
     }
 
@@ -1193,54 +1189,60 @@
       </div>
     </div>
 
-    <div class="header-right">
-      <!-- NOTIFICATIONS BELL DROPDOWN BUTTON -->
-      <button id="btn-notif-bell" class="icon-btn" title="Notifiche e inviti">
-        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"></path><path d="M13.73 21a2 2 0 0 1-3.46 0"></path></svg>
-        <span id="notif-badge" class="notif-badge hidden">0</span>
-      </button>
-
-      <!-- USER PROFILE / GOOGLE LOGIN WIDGET BUTTON -->
-      <div id="user-profile-widget">
-        <button id="btn-google-login-trigger" class="btn-header-login">
-          <svg width="16" height="16" viewBox="0 0 24 24"><path fill="#4285F4" d="M23.745 12.27c0-.7-.06-1.4-.19-2.07H12v4.51h6.6c-.29 1.52-1.14 2.82-2.4 3.68v3.05h3.88c2.27-2.09 3.66-5.17 3.66-9.17z"/><path fill="#34A853" d="M12 24c3.24 0 5.95-1.08 7.93-2.91l-3.88-3.05c-1.08.72-2.45 1.16-4.05 1.16-3.12 0-5.77-2.1-6.72-4.93H1.25v3.15C3.26 21.36 7.35 24 12 24z"/><path fill="#FBBC05" d="M5.28 14.27c-.25-.72-.38-1.49-.38-2.27s.13-1.55.38-2.27V6.58H1.25C.45 8.18 0 9.99 0 12s.45 3.82 1.25 5.42l4.03-3.15z"/><path fill="#EA4335" d="M12 4.75c1.77 0 3.35.61 4.6 1.8l3.42-3.42C17.95 1.19 15.24 0 12 0 7.35 0 3.26 2.64 1.25 6.58l4.03 3.15c.95-2.83 3.6-4.98 6.72-4.98z"/></svg>
-          <span>Accedi con Google</span>
-        </button>
-      </div>
+    <div class="header-right" style="display: none;">
+      <button id="btn-notif-bell"></button>
+      <div id="user-profile-widget"></div>
     </div>
   </header>
 
-  <!-- NOTIFICATIONS DROPDOWN MENU -->
-  <div id="notif-dropdown" class="dropdown-menu hidden">
-    <div class="dropdown-header">
-      <span>🔔 Notifiche & Inviti</span>
-      <button id="btn-close-notif-dropdown" style="background:none; border:none; color:var(--text-muted); cursor:pointer; font-size:1.2rem;">&times;</button>
-    </div>
-    <div id="notif-list" class="dropdown-body">
-      <div class="notif-empty">Nessuna notifica ricevuta.</div>
+  <!-- NOTIFICATIONS MODAL OVERLAY (PURE BLUR / SAME AS FILM DETAILS) -->
+  <div id="notif-dropdown" class="modal-overlay hidden">
+    <div class="modal-card" style="max-width: 480px; padding: 22px;">
+      <button id="btn-close-notif-dropdown" class="modal-close-btn">&times;</button>
+      <h3 style="font-size: 1.2rem; font-weight: 800; margin-bottom: 4px;">🔔 Notifiche & Inviti</h3>
+      <p style="font-size: 0.82rem; color: var(--text-muted); margin-bottom: 16px;">Tutte le notifiche di film condivisi e richieste di amicizia:</p>
+      <div id="notif-list" style="display: flex; flex-direction: column; gap: 10px; max-height: 340px; overflow-y: auto;">
+        <div class="notif-empty">Nessuna notifica ricevuta.</div>
+      </div>
     </div>
   </div>
 
-  <!-- USER PROFILE DROPDOWN MENU -->
-  <div id="user-dropdown" class="dropdown-menu hidden" style="width: 280px;">
-    <div class="dropdown-header">
-      <span id="dropdown-user-name">Mio Profilo</span>
-      <button id="btn-close-user-dropdown" style="background:none; border:none; color:var(--text-muted); cursor:pointer; font-size:1.2rem;">&times;</button>
-    </div>
-    <div style="padding: 14px; display: flex; flex-direction: column; gap: 10px;">
-      <div>
-        <div style="font-size: 0.9rem; font-weight: 800; color: #4ade80;" id="dropdown-user-nickname">@nickname</div>
-        <div style="font-size: 0.75rem; color: var(--text-dim);" id="dropdown-user-email">email@gmail.com</div>
+  <!-- USER PROFILE MODAL OVERLAY (PURE BLUR / SAME AS FILM DETAILS) -->
+  <div id="user-dropdown" class="modal-overlay hidden">
+    <div class="modal-card" style="max-width: 440px; padding: 24px;">
+      <button id="btn-close-user-dropdown" class="modal-close-btn">&times;</button>
+      <div id="user-profile-logged-view">
+        <div style="display: flex; align-items: center; gap: 14px; margin-bottom: 18px; padding-bottom: 14px; border-bottom: 1px solid rgba(255,255,255,0.12);">
+          <img id="dropdown-user-avatar" src="" style="width: 52px; height: 52px; border-radius: 50%; object-fit: cover; background: #6366f1; border: 2px solid rgba(255,255,255,0.2);" onerror="this.src='https://ui-avatars.com/api/?name=User&background=6366f1&color=fff'" />
+          <div>
+            <div style="font-size: 1.1rem; font-weight: 800; color: #fff;" id="dropdown-user-name">Utente</div>
+            <div style="font-size: 0.88rem; font-weight: 700; color: #4ade80;" id="dropdown-user-nickname">@nickname</div>
+            <div style="font-size: 0.76rem; color: var(--text-dim);" id="dropdown-user-email">email@gmail.com</div>
+          </div>
+        </div>
+
+        <div style="display: flex; flex-direction: column; gap: 10px;">
+          <button id="btn-change-nickname" class="btn btn-secondary" style="width:100%; justify-content: flex-start; padding: 12px 16px; font-size: 0.88rem;">
+            ✏️ Modifica Nickname
+          </button>
+          <button id="btn-open-friends-modal" class="btn btn-secondary" style="width:100%; justify-content: flex-start; padding: 12px 16px; font-size: 0.88rem;">
+            👥 Gestisci Amici (<span id="user-friends-count">0</span>)
+          </button>
+          <button id="btn-logout" class="btn btn-secondary" style="width:100%; justify-content: flex-start; padding: 12px 16px; color: #ef4444; font-size: 0.88rem;">
+            🚪 Esci dall'account
+          </button>
+        </div>
       </div>
-      <button id="btn-change-nickname" class="btn btn-secondary" style="width:100%; justify-content: flex-start; font-size: 0.8rem;">
-        ✏️ Modifica Nickname
-      </button>
-      <button id="btn-open-friends-modal" class="btn btn-secondary" style="width:100%; justify-content: flex-start; font-size: 0.8rem;">
-        👥 Gestisci Amici (<span id="user-friends-count">0</span>)
-      </button>
-      <button id="btn-logout" class="btn btn-secondary" style="width:100%; justify-content: flex-start; color: #ef4444; font-size: 0.8rem;">
-        🚪 Esci dall'account
-      </button>
+
+      <div id="user-profile-unlogged-view" style="display:none; text-align:center; padding: 10px 0;">
+        <div style="font-size: 2.2rem; margin-bottom: 8px;">👤</div>
+        <h3 style="font-size: 1.2rem; font-weight: 800; margin-bottom: 6px;">Accedi al tuo Profilo</h3>
+        <p style="font-size: 0.82rem; color: var(--text-muted); margin-bottom: 18px;">Accedi con il tuo account Google per condividere film con gli amici, gestire le notifiche e creare la tua Watch Party:</p>
+        <button id="btn-google-login-trigger" class="btn btn-primary" style="width: 100%; padding: 12px; font-size: 0.92rem; justify-content: center;">
+          <svg width="18" height="18" viewBox="0 0 24 24" style="margin-right: 6px;"><path fill="#4285F4" d="M23.745 12.27c0-.7-.06-1.4-.19-2.07H12v4.51h6.6c-.29 1.52-1.14 2.82-2.4 3.68v3.05h3.88c2.27-2.09 3.66-5.17 3.66-9.17z"/><path fill="#34A853" d="M12 24c3.24 0 5.95-1.08 7.93-2.91l-3.88-3.05c-1.08.72-2.45 1.16-4.05 1.16-3.12 0-5.77-2.1-6.72-4.93H1.25v3.15C3.26 21.36 7.35 24 12 24z"/><path fill="#FBBC05" d="M5.28 14.27c-.25-.72-.38-1.49-.38-2.27s.13-1.55.38-2.27V6.58H1.25C.45 8.18 0 9.99 0 12s.45 3.82 1.25 5.42l4.03-3.15z"/><path fill="#EA4335" d="M12 4.75c1.77 0 3.35.61 4.6 1.8l3.42-3.42C17.95 1.19 15.24 0 12 0 7.35 0 3.26 2.64 1.25 6.58l4.03 3.15c.95-2.83 3.6-4.98 6.72-4.98z"/></svg>
+          Accedi con Google
+        </button>
+      </div>
     </div>
   </div>
 
@@ -1497,21 +1499,26 @@
 
   <!-- FLOATING BOTTOM NAVBAR -->
   <nav class="bottom-navbar">
-    <button class="nav-item active" id="nav-home">
-      <svg viewBox="0 0 24 24" fill="currentColor"><path d="M10 20v-6h4v6h5v-8h3L12 3 2 12h3v8z"/></svg>
-      <span>Home</span>
+    <button class="nav-item active" id="nav-home" data-tooltip="Home" title="Home">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"></path><polyline points="9 22 9 12 15 12 15 22"></polyline></svg>
     </button>
-    <button class="nav-item" id="nav-search">
-      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><circle cx="11" cy="11" r="8"></circle><line x1="21" y1="21" x2="16.65" y2="16.65"></line></svg>
-      <span>Cerca</span>
+    <button class="nav-item" id="nav-search" data-tooltip="Cerca" title="Cerca">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="8"></circle><line x1="21" y1="21" x2="16.65" y2="16.65"></line></svg>
     </button>
-    <button class="nav-item" id="nav-random">
-      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M16 3h5v5M4 20L21 3M21 16v5h-5M15 15l6 6M4 4l5 5"/></svg>
-      <span>Casuale</span>
+    <button class="nav-item" id="nav-random" data-tooltip="Casuale" title="Casuale">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><polyline points="16 3 21 3 21 8"></polyline><line x1="4" y1="20" x2="21" y2="3"></line><polyline points="21 16 21 21 16 21"></polyline><line x1="15" y1="15" x2="21" y2="21"></line><line x1="4" y1="4" x2="9" y2="9"></line></svg>
     </button>
-    <button class="nav-item" id="nav-friends">
-      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"></path><circle cx="9" cy="7" r="4"></circle><path d="M23 21v-2a4 4 0 0 0-3-3.87"></path><path d="M16 3.13a4 4 0 0 1 0 7.75"></path></svg>
-      <span>Amici</span>
+    <button class="nav-item" id="nav-friends" data-tooltip="Amici" title="Amici">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"></path><circle cx="9" cy="7" r="4"></circle><path d="M23 21v-2a4 4 0 0 0-3-3.87"></path><path d="M16 3.13a4 4 0 0 1 0 7.75"></path></svg>
+    </button>
+    <button class="nav-item" id="nav-notif" data-tooltip="Notifiche" title="Notifiche" style="position:relative;">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"></path><path d="M13.73 21a2 2 0 0 1-3.46 0"></path></svg>
+      <span id="notif-badge" class="notif-badge hidden" style="position:absolute; top:2px; right:4px; font-size:0.62rem; min-width:15px; height:15px; padding:0 3px; display:flex; align-items:center; justify-content:center;">0</span>
+    </button>
+    <button class="nav-item" id="nav-profile" data-tooltip="Profilo" title="Profilo">
+      <div id="nav-avatar-wrap" style="width:20px; height:20px; border-radius:50%; display:flex; align-items:center; justify-content:center; overflow:hidden;">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path><circle cx="12" cy="7" r="4"></circle></svg>
+      </div>
     </button>
   </nav>
 
@@ -1580,20 +1587,27 @@
       const navSearch = document.getElementById('nav-search');
       const navRandom = document.getElementById('nav-random');
       const navFriends = document.getElementById('nav-friends');
+      const navNotif = document.getElementById('nav-notif');
+      const navProfile = document.getElementById('nav-profile');
+      const notifBadge = document.getElementById('notif-badge');
+      const navAvatarWrap = document.getElementById('nav-avatar-wrap');
       const gridSectionHeading = document.getElementById('grid-section-heading');
 
       // SOCIAL & NOTIFICATIONS ELEMENTS
       const btnNotifBell = document.getElementById('btn-notif-bell');
-      const notifBadge = document.getElementById('notif-badge');
       const notifDropdown = document.getElementById('notif-dropdown');
       const btnCloseNotifDropdown = document.getElementById('btn-close-notif-dropdown');
       const notifList = document.getElementById('notif-list');
       const userProfileWidget = document.getElementById('user-profile-widget');
       const userDropdown = document.getElementById('user-dropdown');
       const btnCloseUserDropdown = document.getElementById('btn-close-user-dropdown');
+      const userProfileLoggedView = document.getElementById('user-profile-logged-view');
+      const userProfileUnloggedView = document.getElementById('user-profile-unlogged-view');
+      const dropdownUserAvatar = document.getElementById('dropdown-user-avatar');
       const dropdownUserName = document.getElementById('dropdown-user-name');
       const dropdownUserNickname = document.getElementById('dropdown-user-nickname');
       const dropdownUserEmail = document.getElementById('dropdown-user-email');
+      const btnGoogleLoginTrigger = document.getElementById('btn-google-login-trigger');
       const userFriendsCount = document.getElementById('user-friends-count');
       const btnOpenFriendsModal = document.getElementById('btn-open-friends-modal');
       const btnChangeNickname = document.getElementById('btn-change-nickname');
@@ -1773,9 +1787,15 @@
 
       btnChangeNickname.onclick = () => {
         userDropdown.classList.add('hidden');
-        inputUniqueNickname.value = currentUser.nickname || '';
+        inputUniqueNickname.value = (currentUser && currentUser.nickname) || '';
         nicknameError.style.display = 'none';
         nicknameModal.classList.remove('hidden');
+      };
+
+      btnOpenFriendsModal.onclick = () => {
+        userDropdown.classList.add('hidden');
+        friendsModal.classList.remove('hidden');
+        fetchFriends();
       };
 
       // -------------------------------------------------------------
@@ -1784,31 +1804,30 @@
       function updateAuthUI() {
         if (currentUser && currentUser.email) {
           const displayTag = currentUser.nickname ? `@${currentUser.nickname}` : currentUser.name;
-          userProfileWidget.innerHTML = `
-            <div class="user-profile-badge" id="btn-user-avatar" title="${currentUser.name}">
-              <img class="user-avatar-mini" src="${currentUser.avatar || ''}" alt="${currentUser.name}" onerror="this.src='https://ui-avatars.com/api/?name=${encodeURIComponent(currentUser.name)}&background=6366f1&color=fff'" />
-              <span class="user-name-mini">${displayTag}</span>
-            </div>
-          `;
-          document.getElementById('btn-user-avatar').onclick = () => {
-            dropdownUserName.textContent = currentUser.name;
-            dropdownUserNickname.textContent = currentUser.nickname ? `@${currentUser.nickname}` : '(Nessun nickname)';
-            dropdownUserEmail.textContent = currentUser.email;
-            userDropdown.classList.toggle('hidden');
-            notifDropdown.classList.add('hidden');
-          };
+          if (dropdownUserName) dropdownUserName.textContent = currentUser.name || 'Utente';
+          if (dropdownUserNickname) dropdownUserNickname.textContent = currentUser.nickname ? `@${currentUser.nickname}` : '(Nessun nickname)';
+          if (dropdownUserEmail) dropdownUserEmail.textContent = currentUser.email;
+          if (dropdownUserAvatar) dropdownUserAvatar.src = currentUser.avatar || `https://ui-avatars.com/api/?name=${encodeURIComponent(currentUser.name)}&background=6366f1&color=fff`;
+
+          if (userProfileLoggedView) userProfileLoggedView.style.display = 'block';
+          if (userProfileUnloggedView) userProfileUnloggedView.style.display = 'none';
+
+          if (navAvatarWrap) {
+            navAvatarWrap.innerHTML = `<img src="${currentUser.avatar || ''}" style="width:100%; height:100%; object-fit:cover; border-radius:50%;" onerror="this.src='https://ui-avatars.com/api/?name=${encodeURIComponent(currentUser.name)}&background=6366f1&color=fff'" />`;
+          }
+
           fetchFriends();
           startNotificationPolling();
         } else {
-          userProfileWidget.innerHTML = `
-            <button id="btn-google-login-trigger" class="btn-header-login">
-              <svg width="16" height="16" viewBox="0 0 24 24"><path fill="#4285F4" d="M23.745 12.27c0-.7-.06-1.4-.19-2.07H12v4.51h6.6c-.29 1.52-1.14 2.82-2.4 3.68v3.05h3.88c2.27-2.09 3.66-5.17 3.66-9.17z"/><path fill="#34A853" d="M12 24c3.24 0 5.95-1.08 7.93-2.91l-3.88-3.05c-1.08.72-2.45 1.16-4.05 1.16-3.12 0-5.77-2.1-6.72-4.93H1.25v3.15C3.26 21.36 7.35 24 12 24z"/><path fill="#FBBC05" d="M5.28 14.27c-.25-.72-.38-1.49-.38-2.27s.13-1.55.38-2.27V6.58H1.25C.45 8.18 0 9.99 0 12s.45 3.82 1.25 5.42l4.03-3.15z"/><path fill="#EA4335" d="M12 4.75c1.77 0 3.35.61 4.6 1.8l3.42-3.42C17.95 1.19 15.24 0 12 0 7.35 0 3.26 2.64 1.25 6.58l4.03 3.15c.95-2.83 3.6-4.98 6.72-4.98z"/></svg>
-              <span>Accedi con Google</span>
-            </button>
-          `;
-          document.getElementById('btn-google-login-trigger').onclick = startGooglePopupLogin;
+          if (userProfileLoggedView) userProfileLoggedView.style.display = 'none';
+          if (userProfileUnloggedView) userProfileUnloggedView.style.display = 'block';
+
+          if (navAvatarWrap) {
+            navAvatarWrap.innerHTML = `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path><circle cx="12" cy="7" r="4"></circle></svg>`;
+          }
+
           if (notifPollingInterval) clearInterval(notifPollingInterval);
-          notifBadge.classList.add('hidden');
+          if (notifBadge) notifBadge.classList.add('hidden');
         }
       }
 
@@ -1820,7 +1839,43 @@
         showToast('Disconnesso con successo.');
       };
 
+      if (btnGoogleLoginTrigger) {
+        btnGoogleLoginTrigger.onclick = () => {
+          userDropdown.classList.add('hidden');
+          startGooglePopupLogin();
+        };
+      }
+
       btnCloseUserDropdown.onclick = () => userDropdown.classList.add('hidden');
+      userDropdown.onclick = (e) => { if (e.target === userDropdown) userDropdown.classList.add('hidden'); };
+
+      navProfile.onclick = () => {
+        setActiveNav(navProfile);
+        userDropdown.classList.remove('hidden');
+        notifDropdown.classList.add('hidden');
+      };
+
+      navNotif.onclick = () => {
+        setActiveNav(navNotif);
+        if (!currentUser) {
+          showToast("Accedi con Google per vedere le tue notifiche.");
+          userDropdown.classList.remove('hidden');
+          return;
+        }
+        notifDropdown.classList.remove('hidden');
+        userDropdown.classList.add('hidden');
+        fetchNotifications();
+        fetch('/api/notifications/read', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ email: currentUser.email })
+        }).catch(() => {});
+        notifBadge.classList.add('hidden');
+      };
+
+      if (btnNotifBell) {
+        btnNotifBell.onclick = navNotif.onclick;
+      }
 
       // -------------------------------------------------------------
       // FRIENDS MANAGEMENT
@@ -2008,24 +2063,8 @@
         notifPollingInterval = setInterval(fetchNotifications, 5000);
       }
 
-      btnNotifBell.onclick = () => {
-        if (!currentUser) {
-          startGooglePopupLogin();
-          return;
-        }
-        notifDropdown.classList.toggle('hidden');
-        userDropdown.classList.add('hidden');
-        if (!notifDropdown.classList.contains('hidden')) {
-          fetch('/api/notifications/read', {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ email: currentUser.email })
-          });
-          notifBadge.classList.add('hidden');
-        }
-      };
-
       btnCloseNotifDropdown.onclick = () => notifDropdown.classList.add('hidden');
+      notifDropdown.onclick = (e) => { if (e.target === notifDropdown) notifDropdown.classList.add('hidden'); };
 
       // -------------------------------------------------------------
       // SHARE FILM POPUP & RESOLUTION
