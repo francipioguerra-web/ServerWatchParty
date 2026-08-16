@@ -1092,14 +1092,35 @@
       align-items: center;
       gap: 6px;
       box-shadow: 0 16px 36px rgba(0, 0, 0, 0.75), inset 0 1px 0 rgba(255, 255, 255, 0.12);
-      transition: transform 0.35s cubic-bezier(0.16, 1, 0.3, 1), opacity 0.35s ease;
+      transition: all 0.45s cubic-bezier(0.16, 1, 0.3, 1);
       max-width: calc(100vw - 24px);
+      overflow: hidden;
     }
 
-    .bottom-navbar.nav-hidden {
-      transform: translate(-50%, 140%);
+    /* MORPH COLLAPSED STATE: EMPTY FLOATING BLUR DOT */
+    .bottom-navbar.collapsed-dot {
+      width: 26px;
+      height: 26px;
+      min-width: 26px;
+      min-height: 26px;
+      padding: 0 !important;
+      gap: 0 !important;
+      border-radius: 50% !important;
+      border: 1.5px solid rgba(255, 255, 255, 0.35);
+      background: rgba(255, 255, 255, 0.18);
+      box-shadow: 0 10px 28px rgba(0, 0, 0, 0.6), 0 0 14px rgba(255, 255, 255, 0.25);
+      cursor: pointer;
+    }
+
+    .bottom-navbar.collapsed-dot .nav-item {
       opacity: 0;
+      transform: scale(0.3);
       pointer-events: none;
+      width: 0;
+      height: 0;
+      padding: 0;
+      margin: 0;
+      overflow: hidden;
     }
 
     .nav-item {
@@ -1112,7 +1133,7 @@
       padding: 8px 10px;
       border-radius: 999px;
       cursor: pointer;
-      transition: all 0.22s cubic-bezier(0.16, 1, 0.3, 1);
+      transition: opacity 0.32s ease, transform 0.32s ease, color 0.2s ease, background 0.2s ease;
       position: relative;
     }
 
@@ -1135,6 +1156,13 @@
         gap: 10px;
         border: 1.5px solid rgba(255, 255, 255, 0.18);
         box-shadow: 0 20px 48px rgba(0, 0, 0, 0.85);
+      }
+
+      .bottom-navbar.collapsed-dot {
+        width: 30px;
+        height: 30px;
+        min-width: 30px;
+        min-height: 30px;
       }
 
       .nav-item {
@@ -1174,19 +1202,11 @@
 </head>
 <body>
 
-  <!-- TOP APP HEADER -->
+  <!-- TOP APP HEADER (CLEAN & MINIMALIST) -->
   <header class="app-header">
     <div class="brand-section" id="btn-brand-home">
       <div class="brand-badge">SC</div>
       <h1 class="brand-title">StreamingCommunity</h1>
-    </div>
-
-    <div class="header-center">
-      <div class="search-wrapper">
-        <svg class="search-icon" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><circle cx="11" cy="11" r="8"></circle><line x1="21" y1="21" x2="16.65" y2="16.65"></line></svg>
-        <input type="text" id="main-search-input" class="search-input" placeholder="Cerca film, serie..." autocomplete="off">
-        <button id="search-clear-btn" class="search-clear-btn hidden">&times;</button>
-      </div>
     </div>
 
     <div class="header-right" style="display: none;">
@@ -1194,6 +1214,23 @@
       <div id="user-profile-widget"></div>
     </div>
   </header>
+
+  <!-- SEARCH MODAL (PURE BLUR / FLOATING FULL MODAL) -->
+  <div id="search-modal" class="modal-overlay hidden">
+    <div class="modal-card" style="max-width: 540px; padding: 22px;">
+      <button id="btn-close-search-modal" class="modal-close-btn">&times;</button>
+      <h3 style="font-size: 1.2rem; font-weight: 800; margin-bottom: 4px;">🔍 Cerca Film e Serie TV</h3>
+      <p style="font-size: 0.82rem; color: var(--text-muted); margin-bottom: 14px;">Cerca per titolo, attore, regista o genere:</p>
+      <div class="search-wrapper" style="width: 100%; margin-bottom: 16px; background: rgba(255,255,255,0.08); border-radius: 12px; height: 46px; border: 1px solid rgba(255,255,255,0.14);">
+        <svg class="search-icon" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><circle cx="11" cy="11" r="8"></circle><line x1="21" y1="21" x2="16.65" y2="16.65"></line></svg>
+        <input type="text" id="main-search-input" class="search-input" placeholder="Digita per cercare..." autocomplete="off" style="font-size: 0.95rem;">
+        <button id="search-clear-btn" class="search-clear-btn hidden">&times;</button>
+      </div>
+      <div id="search-modal-results" style="display: flex; flex-direction: column; gap: 8px; max-height: 320px; overflow-y: auto;">
+        <div style="color: var(--text-dim); text-align: center; padding: 20px; font-size: 0.88rem;">Inizia a digitare per cercare nel catalogo...</div>
+      </div>
+    </div>
+  </div>
 
   <!-- NOTIFICATIONS MODAL OVERLAY (PURE BLUR / SAME AS FILM DETAILS) -->
   <div id="notif-dropdown" class="modal-overlay hidden">
@@ -1547,6 +1584,9 @@
 
       // DOM ELEMENTS
       const catalogGrid = document.getElementById('catalog-grid');
+      const searchModal = document.getElementById('search-modal');
+      const btnCloseSearchModal = document.getElementById('btn-close-search-modal');
+      const searchModalResults = document.getElementById('search-modal-results');
       const mainSearchInput = document.getElementById('main-search-input');
       const searchClearBtn = document.getElementById('search-clear-btn');
       const heroBanner = document.getElementById('hero-banner');
@@ -2570,30 +2610,7 @@
         }
       }
 
-      // -------------------------------------------------------------
-      // NAVBAR AUTO-COLLAPSE ON SCROLL DOWN & SHOW ON SCROLL UP / IDLE
-      // -------------------------------------------------------------
-      let lastScrollY = window.pageYOffset || document.documentElement.scrollTop;
-      let scrollTimer = null;
-      const navBarElement = document.querySelector('.bottom-navbar');
 
-      window.addEventListener('scroll', () => {
-        const currentY = window.pageYOffset || document.documentElement.scrollTop;
-        if (currentY > lastScrollY && currentY > 60) {
-          // Scrolling down -> hide navbar
-          if (navBarElement) navBarElement.classList.add('nav-hidden');
-        } else if (currentY < lastScrollY) {
-          // Scrolling up -> show navbar
-          if (navBarElement) navBarElement.classList.remove('nav-hidden');
-        }
-        lastScrollY = currentY;
-
-        // When user stops scrolling -> restore navbar smoothly
-        if (scrollTimer) clearTimeout(scrollTimer);
-        scrollTimer = setTimeout(() => {
-          if (navBarElement) navBarElement.classList.remove('nav-hidden');
-        }, 800);
-      }, { passive: true });
 
       // OPEN VIXCLOUD DIRECT LINK
       async function openVixDirect(item) {
@@ -2641,11 +2658,42 @@
 
       // LIVE SEARCH ENGINE (TOUCH & DESKTOP COMPATIBLE)
       let searchTimeout = null;
+
+      function renderSearchResults(titles) {
+        if (!searchModalResults) return;
+        searchModalResults.innerHTML = '';
+        if (!titles || titles.length === 0) {
+          searchModalResults.innerHTML = '<div style="color:var(--text-dim); text-align:center; padding:20px; font-size:0.88rem;">Nessun risultato trovato.</div>';
+          return;
+        }
+
+        titles.forEach(item => {
+          const row = document.createElement('div');
+          row.className = 'player-option-card';
+          const cleanName = decodeHtml(item.name);
+          row.innerHTML = `
+            <img src="${item.poster || 'https://via.placeholder.com/80x120'}" style="width:42px; height:58px; object-fit:cover; border-radius:6px; flex-shrink:0;" />
+            <div style="flex:1; overflow:hidden;">
+              <div style="font-weight:700; font-size:0.92rem; color:#fff; white-space:nowrap; overflow:hidden; text-overflow:ellipsis;">${cleanName}</div>
+              <div style="font-size:0.75rem; color:var(--text-dim); margin-top:2px;">${item.release_date || ''} • ${item.type === 'tv' ? 'Serie TV' : 'Film'}</div>
+            </div>
+          `;
+          row.onclick = () => {
+            searchModal.classList.add('hidden');
+            openDetails(item);
+          };
+          searchModalResults.appendChild(row);
+        });
+      }
+
       async function performSearch(query) {
         const q = (query || '').trim();
         if (!q) {
           gridSectionHeading.textContent = '🔥 Film & Serie TV in Evidenza';
           renderCards(loadedCatalog);
+          if (searchModalResults) {
+            searchModalResults.innerHTML = '<div style="color:var(--text-dim); text-align:center; padding:20px; font-size:0.88rem;">Inizia a digitare per cercare nel catalogo...</div>';
+          }
           return;
         }
 
@@ -2653,12 +2701,18 @@
         try {
           const res = await fetch(`/api/sc/search?q=${encodeURIComponent(q)}`);
           const data = await res.json();
-          if (data.success) {
-            renderCards(data.titles || []);
+          if (data.success && data.titles) {
+            renderCards(data.titles);
+            renderSearchResults(data.titles);
+          } else {
+            const filtered = loadedCatalog.filter(t => t.name.toLowerCase().includes(q.toLowerCase()));
+            renderCards(filtered);
+            renderSearchResults(filtered);
           }
         } catch (e) {
           const filtered = loadedCatalog.filter(t => t.name.toLowerCase().includes(q.toLowerCase()));
           renderCards(filtered);
+          renderSearchResults(filtered);
         }
       }
 
@@ -2679,7 +2733,11 @@
         mainSearchInput.value = '';
         searchClearBtn.classList.add('hidden');
         performSearch('');
+        mainSearchInput.focus();
       };
+
+      btnCloseSearchModal.onclick = () => searchModal.classList.add('hidden');
+      searchModal.onclick = (e) => { if (e.target === searchModal) searchModal.classList.add('hidden'); };
 
       // NAVBAR CONTROLS
       function setActiveNav(btn) {
@@ -2705,9 +2763,62 @@
 
       navSearch.onclick = () => {
         setActiveNav(navSearch);
-        mainSearchInput.focus();
-        window.scrollTo({ top: 0, behavior: 'smooth' });
+        searchModal.classList.remove('hidden');
+        setTimeout(() => mainSearchInput.focus(), 100);
       };
+
+      // -------------------------------------------------------------
+      // SCROLL AUTO-COLLAPSE (MORPH INTO EMPTY BLUR DOT ON SCROLL DOWN, EXPAND ON SCROLL UP OR IDLE STOP)
+      // -------------------------------------------------------------
+      let lastScrollY = window.scrollY;
+      let scrollIdleTimer = null;
+      const bottomNavbar = document.querySelector('.bottom-navbar');
+
+      function expandNavbar() {
+        if (bottomNavbar) {
+          bottomNavbar.classList.remove('collapsed-dot');
+        }
+      }
+
+      function collapseNavbar() {
+        if (bottomNavbar) {
+          bottomNavbar.classList.add('collapsed-dot');
+        }
+      }
+
+      window.addEventListener('scroll', () => {
+        const currentScrollY = window.scrollY;
+        const diff = currentScrollY - lastScrollY;
+
+        // Reset idle timer
+        if (scrollIdleTimer) clearTimeout(scrollIdleTimer);
+
+        if (diff > 8 && currentScrollY > 60) {
+          // Scrolling down: smoothly morph navbar into empty floating blur circle
+          collapseNavbar();
+        } else if (diff < -6 || currentScrollY <= 40) {
+          // Scrolling up: smoothly expand navbar back
+          expandNavbar();
+        }
+
+        // When scrolling stops, smoothly return to normal after short pause
+        scrollIdleTimer = setTimeout(() => {
+          expandNavbar();
+        }, 600);
+
+        lastScrollY = currentScrollY;
+      }, { passive: true });
+
+      // Click or hover on collapsed blur dot immediately expands it
+      if (bottomNavbar) {
+        bottomNavbar.addEventListener('mouseenter', expandNavbar);
+        bottomNavbar.addEventListener('click', (e) => {
+          if (bottomNavbar.classList.contains('collapsed-dot')) {
+            e.stopPropagation();
+            expandNavbar();
+          }
+        });
+      }
 
       // INITIALIZE
       updateAuthUI();
