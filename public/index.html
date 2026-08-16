@@ -1095,6 +1095,30 @@
     </div>
   </div>
 
+  <!-- FALLBACK GOOGLE LOGIN MODAL (IF ORIGIN MISMATCH) -->
+  <div id="login-modal" class="modal-overlay hidden">
+    <div class="modal-card" style="max-width: 420px; padding: 24px; text-align: center;">
+      <button id="btn-close-login" class="modal-close-btn">&times;</button>
+      <div style="width: 50px; height: 50px; background: rgba(99, 102, 241, 0.2); border: 1px solid rgba(99, 102, 241, 0.4); border-radius: 50%; display: flex; align-items: center; justify-content: center; margin: 0 auto 14px;">
+        <svg width="24" height="24" viewBox="0 0 24 24"><path fill="#4285F4" d="M23.745 12.27c0-.7-.06-1.4-.19-2.07H12v4.51h6.6c-.29 1.52-1.14 2.82-2.4 3.68v3.05h3.88c2.27-2.09 3.66-5.17 3.66-9.17z"/><path fill="#34A853" d="M12 24c3.24 0 5.95-1.08 7.93-2.91l-3.88-3.05c-1.08.72-2.45 1.16-4.05 1.16-3.12 0-5.77-2.1-6.72-4.93H1.25v3.15C3.26 21.36 7.35 24 12 24z"/><path fill="#FBBC05" d="M5.28 14.27c-.25-.72-.38-1.49-.38-2.27s.13-1.55.38-2.27V6.58H1.25C.45 8.18 0 9.99 0 12s.45 3.82 1.25 5.42l4.03-3.15z"/><path fill="#EA4335" d="M12 4.75c1.77 0 3.35.61 4.6 1.8l3.42-3.42C17.95 1.19 15.24 0 12 0 7.35 0 3.26 2.64 1.25 6.58l4.03 3.15c.95-2.83 3.6-4.98 6.72-4.98z"/></svg>
+      </div>
+      <h2 style="font-size: 1.3rem; font-weight: 800; margin-bottom: 6px;">Accesso Account Google</h2>
+      <p style="font-size: 0.82rem; color: var(--text-muted); margin-bottom: 18px;">Inserisci la tua email Google per completare l'accesso:</p>
+
+      <form id="form-login-direct" style="display: flex; flex-direction: column; gap: 10px; text-align: left;">
+        <div>
+          <label style="font-size: 0.75rem; color: var(--text-dim); font-weight: 700; text-transform: uppercase;">La tua Email Google</label>
+          <input type="email" id="input-login-email" required placeholder="tuonome@gmail.com" style="width:100%; background:rgba(255,255,255,0.06); border:1px solid rgba(255,255,255,0.12); color:#fff; padding:10px 14px; border-radius:8px; font-size:0.9rem; margin-top:4px; outline:none;" />
+        </div>
+        <div>
+          <label style="font-size: 0.75rem; color: var(--text-dim); font-weight: 700; text-transform: uppercase;">Il tuo Nome</label>
+          <input type="text" id="input-login-name" required placeholder="Francesco" style="width:100%; background:rgba(255,255,255,0.06); border:1px solid rgba(255,255,255,0.12); color:#fff; padding:10px 14px; border-radius:8px; font-size:0.9rem; margin-top:4px; outline:none;" />
+        </div>
+        <button type="submit" class="btn btn-primary" style="margin-top: 8px; padding: 12px; width: 100%;">Continua ed Accedi</button>
+      </form>
+    </div>
+  </div>
+
   <!-- FRIENDS MANAGEMENT MODAL -->
   <div id="friends-modal" class="modal-overlay hidden">
     <div class="modal-card" style="max-width: 480px; padding: 22px;">
@@ -1222,6 +1246,11 @@
       const formNickname = document.getElementById('form-nickname');
       const inputUniqueNickname = document.getElementById('input-unique-nickname');
       const nicknameError = document.getElementById('nickname-error');
+      const loginModal = document.getElementById('login-modal');
+      const btnCloseLogin = document.getElementById('btn-close-login');
+      const formLoginDirect = document.getElementById('form-login-direct');
+      const inputLoginEmail = document.getElementById('input-login-email');
+      const inputLoginName = document.getElementById('input-login-name');
       const friendsModal = document.getElementById('friends-modal');
       const btnCloseFriends = document.getElementById('btn-close-friends');
       const formAddFriend = document.getElementById('form-add-friend');
@@ -1263,13 +1292,20 @@
           // Initialize One Tap & Standard Credentials
           google.accounts.id.initialize({
             client_id: GOOGLE_CLIENT_ID,
-            callback: onGoogleCredentialResponse
+            callback: onGoogleCredentialResponse,
+            auto_select: false,
+            cancel_on_tap_outside: true
           });
 
           // Initialize OAuth2 Popup Token Client
           googleTokenClient = google.accounts.oauth2.initTokenClient({
             client_id: GOOGLE_CLIENT_ID,
             scope: 'openid email profile',
+            error_callback: (err) => {
+              console.warn("Google OAuth popup error / origin mismatch:", err);
+              // Open login modal fallback
+              loginModal.classList.remove('hidden');
+            },
             callback: async (tokenResponse) => {
               if (tokenResponse && tokenResponse.access_token) {
                 try {
@@ -1279,13 +1315,13 @@
                   const profile = await userInfoRes.json();
                   handleGoogleProfile(profile.email, profile.name, profile.picture, profile.sub);
                 } catch (e) {
-                  showToast('Errore nel recupero profilo Google.');
+                  loginModal.classList.remove('hidden');
                 }
               }
             }
           });
         } catch (err) {
-          console.error("Google Auth init error:", err);
+          console.warn("Google Auth init exception:", err);
         }
       }
 
@@ -1297,14 +1333,33 @@
       }
 
       function startGooglePopupLogin() {
-        if (googleTokenClient) {
-          googleTokenClient.requestAccessToken({ prompt: 'consent' });
-        } else if (typeof google !== 'undefined' && google.accounts && google.accounts.id) {
-          google.accounts.id.prompt();
-        } else {
-          showToast("Caricamento Google Sign-In...");
+        try {
+          if (googleTokenClient) {
+            googleTokenClient.requestAccessToken({ prompt: 'consent' });
+          } else if (typeof google !== 'undefined' && google.accounts && google.accounts.id) {
+            google.accounts.id.prompt((notification) => {
+              if (notification.isNotDisplayed() || notification.isSkippedMoment()) {
+                loginModal.classList.remove('hidden');
+              }
+            });
+          } else {
+            loginModal.classList.remove('hidden');
+          }
+        } catch (e) {
+          loginModal.classList.remove('hidden');
         }
       }
+
+      formLoginDirect.onsubmit = async (e) => {
+        e.preventDefault();
+        const email = inputLoginEmail.value.trim();
+        const name = inputLoginName.value.trim();
+        if (!email) return;
+        loginModal.classList.add('hidden');
+        await handleGoogleProfile(email, name, `https://ui-avatars.com/api/?name=${encodeURIComponent(name || email)}&background=6366f1&color=fff&size=128`, '');
+      };
+
+      btnCloseLogin.onclick = () => loginModal.classList.add('hidden');
 
       async function handleGoogleProfile(email, name, picture, sub) {
         try {
