@@ -2,6 +2,7 @@ const express = require('express');
 const http = require('http');
 const { Server } = require('socket.io');
 const cors = require('cors');
+const { Readable } = require('stream');
 
 const app = express();
 app.use(cors());
@@ -47,7 +48,9 @@ app.get('/api/room/:code', (req, res) => {
   const room = rooms[code] || {
     code,
     title: 'In attesa dell\'avvio del film dall\'app...',
-    embedUrl: '',
+    streamUrl: '',
+    masterM3u8: '',
+    vixUrl: '',
     time: 0,
     isPlaying: true,
     host: 'Host',
@@ -62,16 +65,19 @@ app.post('/api/room/:code/sync', (req, res) => {
   const code = (req.params.code || '').toUpperCase().trim();
   const data = req.body || {};
 
-  const embedUrl = data.embedUrl || data.embed_url || data.vixUrl || data.vix_url || (data.streamUrl && data.streamUrl.includes('embed') ? data.streamUrl : '') || data.streamUrl || '';
+  const streamUrl = data.masterM3u8 || data.master_m3u8 || data.streamUrl || data.embedUrl || '';
+  const vixUrl = data.vixUrl || data.vix_url || data.embedUrl || 'https://vixcloud.co/';
   const title = data.title || 'Film Sincronizzato';
 
-  console.log(`[HTTP POST SYNC] Stanza: ${code} | Titolo: ${title} | Embed: ${embedUrl ? embedUrl.substring(0, 50) + '...' : 'NESSUNO'} | Play: ${data.isPlaying} | Time: ${data.time}`);
+  console.log(`[HTTP POST SYNC] Stanza: ${code} | Titolo: ${title} | M3U8: ${streamUrl ? streamUrl.substring(0, 60) + '...' : 'NESSUNO'} | Play: ${data.isPlaying} | Time: ${data.time}`);
 
   if (!rooms[code]) {
     rooms[code] = {
       code,
       title: title,
-      embedUrl: embedUrl,
+      streamUrl: streamUrl,
+      masterM3u8: streamUrl,
+      vixUrl: vixUrl,
       time: data.time || 0,
       isPlaying: data.isPlaying ?? true,
       host: data.user || 'Host',
@@ -81,7 +87,11 @@ app.post('/api/room/:code/sync', (req, res) => {
     };
   } else {
     if (data.title) rooms[code].title = data.title;
-    if (embedUrl) rooms[code].embedUrl = embedUrl;
+    if (streamUrl) {
+      rooms[code].streamUrl = streamUrl;
+      rooms[code].masterM3u8 = streamUrl;
+    }
+    if (vixUrl) rooms[code].vixUrl = vixUrl;
     if (data.time !== undefined) rooms[code].time = data.time;
     if (data.isPlaying !== undefined) rooms[code].isPlaying = data.isPlaying;
     rooms[code].updatedAt = Date.now();
@@ -101,6 +111,100 @@ app.post('/api/room/:code/sync', (req, res) => {
 });
 
 // -------------------------------------------------------------
+// CLOUD HLS PROXY (Bypasses Vixcloud 403 & Referer protections)
+// -------------------------------------------------------------
+app.get('/api/stream/proxy', async (req, res) => {
+  const targetUrl = req.query.url;
+  const referer = req.query.ref || 'https://vixcloud.co/';
+
+  if (!targetUrl) {
+    return res.status(400).send("Parametro URL mancante");
+  }
+
+  try {
+    const headers = {
+      'User-Agent': 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/122.0.0.0 Safari/537.36',
+      'Referer': referer,
+      'Origin': 'https://vixcloud.co'
+    };
+
+    const response = await fetch(targetUrl, { headers });
+    if (!response.ok) {
+      return res.status(response.status).send(`Errore recupero HLS manifest (${response.status}): ${response.statusText}`);
+    }
+
+    const content = await response.text();
+    const lines = content.split('\n');
+    const rewritten = [];
+
+    for (let line of lines) {
+      const trimmed = line.trim();
+      if (trimmed && !trimmed.startsWith('#')) {
+        const absUrl = new URL(trimmed, targetUrl).toString();
+        // If it's another playlist or a segment, route through proxy
+        if (absUrl.includes('.m3u8') || absUrl.includes('playlist') || absUrl.includes('rendition')) {
+          rewritten.push(`/api/stream/proxy?url=${encodeURIComponent(absUrl)}&ref=${encodeURIComponent(referer)}`);
+        } else {
+          rewritten.push(`/api/stream/segment?url=${encodeURIComponent(absUrl)}&ref=${encodeURIComponent(referer)}`);
+        }
+      } else if (trimmed.includes('URI=')) {
+        const replaced = trimmed.replace(/URI=["']([^"']+)["']/g, (match, p1) => {
+          const absUrl = new URL(p1, targetUrl).toString();
+          return `URI="/api/stream/proxy?url=${encodeURIComponent(absUrl)}&ref=${encodeURIComponent(referer)}"`;
+        });
+        rewritten.push(replaced);
+      } else {
+        rewritten.push(line);
+      }
+    }
+
+    res.setHeader('Content-Type', 'application/vnd.apple.mpegurl');
+    res.setHeader('Access-Control-Allow-Origin', '*');
+    res.setHeader('Cache-Control', 'no-cache');
+    res.send(rewritten.join('\n'));
+  } catch (err) {
+    console.error("[HLS PROXY ERROR]", err);
+    res.status(500).send("Errore proxy HLS: " + err.message);
+  }
+});
+
+app.get('/api/stream/segment', async (req, res) => {
+  const targetUrl = req.query.url;
+  const referer = req.query.ref || 'https://vixcloud.co/';
+
+  if (!targetUrl) {
+    return res.status(400).send("Parametro URL mancante");
+  }
+
+  try {
+    const headers = {
+      'User-Agent': 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/122.0.0.0 Safari/537.36',
+      'Referer': referer,
+      'Origin': 'https://vixcloud.co'
+    };
+
+    const response = await fetch(targetUrl, { headers });
+    if (!response.ok) {
+      return res.status(response.status).send("Errore nel recupero del segmento video");
+    }
+
+    res.setHeader('Content-Type', response.headers.get('content-type') || 'video/MP2T');
+    res.setHeader('Access-Control-Allow-Origin', '*');
+    res.setHeader('Cache-Control', 'public, max-age=3600');
+
+    if (response.body) {
+      Readable.fromWeb(response.body).pipe(res);
+    } else {
+      const buffer = await response.arrayBuffer();
+      res.send(Buffer.from(buffer));
+    }
+  } catch (err) {
+    console.error("[SEGMENT PROXY ERROR]", err);
+    res.status(500).send("Errore proxy segmento: " + err.message);
+  }
+});
+
+// -------------------------------------------------------------
 // WEB APP & SYNC PLAYER PAGE
 // -------------------------------------------------------------
 function renderPlayerPage(req, res) {
@@ -114,6 +218,7 @@ function renderPlayerPage(req, res) {
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@400;600;700;800&display=swap" rel="stylesheet">
+  <script src="https://cdn.jsdelivr.net/npm/hls.js@latest"></script>
   <script src="/socket.io/socket.io.js"></script>
   <style>
     :root {
@@ -228,6 +333,16 @@ function renderPlayerPage(req, res) {
       align-items: center;
       justify-content: center;
     }
+    video {
+      width: 100%;
+      height: 100%;
+      object-fit: contain;
+      outline: none;
+      position: absolute;
+      inset: 0;
+      z-index: 10;
+      background: #000;
+    }
     .waiting-screen {
       text-align: center;
       padding: 40px 20px;
@@ -333,9 +448,9 @@ function renderPlayerPage(req, res) {
       <div class="waiting-screen" id="waiting-screen">
         <div class="waiting-spinner"></div>
         <h3 style="margin:0 0 8px;" id="waiting-headline">Connesso alla Stanza Sincronizzata</h3>
-        <p style="color:var(--muted); margin:0;" id="waiting-desc">Non appena clicchi sull'icona 🔗 o avvii il film nell'app, il lettore Vixcloud verrà iniettato qui automaticamente.</p>
+        <p style="color:var(--muted); margin:0;" id="waiting-desc">Non appena clicchi sull'icona 🔗 o avvii il film nell'app, il video partirà qui in streaming HD sincronizzato.</p>
       </div>
-      <div id="iframe-slot" style="width:100%; height:100%; position:absolute; inset:0; z-index:10; display:none; background:#000;"></div>
+      <video id="player" controls playsinline style="display:none;"></video>
       <div id="emoji-container"></div>
     </div>
 
@@ -378,7 +493,7 @@ function renderPlayerPage(req, res) {
     const filmTitleEl = document.getElementById('film-title');
     const roomCodeTxt = document.getElementById('room-code-txt');
     const waitingScreen = document.getElementById('waiting-screen');
-    const iframeSlot = document.getElementById('iframe-slot');
+    const player = document.getElementById('player');
     const emojiContainer = document.getElementById('emoji-container');
     const syncStatus = document.getElementById('sync-status');
     const btnChangeRoom = document.getElementById('btn-change-room');
@@ -386,7 +501,9 @@ function renderPlayerPage(req, res) {
     const syncDetailsTxt = document.getElementById('sync-details-txt');
 
     roomCodeTxt.textContent = roomCode;
-    let injectedIframeUrl = null;
+    let currentLoadedStream = null;
+    let hls = null;
+    let isRemoteUpdate = false;
 
     if (btnChangeRoom) {
       btnChangeRoom.addEventListener('click', () => {
@@ -429,7 +546,7 @@ function renderPlayerPage(req, res) {
       fetch('/api/room/' + roomCode)
         .then(r => r.json())
         .then(res => {
-          if (res && res.room && res.room.embedUrl) {
+          if (res && res.room && (res.room.streamUrl || res.room.masterM3u8)) {
             handleSyncState(res.room);
           }
         })
@@ -447,9 +564,11 @@ function renderPlayerPage(req, res) {
         document.title = data.title + ' - Watch Party';
       }
 
-      const targetEmbed = data.embedUrl || data.vixUrl || (data.streamUrl && data.streamUrl.includes('embed') ? data.streamUrl : '');
-      if (targetEmbed) {
-        injectVixcloudIframe(targetEmbed);
+      const targetStream = data.streamUrl || data.masterM3u8 || data.master_m3u8;
+      const vixUrl = data.vixUrl || data.vix_url || 'https://vixcloud.co/';
+
+      if (targetStream) {
+        loadHlsStream(targetStream, vixUrl);
       }
 
       const isPlaying = data.isPlaying;
@@ -470,40 +589,109 @@ function renderPlayerPage(req, res) {
       if (data.time !== undefined && data.time > 0) {
         const mins = Math.floor(data.time / 60);
         const secs = Math.floor(data.time % 60).toString().padStart(2, '0');
-        syncDetailsTxt.textContent = '⏱ Posizione film: ' + mins + ':' + secs + ' (Sincronizzato)';
+        syncDetailsTxt.textContent = '⏱ Posizione: ' + mins + ':' + secs + ' (Sincronizzato)';
       }
 
-      // Dispatch postMessage events to the embedded Vixcloud iframe
-      const iframe = document.getElementById('vix-injected-frame');
-      if (iframe && iframe.contentWindow) {
-        try {
-          if (data.type === 'play' || isPlaying === true) {
-            iframe.contentWindow.postMessage({ type: 'play', action: 'play' }, '*');
-            iframe.contentWindow.postMessage('{"event":"command","func":"playVideo","args":""}', '*');
-          } else if (data.type === 'pause' || isPlaying === false) {
-            iframe.contentWindow.postMessage({ type: 'pause', action: 'pause' }, '*');
-            iframe.contentWindow.postMessage('{"event":"command","func":"pauseVideo","args":""}', '*');
-          }
-          if (data.time !== undefined) {
-            iframe.contentWindow.postMessage({ type: 'seek', time: data.time }, '*');
-          }
-        } catch (e) {}
+      // Synchronize video player time and playback
+      if (player && data.time !== undefined) {
+        if (Math.abs(player.currentTime - data.time) > 1.5) {
+          isRemoteUpdate = true;
+          player.currentTime = data.time;
+          setTimeout(() => { isRemoteUpdate = false; }, 400);
+        }
+      }
+
+      if (player) {
+        if (isPlaying === true && player.paused) {
+          player.play().catch(() => {});
+        } else if (isPlaying === false && !player.paused) {
+          player.pause();
+        }
       }
     }
 
-    function injectVixcloudIframe(url) {
+    function loadHlsStream(url, vixUrl) {
       if (!url) return;
-      if (injectedIframeUrl === url) return;
-      injectedIframeUrl = url;
+      if (currentLoadedStream === url) return;
+      currentLoadedStream = url;
 
       waitingScreen.style.display = 'none';
-      iframeSlot.style.display = 'block';
+      player.style.display = 'block';
 
-      console.log("⚡ Iniettato Vixcloud Iframe URL:", url);
+      // Load via Render Cloud Proxy (attaches Vixcloud Referer to prevent 403)
+      const proxyUrl = '/api/stream/proxy?url=' + encodeURIComponent(url) + '&ref=' + encodeURIComponent(vixUrl || url);
 
-      // Clean injection of the Vixcloud embed player iframe
-      iframeSlot.innerHTML = '<iframe id="vix-injected-frame" src="' + url + '" allow="autoplay; fullscreen; encrypted-media; picture-in-picture" allowfullscreen frameborder="0" referrerpolicy="no-referrer" style="width:100%; height:100%; border:none; position:absolute; inset:0; z-index:10; border-radius:18px;"></iframe>';
+      console.log("⚡ Caricamento stream HLS tramite Proxy Render:", proxyUrl);
+
+      if (Hls.isSupported()) {
+        if (hls) hls.destroy();
+        hls = new Hls({
+          enableWorker: true,
+          lowLatencyMode: true,
+          maxBufferLength: 30
+        });
+        hls.loadSource(proxyUrl);
+        hls.attachMedia(player);
+        hls.on(Hls.Events.MANIFEST_PARSED, () => {
+          player.play().catch((e) => {
+            console.log("Autoplay click needed in browser:", e);
+          });
+        });
+        hls.on(Hls.Events.ERROR, (event, data) => {
+          console.warn("Hls error:", data);
+          if (data.fatal) {
+            switch (data.type) {
+              case Hls.ErrorTypes.NETWORK_ERROR:
+                hls.startLoad();
+                break;
+              case Hls.ErrorTypes.MEDIA_ERROR:
+                hls.recoverMediaError();
+                break;
+              default:
+                hls.destroy();
+                break;
+            }
+          }
+        });
+      } else if (player.canPlayType('application/vnd.apple.mpegurl')) {
+        player.src = proxyUrl;
+        player.play().catch(() => {});
+      }
     }
+
+    // Video events -> emit sync
+    player.addEventListener('play', () => {
+      if (!isRemoteUpdate) {
+        socket.emit('sync_event', {
+          roomCode: roomCode,
+          type: 'play',
+          isPlaying: true,
+          time: player.currentTime
+        });
+      }
+    });
+
+    player.addEventListener('pause', () => {
+      if (!isRemoteUpdate) {
+        socket.emit('sync_event', {
+          roomCode: roomCode,
+          type: 'pause',
+          isPlaying: false,
+          time: player.currentTime
+        });
+      }
+    });
+
+    player.addEventListener('seeked', () => {
+      if (!isRemoteUpdate) {
+        socket.emit('sync_event', {
+          roomCode: roomCode,
+          type: 'seek',
+          isPlaying: !player.paused,
+          time: player.currentTime
+        });
+      }
+    });
 
     function sendEmoji(emoji) {
       spawnEmoji(emoji);
@@ -554,7 +742,9 @@ io.on('connection', (socket) => {
       rooms[code] = {
         code,
         title: data.title || 'Film Sincronizzato',
-        embedUrl: data.embedUrl || data.vixUrl || '',
+        streamUrl: data.streamUrl || data.masterM3u8 || '',
+        masterM3u8: data.masterM3u8 || data.streamUrl || '',
+        vixUrl: data.vixUrl || '',
         time: data.time || 0,
         isPlaying: data.isPlaying ?? true,
         host: currentUser,
@@ -585,15 +775,18 @@ io.on('connection', (socket) => {
     const code = (payload.roomCode || currentRoom || '').toUpperCase().trim();
     if (!code) return;
 
-    const embedUrl = payload.embedUrl || payload.vixUrl || payload.vix_url || '';
+    const streamUrl = payload.streamUrl || payload.masterM3u8 || payload.master_m3u8 || '';
+    const vixUrl = payload.vixUrl || payload.vix_url || '';
 
-    console.log(`[SOCKET SYNC] Stanza: ${code} | Evento: ${payload.type} | Embed: ${embedUrl ? 'PRESENTE' : 'NONE'} | Time: ${payload.time}`);
+    console.log(`[SOCKET SYNC] Stanza: ${code} | Evento: ${payload.type} | Stream: ${streamUrl ? 'PRESENTE' : 'NONE'} | Time: ${payload.time}`);
 
     if (!rooms[code]) {
       rooms[code] = {
         code,
         title: payload.title || 'Film Sincronizzato',
-        embedUrl: embedUrl,
+        streamUrl: streamUrl,
+        masterM3u8: streamUrl,
+        vixUrl: vixUrl,
         time: payload.time || 0,
         isPlaying: payload.isPlaying ?? true,
         host: currentUser || 'Host',
@@ -603,7 +796,11 @@ io.on('connection', (socket) => {
       };
     } else {
       if (payload.title) rooms[code].title = payload.title;
-      if (embedUrl) rooms[code].embedUrl = embedUrl;
+      if (streamUrl) {
+        rooms[code].streamUrl = streamUrl;
+        rooms[code].masterM3u8 = streamUrl;
+      }
+      if (vixUrl) rooms[code].vixUrl = vixUrl;
       if (payload.time !== undefined) rooms[code].time = payload.time;
       if (payload.isPlaying !== undefined) rooms[code].isPlaying = payload.isPlaying;
       rooms[code].updatedAt = Date.now();
