@@ -2,6 +2,7 @@ const express = require('express');
 const http = require('http');
 const { Server } = require('socket.io');
 const cors = require('cors');
+const { Readable } = require('stream');
 
 const app = express();
 app.use(cors());
@@ -48,6 +49,7 @@ app.get('/api/room/:code', (req, res) => {
     code,
     title: 'In attesa dell\'avvio del film...',
     streamUrl: '',
+    vixUrl: '',
     time: 0,
     isPlaying: true,
     host: 'Host',
@@ -62,12 +64,16 @@ app.post('/api/room/:code/sync', (req, res) => {
   const code = (req.params.code || '').toUpperCase().trim();
   const data = req.body || {};
 
+  const streamUrl = data.streamUrl || data.embedUrl || data.masterM3u8 || data.master_m3u8 || '';
+  const vixUrl = data.vixUrl || data.vix_url || '';
+
   if (!rooms[code]) {
     rooms[code] = {
       code,
       title: data.title || 'Film Sincronizzato',
-      streamUrl: data.streamUrl || data.embedUrl || '',
-      isEmbed: data.isEmbed ?? (data.streamUrl ? data.streamUrl.includes('embed') || data.streamUrl.includes('vixcloud') || data.streamUrl.includes('watch') : true),
+      streamUrl: streamUrl,
+      vixUrl: vixUrl,
+      isEmbed: data.isEmbed ?? false,
       time: data.time || 0,
       isPlaying: data.isPlaying ?? true,
       host: data.user || 'Host',
@@ -77,8 +83,8 @@ app.post('/api/room/:code/sync', (req, res) => {
     };
   } else {
     if (data.title) rooms[code].title = data.title;
-    if (data.streamUrl) rooms[code].streamUrl = data.streamUrl;
-    if (data.embedUrl) rooms[code].streamUrl = data.embedUrl;
+    if (streamUrl) rooms[code].streamUrl = streamUrl;
+    if (vixUrl) rooms[code].vixUrl = vixUrl;
     if (data.isEmbed !== undefined) rooms[code].isEmbed = data.isEmbed;
     if (data.time !== undefined) rooms[code].time = data.time;
     if (data.isPlaying !== undefined) rooms[code].isPlaying = data.isPlaying;
@@ -93,6 +99,95 @@ app.post('/api/room/:code/sync', (req, res) => {
   });
 
   res.json({ success: true, room: rooms[code] });
+});
+
+// -------------------------------------------------------------
+// CLOUD HLS PROXY (Bypasses Vixcloud Referer & CORS Blocks)
+// -------------------------------------------------------------
+app.get('/api/stream/proxy', async (req, res) => {
+  const targetUrl = req.query.url;
+  const referer = req.query.ref || 'https://vixcloud.co/';
+
+  if (!targetUrl) {
+    return res.status(400).send("Parametro URL mancante");
+  }
+
+  try {
+    const headers = {
+      'User-Agent': 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/122.0.0.0 Safari/537.36',
+      'Referer': referer,
+      'Origin': 'https://vixcloud.co'
+    };
+
+    const response = await fetch(targetUrl, { headers });
+    if (!response.ok) {
+      return res.status(response.status).send("Errore nel recupero del manifest HLS: " + response.statusText);
+    }
+
+    const content = await response.text();
+    const lines = content.split('\n');
+    const rewritten = [];
+
+    for (let line of lines) {
+      const trimmed = line.trim();
+      if (trimmed && !trimmed.startsWith('#')) {
+        const absUrl = new URL(trimmed, targetUrl).toString();
+        rewritten.push(`/api/stream/segment?url=${encodeURIComponent(absUrl)}&ref=${encodeURIComponent(referer)}`);
+      } else if (trimmed.includes('URI=')) {
+        const replaced = trimmed.replace(/URI=["']([^"']+)["']/g, (match, p1) => {
+          const absUrl = new URL(p1, targetUrl).toString();
+          return `URI="/api/stream/segment?url=${encodeURIComponent(absUrl)}&ref=${encodeURIComponent(referer)}"`;
+        });
+        rewritten.push(replaced);
+      } else {
+        rewritten.push(line);
+      }
+    }
+
+    res.setHeader('Content-Type', 'application/vnd.apple.mpegurl');
+    res.setHeader('Access-Control-Allow-Origin', '*');
+    res.setHeader('Cache-Control', 'no-cache');
+    res.send(rewritten.join('\n'));
+  } catch (err) {
+    console.error("HLS Proxy Error:", err);
+    res.status(500).send("Errore proxy HLS: " + err.message);
+  }
+});
+
+app.get('/api/stream/segment', async (req, res) => {
+  const targetUrl = req.query.url;
+  const referer = req.query.ref || 'https://vixcloud.co/';
+
+  if (!targetUrl) {
+    return res.status(400).send("Parametro URL mancante");
+  }
+
+  try {
+    const headers = {
+      'User-Agent': 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/122.0.0.0 Safari/537.36',
+      'Referer': referer,
+      'Origin': 'https://vixcloud.co'
+    };
+
+    const response = await fetch(targetUrl, { headers });
+    if (!response.ok) {
+      return res.status(response.status).send("Errore nel recupero del segmento video");
+    }
+
+    res.setHeader('Content-Type', response.headers.get('content-type') || 'video/MP2T');
+    res.setHeader('Access-Control-Allow-Origin', '*');
+    res.setHeader('Cache-Control', 'public, max-age=3600');
+
+    if (response.body) {
+      Readable.fromWeb(response.body).pipe(res);
+    } else {
+      const buffer = await response.arrayBuffer();
+      res.send(Buffer.from(buffer));
+    }
+  } catch (err) {
+    console.error("Segment Proxy Error:", err);
+    res.status(500).send("Errore proxy segmento: " + err.message);
+  }
 });
 
 // -------------------------------------------------------------
@@ -443,8 +538,7 @@ function renderPlayerPage(req, res) {
       }
 
       if (data.streamUrl) {
-        const isEmbed = data.isEmbed ?? (data.streamUrl.includes('embed') || data.streamUrl.includes('vixcloud') || data.streamUrl.includes('watch'));
-        loadStream(data.streamUrl, isEmbed);
+        loadStream(data.streamUrl, data.isEmbed, data.vixUrl);
       }
 
       if (player && data.time !== undefined && !data.isEmbed) {
@@ -464,9 +558,57 @@ function renderPlayerPage(req, res) {
       }
     }
 
-    function loadStream(url, isEmbed) {
+    function loadStream(url, isEmbed, vixUrl) {
       if (!url) return;
       waitingScreen.style.display = 'none';
+
+      // Always proxy HLS streams (.m3u8 or vixcloud streams) through Render proxy
+      if (url.includes('.m3u8') || url.includes('vixcloud') || url.includes('playlist')) {
+        player.style.display = 'block';
+        const existingIframe = document.getElementById('web-embed-iframe');
+        if (existingIframe) existingIframe.style.display = 'none';
+
+        const proxyUrl = '/api/stream/proxy?url=' + encodeURIComponent(url) + '&ref=' + encodeURIComponent(vixUrl || url);
+
+        if (Hls.isSupported()) {
+          if (!hls || hls.streamUrl !== url) {
+            if (hls) hls.destroy();
+            hls = new Hls({
+              enableWorker: true,
+              lowLatencyMode: true,
+              maxBufferLength: 30
+            });
+            hls.streamUrl = url;
+            hls.loadSource(proxyUrl);
+            hls.attachMedia(player);
+            hls.on(Hls.Events.MANIFEST_PARSED, () => {
+              player.play().catch((e) => {
+                console.log("Autoplay click needed:", e);
+              });
+            });
+            hls.on(Hls.Events.ERROR, (event, data) => {
+              console.warn("HLS Error:", data);
+              if (data.fatal) {
+                switch (data.type) {
+                  case Hls.ErrorTypes.NETWORK_ERROR:
+                    hls.startLoad();
+                    break;
+                  case Hls.ErrorTypes.MEDIA_ERROR:
+                    hls.recoverMediaError();
+                    break;
+                  default:
+                    hls.destroy();
+                    break;
+                }
+              }
+            });
+          }
+        } else if (player.canPlayType('application/vnd.apple.mpegurl')) {
+          player.src = proxyUrl;
+          player.play().catch(() => {});
+        }
+        return;
+      }
 
       if (isEmbed) {
         let iframe = document.getElementById('web-embed-iframe');
@@ -481,29 +623,6 @@ function renderPlayerPage(req, res) {
         iframe.style.display = 'block';
         if (iframe.src !== url) iframe.src = url;
         return;
-      }
-
-      // HLS / Direct Video
-      player.style.display = 'block';
-      const existingIframe = document.getElementById('web-embed-iframe');
-      if (existingIframe) existingIframe.style.display = 'none';
-
-      if (Hls.isSupported() && url.includes('.m3u8')) {
-        if (!hls || hls.url !== url) {
-          if (hls) hls.destroy();
-          hls = new Hls({
-            enableWorker: true,
-            lowLatencyMode: true
-          });
-          hls.loadSource(url);
-          hls.attachMedia(player);
-          hls.on(Hls.Events.MANIFEST_PARSED, () => {
-            player.play().catch(() => {});
-          });
-        }
-      } else if (player.src !== url) {
-        player.src = url;
-        player.play().catch(() => {});
       }
     }
 
@@ -587,6 +706,7 @@ io.on('connection', (socket) => {
         code,
         title: data.title || 'Film Sincronizzato',
         streamUrl: data.streamUrl || '',
+        vixUrl: data.vixUrl || '',
         isEmbed: data.isEmbed || false,
         time: data.time || 0,
         isPlaying: data.isPlaying ?? true,
@@ -618,11 +738,15 @@ io.on('connection', (socket) => {
     const code = (payload.roomCode || currentRoom || '').toUpperCase().trim();
     if (!code) return;
 
+    const streamUrl = payload.streamUrl || payload.embedUrl || payload.masterM3u8 || payload.master_m3u8 || '';
+    const vixUrl = payload.vixUrl || payload.vix_url || '';
+
     if (!rooms[code]) {
       rooms[code] = {
         code,
         title: payload.title || 'Film Sincronizzato',
-        streamUrl: payload.streamUrl || '',
+        streamUrl: streamUrl,
+        vixUrl: vixUrl,
         isEmbed: payload.isEmbed || false,
         time: payload.time || 0,
         isPlaying: payload.isPlaying ?? true,
@@ -633,7 +757,8 @@ io.on('connection', (socket) => {
       };
     } else {
       if (payload.title) rooms[code].title = payload.title;
-      if (payload.streamUrl) rooms[code].streamUrl = payload.streamUrl;
+      if (streamUrl) rooms[code].streamUrl = streamUrl;
+      if (vixUrl) rooms[code].vixUrl = vixUrl;
       if (payload.isEmbed !== undefined) rooms[code].isEmbed = payload.isEmbed;
       if (payload.time !== undefined) rooms[code].time = payload.time;
       if (payload.isPlaying !== undefined) rooms[code].isPlaying = payload.isPlaying;
