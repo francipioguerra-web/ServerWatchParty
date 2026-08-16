@@ -2485,7 +2485,7 @@
       // EXTERNAL PLAYER SYSTEM & INTENTS (ANDROID CHOOSER & IOS APPS)
       // -------------------------------------------------------------
       function updateChooserLinks(streamUrl, title, proxyUrl) {
-        const effectiveUrl = proxyUrl || streamUrl;
+        const effectiveUrl = streamUrl || proxyUrl;
         const cleanEffectiveUrl = effectiveUrl.replace(/^https?:\/\//, '');
 
         const isIOS = /iPhone|iPad|iPod/i.test(navigator.userAgent);

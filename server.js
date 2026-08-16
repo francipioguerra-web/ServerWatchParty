@@ -580,8 +580,7 @@ app.get('/api/sc/season/:id/:num', async (req, res) => {
   }
 });
 
-app.post('/api/vixcloud/extract', async (req, res) => {
-  const { url, titleId, slug, episodeId, lang } = req.body || {};
+async function resolveVixcloudStream({ url, titleId, slug, episodeId, lang }) {
   let targetWatchUrl = url;
 
   if (!targetWatchUrl && titleId) {
@@ -592,11 +591,8 @@ app.post('/api/vixcloud/extract', async (req, res) => {
     }
   }
 
-  if (!targetWatchUrl) {
-    return res.status(400).json({ success: false, error: 'URL o ID mancante' });
-  }
+  if (!targetWatchUrl) return null;
 
-  // Ensure targetWatchUrl uses active domain
   try {
     const parsed = new URL(targetWatchUrl);
     targetWatchUrl = `${activeScDomain}${parsed.pathname}${parsed.search}`;
@@ -604,7 +600,7 @@ app.post('/api/vixcloud/extract', async (req, res) => {
 
   const headers = {
     'User-Agent': 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/122.0.0.0 Safari/537.36',
-    'Referer': targetWatchUrl
+    'Referer': activeScDomain
   };
 
   try {
@@ -650,24 +646,21 @@ app.post('/api/vixcloud/extract', async (req, res) => {
       if (matchIfr) embedUrl = unescapeHtml(matchIfr[1]);
     }
 
-    // Direct fallback to /it/iframe/:titleId
     if (!embedUrl && titleId) {
       embedUrl = `${activeScDomain}/it/iframe/${titleId}${episodeId ? `?episode_id=${episodeId}` : ''}`;
     }
 
     if (!embedUrl) {
-      return res.json({
+      return {
         success: true,
         master_m3u8: targetWatchUrl,
         vix_url: targetWatchUrl,
         embed_url: targetWatchUrl,
         is_direct: true
-      });
+      };
     }
 
     let vixEmbed = embedUrl;
-
-    // If embedUrl points to an internal SC iframe, resolve the inner Vixcloud iframe
     if (!vixEmbed.includes('vixcloud.co')) {
       const resIfr = await fetch(embedUrl, { headers: { ...headers, 'Referer': targetWatchUrl }, redirect: 'follow' });
       const htmlIfr = await resIfr.text();
@@ -675,7 +668,6 @@ app.post('/api/vixcloud/extract', async (req, res) => {
       if (matchVix) vixEmbed = unescapeHtml(matchVix[1]);
     }
 
-    // Now fetch the real Vixcloud embed page
     const resVix = await fetch(vixEmbed, { headers: { ...headers, 'Referer': embedUrl }, redirect: 'follow' });
     const htmlVix = await resVix.text();
 
@@ -690,127 +682,67 @@ app.post('/api/vixcloud/extract', async (req, res) => {
       const audioLang = lang === 'orig' ? 'orig' : 'it';
 
       let basePl = '';
-      if (plM) {
-        basePl = plM[1].split('?')[0];
-      }
-      if (!basePl && idM) {
-        basePl = `https://vixcloud.co/playlist/${idM[1]}`;
-      }
-
-      if (basePl && !basePl.endsWith('.m3u8')) {
-        basePl += '.m3u8';
-      }
+      if (plM) basePl = plM[1].split('?')[0];
+      if (!basePl && idM) basePl = `https://vixcloud.co/playlist/${idM[1]}`;
+      if (basePl && !basePl.endsWith('.m3u8')) basePl += '.m3u8';
 
       const signedM3u8 = `${basePl}?b=1&token=${token}&expires=${expires}&h=1&scz=1&lang=${audioLang}`;
 
-      return res.json({
+      return {
         success: true,
         master_m3u8: signedM3u8,
         vix_url: signedM3u8,
         embed_url: vixEmbed,
         token: token,
         expires: expires
-      });
+      };
     }
 
-    return res.json({
+    return {
       success: true,
       master_m3u8: vixEmbed,
       vix_url: vixEmbed,
       embed_url: vixEmbed
-    });
-
+    };
   } catch (err) {
-    res.status(500).json({ success: false, error: err.message });
+    return { success: false, error: err.message };
   }
+}
+
+app.post('/api/vixcloud/extract', async (req, res) => {
+  const result = await resolveVixcloudStream(req.body || {});
+  if (!result) return res.status(400).json({ success: false, error: 'URL o ID mancante' });
+  res.json(result);
 });
 
 // -------------------------------------------------------------
-// UNIVERSAL HLS STREAM PROXY (OPPO / SAMSUNG / VLC / SMART TV)
-// Solves 403 Forbidden for external players lacking custom headers
+// UNIVERSAL HLS STREAM PROXY (INFUSE / VLC / MX PLAYER / SMART TV)
+// Bypasses 403 Forbidden by streaming with proper Vixcloud Referer
 // -------------------------------------------------------------
 app.get('/api/stream/master.m3u8', async (req, res) => {
-  const { url, titleId, slug, e: episodeId, lang } = req.query || {};
-  let targetWatchUrl = url;
-
-  if (!targetWatchUrl && titleId) {
-    if (episodeId) {
-      targetWatchUrl = `${activeScDomain}/it/watch/${titleId}?e=${episodeId}`;
-    } else {
-      targetWatchUrl = slug ? `${activeScDomain}/it/titles/${titleId}-${slug}` : `${activeScDomain}/it/titles/${titleId}`;
-    }
-  }
-
-  if (!targetWatchUrl) {
-    return res.status(400).send('Parametro mancante');
-  }
-
   try {
-    const headers = {
-      'User-Agent': 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/122.0.0.0 Safari/537.36',
-      'Referer': activeScDomain
-    };
-
-    let embedUrl = '';
-    const resWatch = await fetch(targetWatchUrl, { headers, redirect: 'follow' });
-    const htmlWatch = await resWatch.text();
-
-    const matchDp = htmlWatch.match(/data-page=["'](.*?)["']/);
-    if (matchDp) {
-      try {
-        const dp = JSON.parse(unescapeHtml(matchDp[1]));
-        embedUrl = dp.props?.embedUrl || '';
-      } catch (err) {}
+    const stream = await resolveVixcloudStream(req.query || {});
+    if (!stream || !stream.master_m3u8) {
+      return res.status(404).send('Flusso non trovato');
     }
 
-    if (!embedUrl) {
-      const matchIfr = htmlWatch.match(/<iframe[^>]+src=["'](https?:\/\/[^"']+)["']/);
-      if (matchIfr) embedUrl = unescapeHtml(matchIfr[1]);
-    }
+    const hostUrl = `${req.protocol}://${req.get('host')}`;
+    const signedM3u8 = stream.master_m3u8;
+    const refEmbed = stream.embed_url || 'https://vixcloud.co/';
 
-    if (!embedUrl && titleId) {
-      embedUrl = `${activeScDomain}/it/iframe/${titleId}${episodeId ? `?episode_id=${episodeId}` : ''}`;
-    }
-
-    let vixEmbed = embedUrl || targetWatchUrl;
-    if (!vixEmbed.includes('vixcloud.co')) {
-      const resIfr = await fetch(embedUrl, { headers: { ...headers, 'Referer': targetWatchUrl }, redirect: 'follow' });
-      const htmlIfr = await resIfr.text();
-      const matchVix = htmlIfr.match(/<iframe[^>]+src=["'](https?:\/\/[^"']+)["']/);
-      if (matchVix) vixEmbed = unescapeHtml(matchVix[1]);
-    }
-
-    const resVix = await fetch(vixEmbed, { headers: { ...headers, 'Referer': embedUrl }, redirect: 'follow' });
-    const htmlVix = await resVix.text();
-
-    const tokenM = htmlVix.match(/['"]token['"]\s*:\s*['"]([^'"]+)['"]/);
-    const expM = htmlVix.match(/['"]expires['"]\s*:\s*['"]?(\d+)['"]?/);
-    const plM = htmlVix.match(/url\s*:\s*['"]([^'"]+)['"]/);
-    const idM = vixEmbed.match(/\/(?:embed|playlist)\/(\d+)/);
-
-    let signedM3u8 = '';
-    if (tokenM && expM) {
-      const token = tokenM[1];
-      const expires = expM[1];
-      const audioLang = lang === 'orig' ? 'orig' : 'it';
-      let basePl = plM ? plM[1].split('?')[0] : (idM ? `https://vixcloud.co/playlist/${idM[1]}` : '');
-      if (basePl && !basePl.endsWith('.m3u8')) basePl += '.m3u8';
-      signedM3u8 = `${basePl}?b=1&token=${token}&expires=${expires}&h=1&scz=1&lang=${audioLang}`;
-    } else {
-      signedM3u8 = vixEmbed;
-    }
-
-    // Fetch the actual master playlist content from Vixcloud
     const resM3u8 = await fetch(signedM3u8, {
       headers: {
         'User-Agent': 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/122.0.0.0 Safari/537.36',
-        'Referer': vixEmbed
+        'Referer': refEmbed
       }
     });
 
+    if (!resM3u8.ok) {
+      return res.status(resM3u8.status).send('Errore sorgente streaming');
+    }
+
     const m3u8Text = await resM3u8.text();
     const lines = m3u8Text.split('\n');
-    const hostUrl = `${req.protocol}://${req.get('host')}`;
 
     const rewritten = lines.map(line => {
       const trimmed = line.trim();
@@ -820,15 +752,14 @@ app.get('/api/stream/master.m3u8', async (req, res) => {
       if (trimmed.includes('URI=')) {
         return trimmed.replace(/URI=["']([^"']+)["']/g, (m, uri) => {
           const absoluteUri = uri.startsWith('http') ? uri : new URL(uri, signedM3u8).toString();
-          const proxyUri = `${hostUrl}/api/stream/segment?url=${encodeURIComponent(absoluteUri)}&ref=${encodeURIComponent(vixEmbed)}`;
-          return `URI="${proxyUri}"`;
+          return `URI="${hostUrl}/api/stream/segment?url=${encodeURIComponent(absoluteUri)}&ref=${encodeURIComponent(refEmbed)}"`;
         });
       }
 
       // Handle stream resolution playlist links
       if (!trimmed.startsWith('#')) {
         const absoluteUri = trimmed.startsWith('http') ? trimmed : new URL(trimmed, signedM3u8).toString();
-        return `${hostUrl}/api/stream/segment?url=${encodeURIComponent(absoluteUri)}&ref=${encodeURIComponent(vixEmbed)}`;
+        return `${hostUrl}/api/stream/segment?url=${encodeURIComponent(absoluteUri)}&ref=${encodeURIComponent(refEmbed)}`;
       }
 
       return line;
@@ -839,7 +770,7 @@ app.get('/api/stream/master.m3u8', async (req, res) => {
     res.send(rewritten.join('\n'));
 
   } catch (err) {
-    res.status(500).send(`Errore stream: ${err.message}`);
+    res.status(500).send(`Errore master proxy: ${err.message}`);
   }
 });
 
