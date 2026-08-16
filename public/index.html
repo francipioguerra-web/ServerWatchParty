@@ -877,23 +877,23 @@
       background: #000;
     }
 
-    /* FLOATING BOTTOM NAVBAR (PURE BLUR / MONOCHROME) */
+    /* FLOATING BOTTOM NAVBAR (PURE BLUR / ENLARGED / MONOCHROME) */
     .bottom-navbar {
       position: fixed;
-      bottom: 18px;
+      bottom: 22px;
       left: 50%;
       transform: translateX(-50%);
       z-index: 90;
-      background: rgba(12, 12, 15, 0.65);
-      backdrop-filter: blur(28px) saturate(180%);
-      -webkit-backdrop-filter: blur(28px) saturate(180%);
-      border: 1px solid rgba(255, 255, 255, 0.14);
+      background: rgba(14, 14, 18, 0.65);
+      backdrop-filter: blur(32px) saturate(190%);
+      -webkit-backdrop-filter: blur(32px) saturate(190%);
+      border: 1.5px solid rgba(255, 255, 255, 0.16);
       border-radius: 999px;
-      padding: 8px 18px;
+      padding: 10px 22px;
       display: flex;
       align-items: center;
-      gap: 8px;
-      box-shadow: 0 16px 40px rgba(0, 0, 0, 0.7);
+      gap: 10px;
+      box-shadow: 0 20px 48px rgba(0, 0, 0, 0.75), inset 0 1px 0 rgba(255, 255, 255, 0.12);
       transition: transform 0.35s cubic-bezier(0.16, 1, 0.3, 1), opacity 0.35s ease;
     }
 
@@ -910,41 +910,41 @@
       display: flex;
       flex-direction: column;
       align-items: center;
-      gap: 4px;
-      padding: 8px 16px;
+      gap: 5px;
+      padding: 9px 18px;
       border-radius: 999px;
-      font-size: 0.78rem;
+      font-size: 0.82rem;
       font-weight: 700;
       cursor: pointer;
-      transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1);
+      transition: all 0.22s cubic-bezier(0.16, 1, 0.3, 1);
     }
 
     .nav-item:hover, .nav-item.active {
       color: #fff;
-      background: rgba(255, 255, 255, 0.12);
+      background: rgba(255, 255, 255, 0.16);
       transform: translateY(-1px);
     }
 
     .nav-item svg {
-      width: 20px;
-      height: 20px;
+      width: 22px;
+      height: 22px;
     }
 
     /* DESKTOP ENLARGED NAVBAR (BIGGER & MORE SPACIOUS) */
     @media (min-width: 768px) {
       .bottom-navbar {
-        bottom: 24px;
-        padding: 10px 24px;
-        gap: 12px;
-        border: 1.5px solid rgba(255, 255, 255, 0.16);
-        box-shadow: 0 20px 48px rgba(0, 0, 0, 0.8);
+        bottom: 28px;
+        padding: 12px 28px;
+        gap: 14px;
+        border: 1.5px solid rgba(255, 255, 255, 0.18);
+        box-shadow: 0 24px 56px rgba(0, 0, 0, 0.85);
       }
 
       .nav-item {
         flex-direction: row;
-        gap: 8px;
-        padding: 10px 20px;
-        font-size: 0.92rem;
+        gap: 9px;
+        padding: 11px 22px;
+        font-size: 0.94rem;
       }
 
       .nav-item svg {
