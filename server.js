@@ -11,8 +11,8 @@ app.use(express.static(path.join(__dirname, 'public')));
 const GOOGLE_CLIENT_ID = process.env.GOOGLE_CLIENT_ID || "827422677497-4ohkdeqrl6thm55dqvba6j7q2qmdb6nm.apps.googleusercontent.com";
 
 const CANDIDATE_DOMAINS = [
-  'https://streamingcommunityz.luxe',
   'https://streamingcommunityz.miami',
+  'https://streamingcommunityz.luxe',
   'https://streamingcommunityz.boats',
   'https://streamingcommunityz.hair',
   'https://streamingcommunityz.bio'
@@ -521,7 +521,7 @@ app.post('/api/vixcloud/extract', async (req, res) => {
   }
 
   if (!targetWatchUrl) {
-    return res.status(400).json({ success: false, error: 'Nessun URL fornito' });
+    return res.status(400).json({ success: false, error: 'URL o ID mancante' });
   }
 
   // Ensure targetWatchUrl uses active domain
@@ -532,12 +532,12 @@ app.post('/api/vixcloud/extract', async (req, res) => {
 
   const headers = {
     'User-Agent': 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/122.0.0.0 Safari/537.36',
-    'Referer': activeScDomain
+    'Referer': targetWatchUrl
   };
 
   try {
     let embedUrl = '';
-    const resWatch = await fetch(targetWatchUrl, { headers, redirect: 'follow' });
+    const resWatch = await fetch(targetWatchUrl, { headers: { ...headers, 'Referer': activeScDomain }, redirect: 'follow' });
     const htmlWatch = await resWatch.text();
 
     const matchDp = htmlWatch.match(/data-page=["'](.*?)["']/);
@@ -563,6 +563,7 @@ app.post('/api/vixcloud/extract', async (req, res) => {
         success: true,
         master_m3u8: targetWatchUrl,
         vix_url: targetWatchUrl,
+        embed_url: targetWatchUrl,
         is_direct: true
       });
     }
