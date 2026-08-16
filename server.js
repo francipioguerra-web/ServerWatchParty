@@ -496,13 +496,18 @@ app.get('/api/sc/title/:id', async (req, res) => {
     const cdn = props.cdn_url || 'https://cdn.streamingcommunityz.luxe';
     const loadedSeason = props.loadedSeason || {};
 
-    const episodesList = (loadedSeason.episodes || []).map(ep => ({
-      id: ep.id,
-      number: ep.number,
-      name: ep.name || `Episodio ${ep.number}`,
-      plot: ep.plot || '',
-      watch_url: `${activeScDomain}/it/watch/${id}?e=${ep.id}`
-    }));
+    const episodesList = (loadedSeason.episodes || []).map(ep => {
+      const epImg = (ep.images && ep.images[0]) ? `${cdn}/images/${ep.images[0].filename}` : (ep.cover || (titleObj.images && titleObj.images[1] ? `${cdn}/images/${titleObj.images[1].filename}` : ''));
+      return {
+        id: ep.id,
+        number: ep.number,
+        name: ep.name || `Episodio ${ep.number}`,
+        plot: ep.plot || '',
+        image: epImg,
+        duration: ep.duration || '',
+        watch_url: `${activeScDomain}/it/watch/${id}?e=${ep.id}`
+      };
+    });
 
     res.json({
       success: true,
@@ -554,14 +559,20 @@ app.get('/api/sc/season/:id/:num', async (req, res) => {
 
     const raw = unescapeHtml(match[1]);
     const dp = JSON.parse(raw);
+    const cdn = dp.props?.cdn_url || 'https://cdn.streamingcommunityz.luxe';
     const loadedSeason = dp.props?.loadedSeason || {};
-    const episodes = (loadedSeason.episodes || []).map(ep => ({
-      id: ep.id,
-      number: ep.number,
-      name: ep.name || `Episodio ${ep.number}`,
-      plot: ep.plot || '',
-      watch_url: `${activeScDomain}/it/watch/${id}?e=${ep.id}`
-    }));
+    const episodes = (loadedSeason.episodes || []).map(ep => {
+      const epImg = (ep.images && ep.images[0]) ? `${cdn}/images/${ep.images[0].filename}` : (ep.cover || '');
+      return {
+        id: ep.id,
+        number: ep.number,
+        name: ep.name || `Episodio ${ep.number}`,
+        plot: ep.plot || '',
+        image: epImg,
+        duration: ep.duration || '',
+        watch_url: `${activeScDomain}/it/watch/${id}?e=${ep.id}`
+      };
+    });
 
     res.json({ success: true, season_number: num, episodes });
   } catch (err) {
