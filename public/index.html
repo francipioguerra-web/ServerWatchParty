@@ -2032,10 +2032,41 @@
       }
 
       // -------------------------------------------------------------
-      // EXTERNAL PLAYER SYSTEM & INTENTS
+      // EXTERNAL PLAYER SYSTEM & INTENTS (ANDROID CHOOSER & IOS)
       // -------------------------------------------------------------
       async function startExternalPlayer(item) {
-        await openDirectM3u8Stream(item);
+        const target = item || currentActiveItem;
+        const extraction = await resolveExtraction(target);
+        const title = target.current_ep_title ? `${target.name} - ${target.current_ep_title}` : target.name;
+
+        pendingExtraction = {
+          m3u8: extraction.master_m3u8,
+          embed: extraction.embed_url,
+          title: title
+        };
+
+        const isAndroid = /Android/i.test(navigator.userAgent);
+        closeDetails();
+
+        // On Android, automatically trigger the native system app chooser intent, and also display the chooser
+        if (isAndroid && pendingExtraction.m3u8) {
+          triggerAndroidChooser(pendingExtraction.m3u8, title);
+        }
+
+        playerChooserModal.classList.remove('hidden');
+      }
+
+      function triggerAndroidChooser(streamUrl, title) {
+        const cleanUrl = streamUrl.replace(/^https?:\/\//, '');
+        const intentUrl = `intent://${cleanUrl}#Intent;scheme=https;type=video/*;action=android.intent.action.VIEW;S.title=${encodeURIComponent(title || '')};end;`;
+        showToast("Apertura selettore app Android...");
+        
+        const a = document.createElement('a');
+        a.href = intentUrl;
+        a.target = '_blank';
+        document.body.appendChild(a);
+        a.click();
+        document.body.removeChild(a);
       }
 
       function openPlayerChooser(extraction, title) {
@@ -2049,12 +2080,11 @@
 
       btnCloseChooser.onclick = () => playerChooserModal.classList.add('hidden');
 
-      // 1. DIRECT VIXCLOUD M3U8 PLAYLIST (SYSTEM NATIVE PLAYER)
+      // 1. ANDROID SYSTEM APP CHOOSER (OPPO / SAMSUNG / ALL INSTALLED APPS)
       choiceAndroidIntent.onclick = () => {
         if (!pendingExtraction || !pendingExtraction.m3u8) return;
         playerChooserModal.classList.add('hidden');
-        showToast("Apertura link M3U8 nel player di sistema...");
-        window.location.href = pendingExtraction.m3u8;
+        triggerAndroidChooser(pendingExtraction.m3u8, pendingExtraction.title);
       };
 
       // 2. VLC MEDIA PLAYER
