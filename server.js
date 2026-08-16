@@ -29,7 +29,7 @@ function unescapeHtml(safe) {
 
 async function fetchWithFallback(pathUrl) {
   const headers = {
-    'User-Agent': 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/122.0.0.0 Safari/537.36',
+    'User-Agent': 'Mozilla/5.0 (iPhone; CPU iPhone OS 17_4 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/17.4 Mobile/15E148 Safari/604.1',
     'Accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8',
     'Accept-Language': 'it-IT,it;q=0.9,en-US;q=0.8,en;q=0.7'
   };
@@ -132,7 +132,7 @@ app.get('/api/sc/search', async (req, res) => {
 });
 
 // -------------------------------------------------------------
-// API: TITLE DETAILS & SEASONS
+// API: TITLE DETAILS & INITIAL EPISODES
 // -------------------------------------------------------------
 app.get('/api/sc/title/:id', async (req, res) => {
   const id = req.params.id;
@@ -140,7 +140,9 @@ app.get('/api/sc/title/:id', async (req, res) => {
   const pathUrl = slug ? `/it/titles/${id}-${slug}` : `/it/titles/${id}`;
 
   try {
-    const fetched = await fetchWithFallback(pathUrl);
+    let fetched = await fetchWithFallback(pathUrl);
+    if (!fetched) fetched = await fetchWithFallback(`/it/titles/${id}`);
+    if (!fetched) fetched = await fetchWithFallback(`/it/watch/${id}`);
     if (!fetched) return res.status(404).json({ success: false, error: 'Titolo non trovato' });
 
     const match = fetched.text.match(/data-page=["'](.*?)["']/);
@@ -149,16 +151,25 @@ app.get('/api/sc/title/:id', async (req, res) => {
     const raw = unescapeHtml(match[1]);
     const dp = JSON.parse(raw);
     const props = dp.props || {};
-    const titleObj = props.title || {};
+    const titleObj = props.title || props.loadedTitle || props.media || {};
     const cdn = props.cdn_url || 'https://cdn.streamingcommunityz.luxe';
+    const loadedSeason = props.loadedSeason || {};
+
+    const episodesList = (loadedSeason.episodes || []).map(ep => ({
+      id: ep.id,
+      number: ep.number,
+      name: ep.name || `Episodio ${ep.number}`,
+      plot: ep.plot || '',
+      watch_url: `${activeScDomain}/it/watch/${id}?e=${ep.id}`
+    }));
 
     res.json({
       success: true,
       title: {
-        id: titleObj.id,
-        name: titleObj.name,
-        type: titleObj.type || 'movie',
-        slug: titleObj.slug || '',
+        id: titleObj.id || id,
+        name: titleObj.name || titleObj.title || 'Titolo Streaming',
+        type: titleObj.type || (titleObj.seasons && titleObj.seasons.length > 0 ? 'tv' : 'movie'),
+        slug: titleObj.slug || slug || '',
         release_date: titleObj.release_date || titleObj.year || '',
         plot: titleObj.plot || '',
         poster: titleObj.images && titleObj.images[0] ? `${cdn}/images/${titleObj.images[0].filename}` : '',
@@ -167,7 +178,9 @@ app.get('/api/sc/title/:id', async (req, res) => {
           id: s.id,
           number: s.number,
           episodes_count: s.episodes_count || 0
-        }))
+        })),
+        current_season: loadedSeason.number || 1,
+        episodes: episodesList
       }
     });
   } catch (err) {
@@ -181,10 +194,21 @@ app.get('/api/sc/title/:id', async (req, res) => {
 app.get('/api/sc/season/:id/:num', async (req, res) => {
   const { id, num } = req.params;
   const slug = req.query.slug || '';
-  const pathUrl = slug ? `/it/titles/${id}-${slug}/stagione-${num}` : `/it/titles/${id}`;
+
+  const candidates = [
+    slug ? `/it/titles/${id}-${slug}/stagione-${num}` : `/it/titles/${id}/stagione-${num}`,
+    `/it/titles/${id}/stagione-${num}`,
+    slug ? `/it/titles/${id}-${slug}` : `/it/titles/${id}`,
+    `/it/watch/${id}`
+  ];
 
   try {
-    const fetched = await fetchWithFallback(pathUrl);
+    let fetched = null;
+    for (const cPath of candidates) {
+      fetched = await fetchWithFallback(cPath);
+      if (fetched) break;
+    }
+
     if (!fetched) return res.status(404).json({ success: false, error: 'Stagione non trovata' });
 
     const match = fetched.text.match(/data-page=["'](.*?)["']/);
@@ -201,7 +225,7 @@ app.get('/api/sc/season/:id/:num', async (req, res) => {
       watch_url: `${activeScDomain}/it/watch/${id}?e=${ep.id}`
     }));
 
-    res.json({ success: true, episodes });
+    res.json({ success: true, season_number: num, episodes });
   } catch (err) {
     res.status(500).json({ success: false, error: err.message });
   }
