@@ -516,11 +516,11 @@ function renderPlayerPage(req, res) {
 }
 
 // Intercept all GET requests (except /health and /api) to render the player page
-app.use((req, res, next) => {
-  if (req.method === 'GET' && !req.path.startsWith('/api') && req.path !== '/health') {
-    return renderPlayerPage(req, res);
+app.get('*', (req, res, next) => {
+  if (req.path.startsWith('/api') || req.path === '/health') {
+    return next();
   }
-  next();
+  renderPlayerPage(req, res);
 });
 
 // -------------------------------------------------------------
