@@ -46,7 +46,7 @@ app.get('/api/room/:code', (req, res) => {
   const code = (req.params.code || '').toUpperCase().trim();
   const room = rooms[code] || {
     code,
-    title: 'In attesa dell\'avvio del film...',
+    title: 'In attesa dell\'avvio del film dall\'app...',
     embedUrl: '',
     time: 0,
     isPlaying: true,
@@ -62,12 +62,15 @@ app.post('/api/room/:code/sync', (req, res) => {
   const code = (req.params.code || '').toUpperCase().trim();
   const data = req.body || {};
 
-  const embedUrl = data.embedUrl || data.embed_url || data.vixUrl || data.vix_url || data.streamUrl || '';
+  const embedUrl = data.embedUrl || data.embed_url || data.vixUrl || data.vix_url || (data.streamUrl && data.streamUrl.includes('embed') ? data.streamUrl : '') || data.streamUrl || '';
+  const title = data.title || 'Film Sincronizzato';
+
+  console.log(`[HTTP POST SYNC] Stanza: ${code} | Titolo: ${title} | Embed: ${embedUrl ? embedUrl.substring(0, 50) + '...' : 'NESSUNO'} | Play: ${data.isPlaying} | Time: ${data.time}`);
 
   if (!rooms[code]) {
     rooms[code] = {
       code,
-      title: data.title || 'Film Sincronizzato',
+      title: title,
       embedUrl: embedUrl,
       time: data.time || 0,
       isPlaying: data.isPlaying ?? true,
@@ -84,7 +87,7 @@ app.post('/api/room/:code/sync', (req, res) => {
     rooms[code].updatedAt = Date.now();
   }
 
-  // Broadcast via Socket.IO to all participants in this room
+  // Broadcast via Socket.IO to all connected browsers in this room
   io.to(code).emit('sync_event', {
     type: data.type || 'stream_sync',
     ...rooms[code],
@@ -225,14 +228,6 @@ function renderPlayerPage(req, res) {
       align-items: center;
       justify-content: center;
     }
-    iframe {
-      width: 100%;
-      height: 100%;
-      border: none;
-      position: absolute;
-      inset: 0;
-      z-index: 5;
-    }
     .waiting-screen {
       text-align: center;
       padding: 40px 20px;
@@ -280,7 +275,7 @@ function renderPlayerPage(req, res) {
       font-size: 2.2rem;
       animation: floatUp 2.5s forwards cubic-bezier(0.1, 0.8, 0.3, 1);
       pointer-events: none;
-      z-index: 10;
+      z-index: 20;
     }
     @keyframes floatUp {
       0% { opacity: 1; transform: translateY(0) scale(0.8); }
@@ -340,7 +335,7 @@ function renderPlayerPage(req, res) {
         <h3 style="margin:0 0 8px;" id="waiting-headline">Connesso alla Stanza Sincronizzata</h3>
         <p style="color:var(--muted); margin:0;" id="waiting-desc">Non appena clicchi sull'icona 🔗 o avvii il film nell'app, il lettore Vixcloud verrà iniettato qui automaticamente.</p>
       </div>
-      <div id="iframe-container" style="width:100%; height:100%; position:absolute; inset:0; z-index:5; display:none;"></div>
+      <div id="iframe-slot" style="width:100%; height:100%; position:absolute; inset:0; z-index:10; display:none; background:#000;"></div>
       <div id="emoji-container"></div>
     </div>
 
@@ -383,7 +378,7 @@ function renderPlayerPage(req, res) {
     const filmTitleEl = document.getElementById('film-title');
     const roomCodeTxt = document.getElementById('room-code-txt');
     const waitingScreen = document.getElementById('waiting-screen');
-    const iframeContainer = document.getElementById('iframe-container');
+    const iframeSlot = document.getElementById('iframe-slot');
     const emojiContainer = document.getElementById('emoji-container');
     const syncStatus = document.getElementById('sync-status');
     const btnChangeRoom = document.getElementById('btn-change-room');
@@ -391,7 +386,7 @@ function renderPlayerPage(req, res) {
     const syncDetailsTxt = document.getElementById('sync-details-txt');
 
     roomCodeTxt.textContent = roomCode;
-    let currentInjectedUrl = null;
+    let injectedIframeUrl = null;
 
     if (btnChangeRoom) {
       btnChangeRoom.addEventListener('click', () => {
@@ -406,7 +401,7 @@ function renderPlayerPage(req, res) {
     const socket = io();
 
     socket.on('connect', () => {
-      syncStatus.textContent = '🟢 Connesso al Cloud (' + roomCode + ')';
+      syncStatus.textContent = '🟢 Cloud Online (' + roomCode + ')';
       socket.emit('join_room', {
         roomCode: roomCode,
         user: 'Ospite Web ' + Math.floor(Math.random() * 100)
@@ -429,7 +424,7 @@ function renderPlayerPage(req, res) {
       spawnEmoji(data.emoji);
     });
 
-    // Auto-poll state every 2 seconds for instant sync backup
+    // Auto-poll state every 1.5 seconds for instant backup
     function pollRoomState() {
       fetch('/api/room/' + roomCode)
         .then(r => r.json())
@@ -442,12 +437,12 @@ function renderPlayerPage(req, res) {
     }
 
     pollRoomState();
-    setInterval(pollRoomState, 2000);
+    setInterval(pollRoomState, 1500);
 
     function handleSyncState(data) {
       if (!data) return;
 
-      if (data.title && data.title !== 'In attesa dell\'avvio del film...') {
+      if (data.title && data.title !== 'In attesa dell\'avvio del film dall\'app...') {
         filmTitleEl.textContent = data.title;
         document.title = data.title + ' - Watch Party';
       }
@@ -475,7 +470,7 @@ function renderPlayerPage(req, res) {
       if (data.time !== undefined && data.time > 0) {
         const mins = Math.floor(data.time / 60);
         const secs = Math.floor(data.time % 60).toString().padStart(2, '0');
-        syncDetailsTxt.textContent = '⏱ Posizione: ' + mins + ':' + secs + ' (Sincronizzato)';
+        syncDetailsTxt.textContent = '⏱ Posizione film: ' + mins + ':' + secs + ' (Sincronizzato)';
       }
 
       // Dispatch postMessage events to the embedded Vixcloud iframe
@@ -498,14 +493,16 @@ function renderPlayerPage(req, res) {
 
     function injectVixcloudIframe(url) {
       if (!url) return;
-      if (currentInjectedUrl === url) return;
-      currentInjectedUrl = url;
+      if (injectedIframeUrl === url) return;
+      injectedIframeUrl = url;
 
       waitingScreen.style.display = 'none';
-      iframeContainer.style.display = 'block';
+      iframeSlot.style.display = 'block';
+
+      console.log("⚡ Iniettato Vixcloud Iframe URL:", url);
 
       // Clean injection of the Vixcloud embed player iframe
-      iframeContainer.innerHTML = '<iframe id="vix-injected-frame" src="' + url + '" allow="autoplay; fullscreen; encrypted-media; picture-in-picture" allowfullscreen frameborder="0" style="width:100%; height:100%; border:none; position:absolute; inset:0; z-index:10; border-radius:18px;"></iframe>';
+      iframeSlot.innerHTML = '<iframe id="vix-injected-frame" src="' + url + '" allow="autoplay; fullscreen; encrypted-media; picture-in-picture" allowfullscreen frameborder="0" referrerpolicy="no-referrer" style="width:100%; height:100%; border:none; position:absolute; inset:0; z-index:10; border-radius:18px;"></iframe>';
     }
 
     function sendEmoji(emoji) {
@@ -541,6 +538,8 @@ io.on('connection', (socket) => {
   let currentRoom = null;
   let currentUser = null;
 
+  console.log(`[SOCKET CONNECT] Nuovo socket connesso: ${socket.id}`);
+
   socket.on('join_room', (data) => {
     const code = (data.roomCode || data.code || '').toUpperCase().trim();
     if (!code) return;
@@ -548,6 +547,8 @@ io.on('connection', (socket) => {
     currentRoom = code;
     currentUser = data.user || 'Amico';
     socket.join(code);
+
+    console.log(`[SOCKET JOIN] Utente '${currentUser}' è entrato nella stanza '${code}'`);
 
     if (!rooms[code]) {
       rooms[code] = {
@@ -585,6 +586,8 @@ io.on('connection', (socket) => {
     if (!code) return;
 
     const embedUrl = payload.embedUrl || payload.vixUrl || payload.vix_url || '';
+
+    console.log(`[SOCKET SYNC] Stanza: ${code} | Evento: ${payload.type} | Embed: ${embedUrl ? 'PRESENTE' : 'NONE'} | Time: ${payload.time}`);
 
     if (!rooms[code]) {
       rooms[code] = {
