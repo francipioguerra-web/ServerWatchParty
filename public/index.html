@@ -2092,15 +2092,29 @@
         } else if (isAndroid) {
           choiceVlc.href = `intent://${cleanEffectiveUrl}#Intent;package=org.videolan.vlc;type=video/*;scheme=https;action=android.intent.action.VIEW;end;`;
         } else {
-          // macOS & Desktop: VLC expects vlc://https://... or direct protocol launch
           choiceVlc.href = `vlc://${effectiveUrl}`;
         }
 
         choiceVlc.onclick = (e) => {
           if (isMac || (!isIOS && !isAndroid)) {
-            // Also copy to clipboard for convenience in case protocol popup is dismissed
+            // Generate instant .m3u8 playlist file for 1-click VLC playback on Mac
+            try {
+              const safeTitle = (title || 'streaming').replace(/[^a-zA-Z0-9_\-\s]/g, '').trim();
+              const m3uContent = `#EXTM3U\n#EXTINF:-1,${title || 'Streaming'}\n${effectiveUrl}\n`;
+              const blob = new Blob([m3uContent], { type: 'application/x-mpegurl' });
+              const blobUrl = URL.createObjectURL(blob);
+              
+              const dlLink = document.createElement('a');
+              dlLink.href = blobUrl;
+              dlLink.download = `${safeTitle || 'film'}.m3u8`;
+              document.body.appendChild(dlLink);
+              dlLink.click();
+              document.body.removeChild(dlLink);
+              setTimeout(() => URL.revokeObjectURL(blobUrl), 2000);
+            } catch (err) {}
+
             navigator.clipboard.writeText(effectiveUrl).catch(() => {});
-            showToast("🚀 Apertura in VLC... (Link copiato negli appunti: ⌘+N)");
+            showToast("🚀 File .m3u8 scaricato per VLC (e link copiato: ⌘+N)");
           }
         };
 
