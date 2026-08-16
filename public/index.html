@@ -279,7 +279,7 @@
     /* FLOATING SEARCH BAR (EMERGES SMOOTHLY FROM MAGNIFYING GLASS) */
     .floating-search-bar {
       position: fixed;
-      bottom: 64px;
+      bottom: 78px;
       left: 50%;
       transform: translateX(-50%) translateY(0) scale(1);
       transform-origin: bottom 38%;
@@ -292,7 +292,7 @@
       -webkit-backdrop-filter: blur(36px) saturate(190%);
       border: 1.5px solid rgba(255, 255, 255, 0.18);
       border-radius: 999px;
-      padding: 0 12px 0 16px;
+      padding: 0 16px;
       display: flex;
       align-items: center;
       gap: 10px;
@@ -347,30 +347,9 @@
       background: rgba(255, 255, 255, 0.25);
     }
 
-    .floating-search-close {
-      background: rgba(255, 255, 255, 0.08);
-      border: 1px solid rgba(255, 255, 255, 0.12);
-      color: var(--text-muted);
-      width: 28px;
-      height: 28px;
-      border-radius: 50%;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      cursor: pointer;
-      transition: all 0.2s ease;
-      flex-shrink: 0;
-    }
-
-    .floating-search-close:hover {
-      background: rgba(239, 68, 68, 0.25);
-      border-color: rgba(239, 68, 68, 0.5);
-      color: #fff;
-    }
-
     @media (min-width: 768px) {
       .floating-search-bar {
-        bottom: 76px;
+        bottom: 96px;
         width: 460px;
         height: 50px;
       }
@@ -1325,12 +1304,6 @@
     </svg>
     <input type="text" id="main-search-input" class="floating-search-input" placeholder="Cerca film o serie tv..." autocomplete="off" />
     <button id="search-clear-btn" class="floating-search-clear hidden">&times;</button>
-    <button id="btn-close-floating-search" class="floating-search-close" title="Chiudi Ricerca">
-      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
-        <line x1="18" y1="6" x2="6" y2="18"></line>
-        <line x1="6" y1="6" x2="18" y2="18"></line>
-      </svg>
-    </button>
   </div>
 
   <!-- NOTIFICATIONS MODAL OVERLAY (PURE BLUR / SAME AS FILM DETAILS) -->
@@ -2853,10 +2826,23 @@
             floatingSearchBar.classList.remove('hidden');
             setTimeout(() => mainSearchInput.focus(), 150);
           } else {
-            mainSearchInput.focus();
+            floatingSearchBar.classList.add('hidden');
           }
         }
       };
+
+      // Click anywhere outside to close the floating search bar
+      document.addEventListener('click', (e) => {
+        if (floatingSearchBar && !floatingSearchBar.classList.contains('hidden')) {
+          if (!floatingSearchBar.contains(e.target) && !navSearch.contains(e.target)) {
+            floatingSearchBar.classList.add('hidden');
+          }
+        }
+      });
+
+      if (floatingSearchBar) {
+        floatingSearchBar.onclick = (e) => e.stopPropagation();
+      }
 
       // -------------------------------------------------------------
       // SCROLL AUTO-COLLAPSE (MORPH INTO EMPTY BLUR DOT ON SCROLL DOWN, EXPAND ON SCROLL UP OR IDLE STOP)
