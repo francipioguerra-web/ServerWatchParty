@@ -3253,16 +3253,9 @@
         }
       }
 
-              });
-      }
-
       // BACK TO HOME BUTTON
       if (btnBackToHome) {
         btnBackToHome.onclick = () => {
-          categoryPillsBar.querySelectorAll('.category-pill').forEach(p => {
-            if (p.dataset.type === 'all') p.classList.add('active');
-            else p.classList.remove('active');
-          });
           showHomeMultiRows();
         };
       }
@@ -3273,16 +3266,6 @@
           const type = link.dataset.filterType;
           const genreId = link.dataset.filterGenre;
           const name = link.dataset.name;
-
-          categoryPillsBar.querySelectorAll('.category-pill').forEach(p => {
-            if ((type && p.dataset.type === type) || (genreId && p.dataset.genre === genreId)) {
-              p.classList.add('active');
-              p.scrollIntoView({ behavior: 'smooth', inline: 'center', block: 'nearest' });
-            } else {
-              p.classList.remove('active');
-            }
-          });
-
           loadGenreOrType({ genreId, type, name });
         };
       });
