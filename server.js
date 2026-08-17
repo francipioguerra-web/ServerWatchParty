@@ -1,5 +1,6 @@
 const express = require('express');
 const http = require('http');
+const { Server } = require('socket.io');
 const cors = require('cors');
 const path = require('path');
 const fs = require('fs');
@@ -901,10 +902,77 @@ app.get('*', (req, res) => {
 
 const PORT = process.env.PORT || 3000;
 const server = http.createServer(app);
+const io = new Server(server, { cors: { origin: '*' } });
+
+const connectedSockets = {}; // email -> socket instance
+
+io.on('connection', (socket) => {
+  let currentUserEmail = null;
+
+  socket.on('authenticate', (email) => {
+    if (!email) return;
+    currentUserEmail = email.toLowerCase().trim();
+    connectedSockets[currentUserEmail] = socket;
+  });
+
+  socket.on('invite_watchparty', (data) => {
+    if (!data.targetEmail || !currentUserEmail) return;
+    const target = data.targetEmail.toLowerCase().trim();
+    const targetSocket = connectedSockets[target];
+    
+    if (targetSocket) {
+      targetSocket.emit('watchparty_invite', {
+        fromEmail: currentUserEmail,
+        fromName: users[currentUserEmail]?.name || currentUserEmail,
+        movieId: data.movieId,
+        movieTitle: data.movieTitle,
+        streamUrl: data.streamUrl,
+        poster: data.poster
+      });
+    }
+  });
+
+  socket.on('accept_watchparty', (data) => {
+    if (!data.fromEmail) return;
+    const initiator = data.fromEmail.toLowerCase().trim();
+    const initiatorSocket = connectedSockets[initiator];
+    
+    if (initiatorSocket) {
+      const roomId = `wp_${Date.now()}_${Math.floor(Math.random() * 1000)}`;
+      
+      socket.join(roomId);
+      socket.emit('watchparty_start', { roomId, ...data });
+
+      initiatorSocket.join(roomId);
+      initiatorSocket.emit('watchparty_start', { roomId, ...data });
+    }
+  });
+
+  // Player synchronization events
+  socket.on('sync_play', (data) => {
+    if (data.roomId) socket.to(data.roomId).emit('sync_play', data);
+  });
+
+  socket.on('sync_pause', (data) => {
+    if (data.roomId) socket.to(data.roomId).emit('sync_pause', data);
+  });
+
+  socket.on('sync_seek', (data) => {
+    if (data.roomId) socket.to(data.roomId).emit('sync_seek', data);
+  });
+
+  socket.on('disconnect', () => {
+    if (currentUserEmail && connectedSockets[currentUserEmail] === socket) {
+      delete connectedSockets[currentUserEmail];
+    }
+  });
+});
+
 server.listen(PORT, '0.0.0.0', () => {
   console.log(`========================================================`);
   console.log(` 🚀 STREAMINGCOMMUNITY SOCIAL & UNIVERSAL WEB APP`);
   console.log(` • Porta: ${PORT}`);
+  console.log(` • Socket.io & Watchparty abilitati`);
   console.log(` • Google OAuth & Unique Nicknames attivi`);
   console.log(`========================================================`);
 });

@@ -14,6 +14,7 @@
   <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 512 512'%3E%3Crect width='512' height='512' rx='110' fill='%2309090b'/%3E%3Cpath d='M140 120 L372 256 L140 392 Z' fill='%23e50914'/%3E%3C/svg%3E">
   
   <script src="https://cdn.jsdelivr.net/npm/hls.js@latest"></script>
+  <script src="/socket.io/socket.io.js"></script>
   <!-- OFFICIAL GOOGLE IDENTITY SERVICES (GSI) -->
   <script src="https://accounts.google.com/gsi/client" async defer></script>
 
@@ -463,6 +464,47 @@
       font-size: 0.72rem;
       font-weight: 600;
       cursor: pointer;
+    }
+
+    .card-badge {
+      position: absolute;
+      top: 10px;
+      left: 10px;
+      background: rgba(0, 0, 0, 0.65);
+      backdrop-filter: blur(8px);
+      -webkit-backdrop-filter: blur(8px);
+      padding: 4px 10px;
+      border-radius: 6px;
+      font-size: 0.72rem;
+      font-weight: 700;
+      letter-spacing: 0.5px;
+      border: 1px solid rgba(255, 255, 255, 0.12);
+      z-index: 2;
+    }
+
+    .btn-watchparty-card {
+      position: absolute;
+      top: 10px;
+      right: 10px;
+      background: rgba(99, 102, 241, 0.85);
+      backdrop-filter: blur(8px);
+      -webkit-backdrop-filter: blur(8px);
+      padding: 6px;
+      border-radius: 50%;
+      border: 1px solid rgba(255, 255, 255, 0.3);
+      cursor: pointer;
+      z-index: 3;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      transition: all 0.2s ease;
+      font-size: 1rem;
+    }
+
+    .btn-watchparty-card:hover {
+      transform: scale(1.15);
+      background: rgba(99, 102, 241, 1);
+      box-shadow: 0 0 15px rgba(99, 102, 241, 0.6);
     }
 
     .notif-empty {
@@ -2083,6 +2125,19 @@
     </div>
   </div>
 
+  <!-- WATCHPARTY INVITE MODAL -->
+  <div id="watchparty-modal" class="modal-overlay hidden">
+    <div class="modal-card" style="max-width: 440px; padding: 22px;">
+      <button id="btn-close-watchparty" class="modal-close-btn">&times;</button>
+      <h3 style="font-size: 1.2rem; font-weight: 800; margin-bottom: 6px;">🍿 Avvia Watchparty Sincronizzato</h3>
+      <p style="font-size: 0.82rem; color: var(--text-muted); margin-bottom: 16px;">Scegli un amico da invitare per guardare questo titolo in contemporanea.</p>
+      
+      <div id="watchparty-friends-list" style="display: flex; flex-direction: column; gap: 8px; max-height: 240px; overflow-y: auto; margin-bottom: 14px;">
+        <div style="color: var(--text-dim); text-align: center; padding: 20px;">Caricamento lista amici...</div>
+      </div>
+    </div>
+  </div>
+
   <!-- NICKNAME SETUP / MODAL -->
   <div id="nickname-modal" class="modal-overlay hidden">
     <div class="modal-card" style="max-width: 400px; padding: 24px; text-align: center;">
@@ -2210,6 +2265,10 @@
       let notifPollingInterval = null;
       let googleTokenClient = null;
       let pendingExtraction = null;
+      let socket = null;
+      let watchpartyRoomId = null;
+      let isVideoSyncing = false;
+      let currentWatchpartyItem = null;
 
       // DOM ELEMENTS
       const catalogGrid = document.getElementById('catalog-grid');
@@ -2289,7 +2348,13 @@
       const peekMeta = document.getElementById('peek-meta');
       const peekPlot = document.getElementById('peek-plot');
       const peekBtnPlay = document.getElementById('peek-btn-play');
+      const peekBtnInfo = document.getElementById('peek-btn-info');
       const peekBtnShare = document.getElementById('peek-btn-share');
+
+      // WATCHPARTY ELEMENTS
+      const watchpartyModal = document.getElementById('watchparty-modal');
+      const btnCloseWatchparty = document.getElementById('btn-close-watchparty');
+      const watchpartyFriendsList = document.getElementById('watchparty-friends-list');
 
       // SOCIAL & NOTIFICATIONS ELEMENTS
       const btnNotifBell = document.getElementById('btn-notif-bell');
@@ -2496,6 +2561,77 @@
         fetchFriends();
       };
 
+      window.startWatchpartyFlow = function(id, title, type, poster) {
+        if (!currentUser) {
+          showToast('Accedi con Google per avviare una Watchparty.');
+          startGooglePopupLogin();
+          return;
+        }
+        currentWatchpartyItem = { id, title, type, poster };
+        watchpartyModal.classList.remove('hidden');
+        renderWatchpartyFriends();
+      };
+
+      function renderWatchpartyFriends() {
+        watchpartyFriendsList.innerHTML = '';
+        if (!currentFriends || currentFriends.length === 0) {
+          watchpartyFriendsList.innerHTML = '<div style="color:var(--text-dim); text-align:center; padding:15px;">Nessun amico trovato. Aggiungi amici prima di avviare una Watchparty.</div>';
+          return;
+        }
+
+        currentFriends.forEach(fr => {
+          const item = document.createElement('div');
+          item.style.display = 'flex';
+          item.style.alignItems = 'center';
+          item.style.justifyContent = 'space-between';
+          item.style.background = 'rgba(255,255,255,0.06)';
+          item.style.padding = '10px 14px';
+          item.style.borderRadius = '8px';
+          item.style.marginBottom = '6px';
+          
+          item.innerHTML = `
+            <div style="display:flex; alignItems:center; gap:10px;">
+              <img src="${fr.avatar || `https://ui-avatars.com/api/?name=${encodeURIComponent(fr.name)}&background=6366f1&color=fff`}" style="width:36px; height:36px; border-radius:50%; object-fit:cover;" />
+              <div>
+                <div style="font-size:0.85rem; font-weight:700; color:#fff;">${fr.nickname ? '@' + fr.nickname : fr.name}</div>
+                <div style="font-size:0.72rem; color:var(--text-dim);">${fr.email}</div>
+              </div>
+            </div>
+            <button class="btn btn-primary" style="padding:6px 14px; font-size:0.75rem;">Invita</button>
+          `;
+          
+          const inviteBtn = item.querySelector('button');
+          inviteBtn.onclick = async () => {
+            inviteBtn.textContent = 'Inviato';
+            inviteBtn.style.background = 'var(--accent-green)';
+            inviteBtn.disabled = true;
+            
+            // Build Stream URL just in case
+            const effectiveDomain = await getActiveDomain();
+            const pathUrl = currentWatchpartyItem.id ? `titoli/${currentWatchpartyItem.id}-${currentWatchpartyItem.title.replace(/[^a-z0-9]/gi, '-').toLowerCase()}` : '';
+            const streamUrl = await buildStreamUrl(effectiveDomain, pathUrl);
+
+            socket.emit('invite_watchparty', {
+              targetEmail: fr.email,
+              movieId: currentWatchpartyItem.id,
+              movieTitle: currentWatchpartyItem.title,
+              streamUrl: streamUrl,
+              poster: currentWatchpartyItem.poster
+            });
+            
+            setTimeout(() => {
+              watchpartyModal.classList.add('hidden');
+              showToast(`Invito inviato a ${fr.name}!`);
+            }, 800);
+          };
+          watchpartyFriendsList.appendChild(item);
+        });
+      }
+
+      if (btnCloseWatchparty) {
+        btnCloseWatchparty.onclick = () => watchpartyModal.classList.add('hidden');
+      }
+
       // -------------------------------------------------------------
       // USER AUTH & PROFILE UI
       // -------------------------------------------------------------
@@ -2524,8 +2660,68 @@
             navAvatarWrap.innerHTML = `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path><circle cx="12" cy="7" r="4"></circle></svg>`;
           }
 
-          if (notifPollingInterval) clearInterval(notifPollingInterval);
           if (notifBadge) notifBadge.classList.add('hidden');
+        }
+        
+        // WATCHPARTY SOCKET INIT
+        if (currentUser && currentUser.email) {
+          if (!socket && typeof io !== 'undefined') {
+            socket = io();
+            socket.on('connect', () => {
+              socket.emit('authenticate', currentUser.email);
+            });
+            
+            socket.on('watchparty_invite', (data) => {
+              // Custom Watchparty Invite Toast / Modal
+              const isConfirmed = window.confirm(`🍿 ${data.fromName} ti ha invitato a una Watchparty per "${data.movieTitle}". Vuoi partecipare?`);
+              if (isConfirmed) {
+                socket.emit('accept_watchparty', data);
+              }
+            });
+
+            socket.on('watchparty_start', async (data) => {
+              watchpartyRoomId = data.roomId;
+              showToast("Watchparty avviata! Sincronizzazione attiva.");
+              // Fetch stream URL and open player
+              if (!data.streamUrl) {
+                const effectiveDomain = await getActiveDomain();
+                if (!effectiveDomain) return;
+                const pathUrl = data.movieId ? `titoli/${data.movieId}-${data.movieTitle.replace(/[^a-z0-9]/gi, '-').toLowerCase()}` : '';
+                data.streamUrl = await buildStreamUrl(effectiveDomain, pathUrl);
+              }
+              openVideoModal(data.streamUrl);
+            });
+
+            socket.on('sync_play', (data) => {
+              if (!webVideo || webVideo.classList.contains('hidden')) return;
+              isVideoSyncing = true;
+              if (Math.abs(webVideo.currentTime - data.time) > 2) {
+                webVideo.currentTime = data.time;
+              }
+              webVideo.play().catch(()=>{});
+              setTimeout(() => isVideoSyncing = false, 500);
+            });
+
+            socket.on('sync_pause', (data) => {
+              if (!webVideo || webVideo.classList.contains('hidden')) return;
+              isVideoSyncing = true;
+              webVideo.currentTime = data.time;
+              webVideo.pause();
+              setTimeout(() => isVideoSyncing = false, 500);
+            });
+
+            socket.on('sync_seek', (data) => {
+              if (!webVideo || webVideo.classList.contains('hidden')) return;
+              isVideoSyncing = true;
+              webVideo.currentTime = data.time;
+              setTimeout(() => isVideoSyncing = false, 500);
+            });
+          }
+        } else {
+          if (socket) {
+            socket.disconnect();
+            socket = null;
+          }
         }
       }
 
@@ -2975,6 +3171,7 @@
               <div class="card-poster-wrap">
                 <img class="card-poster" src="${item.poster || 'https://via.placeholder.com/300x450'}" alt="${cleanName}" loading="lazy">
                 <div class="card-badge">${item.type === 'tv' ? 'Serie TV' : 'Film'}</div>
+                <button class="btn-watchparty-card" title="Avvia Watchparty" onclick="event.stopPropagation(); startWatchpartyFlow(${item.id}, '${cleanName}', '${item.type}', '${item.poster || ''}')">🍿</button>
               </div>
               <div class="card-info">
                 <div class="card-title">${cleanName}</div>
@@ -2991,6 +3188,7 @@
             <div class="card-poster-wrap">
               <img class="card-poster" src="${item.poster || 'https://via.placeholder.com/300x450'}" alt="${cleanName}" loading="lazy">
               <div class="card-badge">${item.type === 'tv' ? 'Serie TV' : 'Film'}</div>
+              <button class="btn-watchparty-card" title="Avvia Watchparty" onclick="event.stopPropagation(); startWatchpartyFlow(${item.id}, '${cleanName}', '${item.type}', '${item.poster || ''}')">🍿</button>
             </div>
             <div class="card-info">
               <div class="card-title">${cleanName}</div>
@@ -3902,6 +4100,28 @@
       }
 
       // INITIALIZE
+      updateAuthUI();
+      // -------------------------------------------------------------
+      // WATCHPARTY VIDEO SYNC EVENT LISTENERS
+      // -------------------------------------------------------------
+      if (webVideo) {
+        webVideo.addEventListener('play', () => {
+          if (socket && watchpartyRoomId && !isVideoSyncing) {
+            socket.emit('sync_play', { roomId: watchpartyRoomId, time: webVideo.currentTime });
+          }
+        });
+        webVideo.addEventListener('pause', () => {
+          if (socket && watchpartyRoomId && !isVideoSyncing) {
+            socket.emit('sync_pause', { roomId: watchpartyRoomId, time: webVideo.currentTime });
+          }
+        });
+        webVideo.addEventListener('seeked', () => {
+          if (socket && watchpartyRoomId && !isVideoSyncing) {
+            socket.emit('sync_seek', { roomId: watchpartyRoomId, time: webVideo.currentTime });
+          }
+        });
+      }
+
       updateAuthUI();
       initGoogleAuth();
       loadHome();
