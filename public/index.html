@@ -964,6 +964,9 @@
       cursor: pointer;
       transition: all 0.22s ease;
       border: 1px solid var(--border);
+      -webkit-touch-callout: none;
+      -webkit-user-select: none;
+      user-select: none;
     }
 
     .media-card:hover {
@@ -2000,6 +2003,16 @@
                 <line x1="15.41" y1="6.51" x2="8.59" y2="10.49"></line>
               </svg>
             </button>
+
+            <!-- OPTION 5: WATCHPARTY -->
+            <button id="btn-modal-watchparty" class="icon-action-btn btn-watchparty" data-tooltip="Avvia Watchparty" title="Avvia Watchparty" style="color: #fff;">
+              <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"></path>
+                <circle cx="9" cy="7" r="4"></circle>
+                <path d="M23 21v-2a4 4 0 0 0-3-3.87"></path>
+                <path d="M16 3.13a4 4 0 0 1 0 7.75"></path>
+              </svg>
+            </button>
           </div>
         </div>
       </div>
@@ -2042,6 +2055,18 @@
             </svg>
           </div>
           <span class="peek-action-label">Condividi</span>
+        </div>
+
+        <div id="peek-btn-watchparty" class="peek-action-btn peek-watchparty-btn" data-action="watchparty" title="Watchparty">
+          <div class="peek-action-icon">
+            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+              <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"></path>
+              <circle cx="9" cy="7" r="4"></circle>
+              <path d="M23 21v-2a4 4 0 0 0-3-3.87"></path>
+              <path d="M16 3.13a4 4 0 0 1 0 7.75"></path>
+            </svg>
+          </div>
+          <span class="peek-action-label">Watchparty</span>
         </div>
       </div>
     </div>
@@ -2294,6 +2319,7 @@
       const btnModalPlayerOpen = document.getElementById('btn-modal-player-open');
       const btnModalDownloadApp = document.getElementById('btn-modal-download-app');
       const btnModalShareFriend = document.getElementById('btn-modal-share-friend');
+      const btnModalWatchparty = document.getElementById('btn-modal-watchparty');
       const playerChooserModal = document.getElementById('player-chooser-modal');
       const btnCloseChooser = document.getElementById('btn-close-chooser');
       const choiceAndroidIntent = document.getElementById('choice-android-intent');
@@ -2350,6 +2376,7 @@
       const peekBtnPlay = document.getElementById('peek-btn-play');
       const peekBtnInfo = document.getElementById('peek-btn-info');
       const peekBtnShare = document.getElementById('peek-btn-share');
+      const peekBtnWatchparty = document.getElementById('peek-btn-watchparty');
 
       // WATCHPARTY ELEMENTS
       const watchpartyModal = document.getElementById('watchparty-modal');
@@ -3063,6 +3090,7 @@
 
         peekBtnPlay.classList.remove('active-hover');
         peekBtnShare.classList.remove('active-hover');
+        if (peekBtnWatchparty) peekBtnWatchparty.classList.remove('active-hover');
 
         peekModal.classList.add('active');
 
@@ -3077,6 +3105,7 @@
         peekModal.classList.remove('active');
         peekBtnPlay.classList.remove('active-hover');
         peekBtnShare.classList.remove('active-hover');
+        if (peekBtnWatchparty) peekBtnWatchparty.classList.remove('active-hover');
         currentPeekHoverAction = null;
       }
 
@@ -3091,18 +3120,28 @@
           if (newAction === 'play') {
             peekBtnPlay.classList.add('active-hover');
             peekBtnShare.classList.remove('active-hover');
+            if (peekBtnWatchparty) peekBtnWatchparty.classList.remove('active-hover');
             if (navigator.vibrate) {
               try { navigator.vibrate(15); } catch (e) {}
             }
           } else if (newAction === 'share') {
             peekBtnShare.classList.add('active-hover');
             peekBtnPlay.classList.remove('active-hover');
+            if (peekBtnWatchparty) peekBtnWatchparty.classList.remove('active-hover');
+            if (navigator.vibrate) {
+              try { navigator.vibrate(15); } catch (e) {}
+            }
+          } else if (newAction === 'watchparty') {
+            if (peekBtnWatchparty) peekBtnWatchparty.classList.add('active-hover');
+            peekBtnPlay.classList.remove('active-hover');
+            peekBtnShare.classList.remove('active-hover');
             if (navigator.vibrate) {
               try { navigator.vibrate(15); } catch (e) {}
             }
           } else {
             peekBtnPlay.classList.remove('active-hover');
             peekBtnShare.classList.remove('active-hover');
+            if (peekBtnWatchparty) peekBtnWatchparty.classList.remove('active-hover');
           }
         }
       }
@@ -3117,6 +3156,8 @@
           playDirectly(itemToRun);
         } else if (actionToRun === 'share' && itemToRun) {
           openShareFilmModal(itemToRun);
+        } else if (actionToRun === 'watchparty' && itemToRun) {
+          startWatchpartyFlow(itemToRun.id, itemToRun.name || itemToRun.title, itemToRun.type, itemToRun.poster);
         }
       }
 
@@ -3171,7 +3212,6 @@
               <div class="card-poster-wrap">
                 <img class="card-poster" src="${item.poster || 'https://via.placeholder.com/300x450'}" alt="${cleanName}" loading="lazy">
                 <div class="card-badge">${item.type === 'tv' ? 'Serie TV' : 'Film'}</div>
-                <button class="btn-watchparty-card" title="Avvia Watchparty" onclick="event.stopPropagation(); startWatchpartyFlow(${item.id}, '${cleanName}', '${item.type}', '${item.poster || ''}')">🍿</button>
               </div>
               <div class="card-info">
                 <div class="card-title">${cleanName}</div>
@@ -3188,7 +3228,6 @@
             <div class="card-poster-wrap">
               <img class="card-poster" src="${item.poster || 'https://via.placeholder.com/300x450'}" alt="${cleanName}" loading="lazy">
               <div class="card-badge">${item.type === 'tv' ? 'Serie TV' : 'Film'}</div>
-              <button class="btn-watchparty-card" title="Avvia Watchparty" onclick="event.stopPropagation(); startWatchpartyFlow(${item.id}, '${cleanName}', '${item.type}', '${item.poster || ''}')">🍿</button>
             </div>
             <div class="card-info">
               <div class="card-title">${cleanName}</div>
@@ -3819,6 +3858,27 @@
 
       if (btnModalDownloadApp) {
         btnModalDownloadApp.onclick = () => downloadWithMacApp(currentActiveItem);
+      }
+
+      if (btnModalShareFriend) {
+        btnModalShareFriend.onclick = () => openShareFilmModal(currentActiveItem);
+      }
+
+      if (btnModalWatchparty) {
+        btnModalWatchparty.onclick = () => {
+          detailsModal.classList.add('hidden');
+          startWatchpartyFlow(currentActiveItem.id, currentActiveItem.name || currentActiveItem.title, currentActiveItem.type, currentActiveItem.poster);
+        };
+      }
+
+      // -------------------------------------------------------------
+      // LONG-PRESS PEEK LOGIC
+      // -------------------------------------------------------------
+      if (peekBtnWatchparty) {
+        peekBtnWatchparty.onclick = (e) => {
+          e.stopPropagation();
+          startWatchpartyFlow(currentActiveItem.id, currentActiveItem.name || currentActiveItem.title, currentActiveItem.type, currentActiveItem.poster);
+        };
       }
 
       function playInWebPlayer(streamUrl, title, isAppleNative) {
