@@ -523,85 +523,244 @@
       padding: 16px;
     }
 
-    /* HERO BANNER */
+    /* HERO BANNER (FULL VIEWPORT WIDTH & CINEMATIC IMMERSION) */
     .hero-banner {
       position: relative;
-      width: 100%;
-      height: 380px;
-      border-radius: var(--radius-lg);
-      overflow: hidden;
-      margin-bottom: 28px;
+      width: 100vw;
+      left: 50%;
+      right: 50%;
+      margin-left: -50vw;
+      margin-right: -50vw;
+      min-height: 75vh;
+      height: 80vh;
+      max-height: 860px;
       display: flex;
       align-items: flex-end;
-      padding: 30px;
-      border: 1px solid var(--border);
+      padding: 0 max(4vw, 36px) 80px max(4vw, 36px);
       background-size: cover;
-      background-position: center top;
-      box-shadow: 0 16px 36px rgba(0, 0, 0, 0.6);
-      transition: background-image 0.4s ease;
+      background-position: center 25%;
+      background-repeat: no-repeat;
+      overflow: hidden;
+      margin-bottom: 24px;
+      box-sizing: border-box;
+      border: none;
+      border-radius: 0;
+      box-shadow: none;
+      transition: background-image 0.6s cubic-bezier(0.16, 1, 0.3, 1);
     }
 
+    /* Seamless Multi-Stop Dark Gradients */
     .hero-backdrop-overlay {
       position: absolute;
       inset: 0;
-      background: linear-gradient(0deg, #09090b 0%, rgba(9, 9, 11, 0.65) 55%, rgba(9, 9, 11, 0.25) 100%);
+      background: 
+        linear-gradient(0deg, #07080b 0%, rgba(7, 8, 11, 0.96) 12%, rgba(7, 8, 11, 0.72) 32%, rgba(7, 8, 11, 0.2) 65%, rgba(7, 8, 11, 0.45) 100%),
+        linear-gradient(90deg, #07080b 0%, rgba(7, 8, 11, 0.9) 32%, rgba(7, 8, 11, 0.45) 60%, transparent 100%);
+      pointer-events: none;
+      z-index: 1;
+    }
+
+    /* Bottom Blur & Vignette Fusion into Site Background */
+    .hero-blur-bottom {
+      position: absolute;
+      bottom: 0;
+      left: 0;
+      right: 0;
+      height: 260px;
+      background: linear-gradient(to bottom, transparent 0%, rgba(7, 8, 11, 0.65) 45%, #07080b 100%);
+      backdrop-filter: blur(28px);
+      -webkit-backdrop-filter: blur(28px);
+      mask-image: linear-gradient(to bottom, transparent 0%, black 80%);
+      -webkit-mask-image: linear-gradient(to bottom, transparent 0%, black 80%);
+      pointer-events: none;
+      z-index: 2;
     }
 
     .hero-content {
       position: relative;
-      z-index: 2;
-      max-width: 680px;
+      z-index: 3;
+      max-width: 860px;
+      animation: heroFadeIn 0.5s cubic-bezier(0.16, 1, 0.3, 1);
+    }
+
+    @keyframes heroFadeIn {
+      from { opacity: 0; transform: translateY(18px); }
+      to { opacity: 1; transform: translateY(0); }
+    }
+
+    .hero-meta-row {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      flex-wrap: wrap;
+      margin-bottom: 14px;
     }
 
     .hero-tag {
-      display: inline-block;
-      background: var(--accent);
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      background: linear-gradient(135deg, #e50914, #ff2a3b);
       color: #fff;
-      font-size: 0.72rem;
+      font-size: 0.82rem;
       font-weight: 800;
+      letter-spacing: 0.6px;
       text-transform: uppercase;
-      padding: 3px 10px;
-      border-radius: var(--radius-sm);
-      margin-bottom: 10px;
+      padding: 6px 14px;
+      border-radius: 999px;
+      box-shadow: 0 4px 14px rgba(229, 9, 20, 0.45);
+    }
+
+    .hero-badge-quality {
+      display: inline-flex;
+      align-items: center;
+      background: rgba(255, 255, 255, 0.16);
+      border: 1px solid rgba(255, 255, 255, 0.28);
+      color: #fff;
+      font-size: 0.78rem;
+      font-weight: 800;
+      padding: 4px 10px;
+      border-radius: 6px;
+      backdrop-filter: blur(10px);
+    }
+
+    .hero-badge-meta {
+      font-size: 0.9rem;
+      font-weight: 700;
+      color: #cbd5e1;
     }
 
     .hero-title {
-      font-size: 2.2rem;
+      font-size: clamp(2.6rem, 5.8vw, 4.6rem);
       font-weight: 900;
-      margin-bottom: 8px;
-      line-height: 1.15;
+      letter-spacing: -0.03em;
+      margin-bottom: 14px;
+      line-height: 1.05;
+      color: #ffffff;
+      text-shadow: 0 4px 28px rgba(0, 0, 0, 0.95);
     }
 
     .hero-plot {
-      font-size: 0.92rem;
-      color: #cbd5e1;
-      line-height: 1.5;
+      font-size: clamp(0.98rem, 1.25vw, 1.15rem);
+      color: #e2e8f0;
+      line-height: 1.6;
       display: -webkit-box;
       -webkit-line-clamp: 3;
       -webkit-box-orient: vertical;
       overflow: hidden;
-      margin-bottom: 18px;
+      margin-bottom: 28px;
+      max-width: 720px;
+      text-shadow: 0 2px 14px rgba(0, 0, 0, 0.8);
     }
 
     .hero-actions {
       display: flex;
       align-items: center;
-      gap: 10px;
+      gap: 14px;
       flex-wrap: wrap;
+    }
+
+    .btn-hero-play-main {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      gap: 10px;
+      background: #ffffff;
+      color: #000000;
+      font-size: 1.1rem;
+      font-weight: 800;
+      padding: 15px 36px;
+      border-radius: 999px;
+      border: none;
+      cursor: pointer;
+      box-shadow: 0 8px 26px rgba(255, 255, 255, 0.35);
+      transition: all 0.25s cubic-bezier(0.34, 1.56, 0.64, 1);
+    }
+    .btn-hero-play-main:hover {
+      transform: scale(1.06);
+      background: #f1f5f9;
+      box-shadow: 0 12px 34px rgba(255, 255, 255, 0.55);
+    }
+    .btn-hero-play-main:active {
+      transform: scale(0.97);
+    }
+
+    .btn-hero-info-main {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      gap: 10px;
+      background: rgba(255, 255, 255, 0.18);
+      color: #ffffff;
+      font-size: 1.05rem;
+      font-weight: 700;
+      padding: 15px 30px;
+      border-radius: 999px;
+      border: 1px solid rgba(255, 255, 255, 0.3);
+      backdrop-filter: blur(16px);
+      -webkit-backdrop-filter: blur(16px);
+      cursor: pointer;
+      transition: all 0.25s ease;
+    }
+    .btn-hero-info-main:hover {
+      background: rgba(255, 255, 255, 0.28);
+      transform: scale(1.04);
+      border-color: rgba(255, 255, 255, 0.45);
+    }
+    .btn-hero-info-main:active {
+      transform: scale(0.97);
+    }
+
+    .btn-hero-circle {
+      width: 52px;
+      height: 52px;
+      border-radius: 50%;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      background: rgba(30, 41, 59, 0.75);
+      border: 1px solid rgba(255, 255, 255, 0.25);
+      color: #ffffff;
+      backdrop-filter: blur(16px);
+      -webkit-backdrop-filter: blur(16px);
+      cursor: pointer;
+      transition: all 0.25s cubic-bezier(0.34, 1.56, 0.64, 1);
+    }
+    .btn-hero-circle:hover {
+      transform: scale(1.12);
+      background: rgba(255, 255, 255, 0.22);
+      border-color: #ffffff;
+      box-shadow: 0 4px 18px rgba(0, 0, 0, 0.5);
+    }
+    .btn-hero-circle:active {
+      transform: scale(0.95);
     }
 
     @media (max-width: 768px) {
       .hero-banner {
-        height: 260px;
-        padding: 18px;
+        min-height: 58vh;
+        height: 64vh;
+        padding: 0 20px 45px 20px;
       }
       .hero-title {
-        font-size: 1.4rem;
+        font-size: 2.1rem;
       }
       .hero-plot {
-        display: -webkit-box;
         -webkit-line-clamp: 2;
-        font-size: 0.85rem;
+        font-size: 0.88rem;
+        margin-bottom: 20px;
+      }
+      .btn-hero-play-main {
+        padding: 12px 24px;
+        font-size: 0.95rem;
+      }
+      .btn-hero-info-main {
+        padding: 12px 20px;
+        font-size: 0.92rem;
+      }
+      .btn-hero-circle {
+        width: 44px;
+        height: 44px;
       }
     }
 
@@ -1981,24 +2140,34 @@
   <main class="main-container">
     <!-- HOME MULTI-ROW EXPERIENCE CONTAINER -->
     <div id="home-multi-rows">
-      <!-- HERO FEATURED SECTION -->
+      <!-- HERO FEATURED SECTION (FULL-WIDTH CINEMATIC) -->
       <div id="hero-banner" class="hero-banner">
         <div class="hero-backdrop-overlay"></div>
+        <div class="hero-blur-bottom"></div>
         <div class="hero-content">
-          <span class="hero-tag" id="hero-tag">In Primo Piano</span>
-          <h2 id="hero-title" class="hero-title">Caricamento catalogo...</h2>
+          <div class="hero-meta-row">
+            <span class="hero-tag" id="hero-tag">In Evidenza</span>
+            <span class="hero-badge-quality" id="hero-badge-quality">4K Ultra HD</span>
+            <span class="hero-badge-meta" id="hero-badge-year"></span>
+            <span class="hero-badge-meta" id="hero-badge-rating"></span>
+            <span class="hero-badge-meta" id="hero-badge-genres"></span>
+          </div>
+          <h1 id="hero-title" class="hero-title">Caricamento catalogo...</h1>
           <p id="hero-plot" class="hero-plot">Connessione ai server di streaming in corso...</p>
           <div class="hero-actions">
-            <button id="btn-hero-player" class="btn btn-primary" style="padding: 10px 20px; font-weight: 800; font-size: 0.95rem;">
-              <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor" style="margin-right: 6px;"><polygon points="6 4 19 12 6 20"></polygon></svg>
-              Riproduci Subito
+            <button id="btn-hero-player" class="btn-hero-play-main">
+              <svg width="24" height="24" viewBox="0 0 24 24" fill="currentColor"><polygon points="6 4 19 12 6 20"></polygon></svg>
+              <span>Riproduci Subito</span>
             </button>
-            <button id="btn-hero-details" class="btn btn-secondary" style="padding: 10px 18px;">
-              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="margin-right: 6px;"><circle cx="12" cy="12" r="10"></circle><line x1="12" y1="16" x2="12" y2="12"></line><line x1="12" y1="8" x2="12.01" y2="8"></line></svg>
-              Altre Info
+            <button id="btn-hero-details" class="btn-hero-info-main">
+              <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"></circle><line x1="12" y1="16" x2="12" y2="12"></line><line x1="12" y1="8" x2="12.01" y2="8"></line></svg>
+              <span>Altre Info</span>
             </button>
-            <button id="btn-hero-vix" class="icon-action-btn btn-vix" data-tooltip="Scegli Lettore (VLC, Apple, Android)" title="Scegli Lettore (VLC, Apple, Android)" style="width: 42px; height: 42px;">
-              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <button id="btn-hero-quick-dl" class="btn-hero-circle" data-tooltip="Scarica con l'App" title="Scarica con l'App">
+              <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#22c55e" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path><polyline points="7 10 12 15 17 10"></polyline><line x1="12" y1="15" x2="12" y2="3"></line></svg>
+            </button>
+            <button id="btn-hero-vix" class="btn-hero-circle" data-tooltip="Opzioni Lettore & Vixcloud" title="Opzioni Lettore & Vixcloud">
+              <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
                 <rect x="2" y="4" width="20" height="16" rx="3"></rect>
                 <polygon points="10 8 16 12 10 16" fill="currentColor"></polygon>
               </svg>
@@ -3807,10 +3976,42 @@
       function updateHero(item) {
         if (!item) return;
         currentActiveItem = item;
-        heroBanner.style.backgroundImage = `url('${item.backdrop || item.poster}')`;
+        const bgUrl = item.backdrop || item.poster;
+        if (bgUrl) {
+          heroBanner.style.backgroundImage = `url('${bgUrl}')`;
+        }
         heroTitle.textContent = decodeHtml(item.name);
-        heroPlot.textContent = decodeHtml(item.plot || 'Nessuna trama disponibile.');
-        if (heroTag) heroTag.textContent = item.type === 'tv' ? 'Serie TV in Evidenza' : 'Film in Primo Piano';
+        heroPlot.textContent = decodeHtml(item.plot || (item.overview || 'Nessuna trama disponibile.'));
+        if (heroTag) {
+          heroTag.textContent = item.type === 'tv' ? 'Serie TV in Evidenza' : 'Film in Evidenza';
+        }
+
+        const heroYear = document.getElementById('hero-badge-year');
+        if (heroYear) {
+          const year = item.release_date ? item.release_date.split('-')[0] : (item.year || (item.type === 'tv' ? (item.seasons_count ? item.seasons_count + ' Stagioni' : 'Serie TV') : 'Film'));
+          heroYear.textContent = year || '';
+        }
+
+        const heroRating = document.getElementById('hero-badge-rating');
+        if (heroRating) {
+          const score = item.score || item.rating || item.vote_average;
+          if (score) {
+            heroRating.textContent = `⭐ ${typeof score === 'number' ? score.toFixed(1) : score}`;
+            heroRating.style.display = 'inline-flex';
+          } else {
+            heroRating.style.display = 'none';
+          }
+        }
+
+        const heroGenres = document.getElementById('hero-badge-genres');
+        if (heroGenres) {
+          if (item.genres && Array.isArray(item.genres) && item.genres.length > 0) {
+            heroGenres.textContent = item.genres.map(g => g.name || g).slice(0, 3).join(' • ');
+            heroGenres.style.display = 'inline-flex';
+          } else {
+            heroGenres.style.display = 'none';
+          }
+        }
       }
 
       function showHomeMultiRows() {
@@ -4178,6 +4379,12 @@
 
       // RIPRODUCI SUBITO -> PLAYS DIRECTLY WITH VIXCLOUD
       if (btnHeroPlayer) btnHeroPlayer.onclick = () => playDirectly(currentActiveItem);
+      const btnHeroQuickDl = document.getElementById('btn-hero-quick-dl');
+      if (btnHeroQuickDl) {
+        btnHeroQuickDl.onclick = () => {
+          if (currentActiveItem) downloadWithMacApp(currentActiveItem);
+        };
+      }
       if (btnModalPlayerOpen) btnModalPlayerOpen.onclick = () => playDirectly(currentActiveItem);
 
       // CHOOSER BUTTONS -> OPENS EXTERNAL PLAYER CHOOSER
