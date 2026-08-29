@@ -2730,7 +2730,7 @@
         await handleGoogleProfile(email, name, `https://ui-avatars.com/api/?name=${encodeURIComponent(name || email)}&background=6366f1&color=fff&size=128`, '');
       };
 
-      btnCloseLogin.onclick = () => loginModal.classList.add('hidden');
+      if (btnCloseLogin) btnCloseLogin.onclick = () => loginModal.classList.add('hidden');
 
       async function handleGoogleProfile(email, name, picture, sub) {
         try {
@@ -2786,14 +2786,14 @@
         }
       };
 
-      btnChangeNickname.onclick = () => {
+      if (btnChangeNickname) btnChangeNickname.onclick = () => {
         userDropdown.classList.add('hidden');
         inputUniqueNickname.value = (currentUser && currentUser.nickname) || '';
         nicknameError.style.display = 'none';
         nicknameModal.classList.remove('hidden');
       };
 
-      btnOpenFriendsModal.onclick = () => {
+      if (btnOpenFriendsModal) btnOpenFriendsModal.onclick = () => {
         userDropdown.classList.add('hidden');
         friendsModal.classList.remove('hidden');
         fetchFriends();
@@ -2867,7 +2867,7 @@
       }
 
       if (btnCloseWatchparty) {
-        btnCloseWatchparty.onclick = () => watchpartyModal.classList.add('hidden');
+        if (btnCloseWatchparty) btnCloseWatchparty.onclick = () => watchpartyModal.classList.add('hidden');
       }
 
       // -------------------------------------------------------------
@@ -2963,7 +2963,7 @@
         }
       }
 
-      btnLogout.onclick = () => {
+      if (btnLogout) btnLogout.onclick = () => {
         currentUser = null;
         localStorage.removeItem('sc_logged_user');
         userDropdown.classList.add('hidden');
@@ -2972,22 +2972,22 @@
       };
 
       if (btnGoogleLoginTrigger) {
-        btnGoogleLoginTrigger.onclick = () => {
+        if (btnGoogleLoginTrigger) btnGoogleLoginTrigger.onclick = () => {
           userDropdown.classList.add('hidden');
           startGooglePopupLogin();
         };
       }
 
-      btnCloseUserDropdown.onclick = () => userDropdown.classList.add('hidden');
+      if (btnCloseUserDropdown) btnCloseUserDropdown.onclick = () => userDropdown.classList.add('hidden');
       userDropdown.onclick = (e) => { if (e.target === userDropdown) userDropdown.classList.add('hidden'); };
 
-      navProfile.onclick = () => {
+      if (navProfile) navProfile.onclick = () => {
         setActiveNav(navProfile);
         userDropdown.classList.remove('hidden');
         notifDropdown.classList.add('hidden');
       };
 
-      navNotif.onclick = () => {
+      if (navNotif) navNotif.onclick = () => {
         setActiveNav(navNotif);
         if (!currentUser) {
           showToast("Accedi con Google per vedere le tue notifiche.");
@@ -3006,7 +3006,7 @@
       };
 
       if (btnNotifBell) {
-        btnNotifBell.onclick = navNotif.onclick;
+        if (btnNotifBell && navNotif) btnNotifBell.onclick = navNotif.onclick;
       }
 
       // -------------------------------------------------------------
@@ -3077,13 +3077,13 @@
         }
       };
 
-      btnOpenFriendsModal.onclick = () => {
+      if (btnOpenFriendsModal) btnOpenFriendsModal.onclick = () => {
         userDropdown.classList.add('hidden');
         friendsModal.classList.remove('hidden');
         fetchFriends();
       };
-      btnCloseFriends.onclick = () => friendsModal.classList.add('hidden');
-      navFriends.onclick = () => {
+      if (btnCloseFriends) btnCloseFriends.onclick = () => friendsModal.classList.add('hidden');
+      if (navFriends) navFriends.onclick = () => {
         if (!currentUser) startGooglePopupLogin();
         else {
           friendsModal.classList.remove('hidden');
@@ -3195,7 +3195,7 @@
         notifPollingInterval = setInterval(fetchNotifications, 5000);
       }
 
-      btnCloseNotifDropdown.onclick = () => notifDropdown.classList.add('hidden');
+      if (btnCloseNotifDropdown) btnCloseNotifDropdown.onclick = () => notifDropdown.classList.add('hidden');
       notifDropdown.onclick = (e) => { if (e.target === notifDropdown) notifDropdown.classList.add('hidden'); };
 
       // -------------------------------------------------------------
@@ -3277,7 +3277,7 @@
         }
       }
 
-      btnCloseShare.onclick = () => shareModal.classList.add('hidden');
+      if (btnCloseShare) btnCloseShare.onclick = () => shareModal.classList.add('hidden');
 
       // -------------------------------------------------------------
       // LONG-PRESS PEEK & QUICK ACTION RADIAL FLOATING CONTROLLER
@@ -3857,7 +3857,7 @@
 
       // BACK TO HOME BUTTON
       if (btnBackToHome) {
-        btnBackToHome.onclick = () => {
+        if (btnBackToHome) btnBackToHome.onclick = () => {
           showHomeMultiRows();
         };
       }
@@ -3888,7 +3888,7 @@
       });
 
       if (btnHeroDetails) {
-        btnHeroDetails.onclick = () => {
+        if (btnHeroDetails) btnHeroDetails.onclick = () => {
           if (currentActiveItem) openDetails(currentActiveItem);
         };
       }
@@ -4068,7 +4068,7 @@
         // 2. Apple Native Player / Direct Stream Tab
         choiceIos.href = effectiveUrl;
         choiceIos.target = "_blank";
-        choiceIos.onclick = () => {
+        if (choiceIos) choiceIos.onclick = () => {
           playerChooserModal.classList.add('hidden');
           showToast("Apertura flusso in corso...");
         };
@@ -4082,7 +4082,7 @@
           choiceVlc.href = `vlc://${effectiveUrl}`;
         }
 
-        choiceVlc.onclick = (e) => {
+        if (choiceVlc) choiceVlc.onclick = (e) => {
           playerChooserModal.classList.add('hidden');
           showToast("Apertura VLC Media Player...");
           if (isMac || (!isIOS && !isAndroid)) {
@@ -4108,7 +4108,7 @@
 
         // 4. Infuse (iOS & iPadOS & macOS)
         choiceInfuse.href = `infuse://control/play?url=${encodeURIComponent(effectiveUrl)}`;
-        choiceInfuse.onclick = () => {
+        if (choiceInfuse) choiceInfuse.onclick = () => {
           playerChooserModal.classList.add('hidden');
           showToast("Apertura Infuse Video Player...");
         };
@@ -4172,17 +4172,17 @@
       };
 
       // RIPRODUCI SUBITO -> PLAYS DIRECTLY WITH VIXCLOUD
-      btnHeroPlayer.onclick = () => playDirectly(currentActiveItem);
-      btnModalPlayerOpen.onclick = () => playDirectly(currentActiveItem);
+      if (btnHeroPlayer) btnHeroPlayer.onclick = () => playDirectly(currentActiveItem);
+      if (btnModalPlayerOpen) btnModalPlayerOpen.onclick = () => playDirectly(currentActiveItem);
 
       // CHOOSER BUTTONS -> OPENS EXTERNAL PLAYER CHOOSER
-      btnHeroVix.onclick = async () => {
+      if (btnHeroVix) btnHeroVix.onclick = async () => {
         const extraction = await resolveExtraction(currentActiveItem);
         const title = decodeHtml(currentActiveItem.name);
         openPlayerChooser(extraction, title);
       };
 
-      btnModalVixEmbed.onclick = async () => {
+      if (btnModalVixEmbed) btnModalVixEmbed.onclick = async () => {
         const extraction = await resolveExtraction(currentActiveItem);
         const title = currentActiveItem.current_ep_title ? `${decodeHtml(currentActiveItem.name)} - ${currentActiveItem.current_ep_title}` : decodeHtml(currentActiveItem.name);
         closeDetails();
@@ -4257,7 +4257,7 @@
       }
 
       if (btnModalWatchparty) {
-        btnModalWatchparty.onclick = () => {
+        if (btnModalWatchparty) btnModalWatchparty.onclick = () => {
           detailsModal.classList.add('hidden');
           startWatchpartyFlow(currentActiveItem.id, currentActiveItem.name || currentActiveItem.title, currentActiveItem.type, currentActiveItem.poster);
         };
@@ -4267,7 +4267,7 @@
       // LONG-PRESS PEEK LOGIC
       // -------------------------------------------------------------
       if (peekBtnWatchparty) {
-        peekBtnWatchparty.onclick = (e) => {
+        if (peekBtnWatchparty) peekBtnWatchparty.onclick = (e) => {
           e.stopPropagation();
           startWatchpartyFlow(currentActiveItem.id, currentActiveItem.name || currentActiveItem.title, currentActiveItem.type, currentActiveItem.poster);
         };
@@ -4313,7 +4313,7 @@
         }
       };
 
-      btnPlayerBack.onclick = () => {
+      if (btnPlayerBack) btnPlayerBack.onclick = () => {
         playerModal.classList.add('hidden');
         webVideo.pause();
         webVideo.src = '';
@@ -4335,7 +4335,7 @@
         openDetails(rand);
       }
 
-      navRandom.onclick = () => {
+      if (navRandom) navRandom.onclick = () => {
         setActiveNav(navRandom);
         pickRandomTitle();
       };
@@ -4427,11 +4427,11 @@
         if (btn) btn.classList.add('active');
       }
 
-      btnBrandHome.onclick = () => {
+      if (btnBrandHome) btnBrandHome.onclick = () => {
         showHomeMultiRows();
       };
 
-      navHome.onclick = () => {
+      if (navHome) navHome.onclick = () => {
         showHomeMultiRows();
       };
 
@@ -4444,7 +4444,7 @@
         };
       }
 
-      navSearch.onclick = (e) => {
+      if (navSearch) navSearch.onclick = (e) => {
         e.stopPropagation();
         setActiveNav(navSearch);
         if (floatingSearchBar) {
@@ -4565,11 +4565,10 @@
       updateAuthUI();
       initGoogleAuth();
       loadHome();
-    })();
 
-      // -------------------------------------------------------------
+
       // DOWNLOAD MANAGER & REAL-TIME PROGRESS TRACKING
-      // -------------------------------------------------------------
+// -------------------------------------------------------------
       const navDownloads = document.getElementById('nav-downloads');
       const downloadsView = document.getElementById('downloads-view');
       const downloadsListContainer = document.getElementById('downloads-list-container');
@@ -4715,7 +4714,7 @@
 
       // Realtime polling
       setInterval(fetchAndRenderDownloads, 1000);
-
+    })();
   </script>
 </body>
 </html>
