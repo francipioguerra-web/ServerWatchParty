@@ -3722,12 +3722,13 @@
       }
 
 
-      async function loadHome() {
+      async function loadHome(retryCount = 0) {
         showHomeMultiRows();
-                try {
-          const res = await fetch('/api/sc/home');
+        try {
+          const apiBase = (window.location.protocol === 'file:' || !window.location.port) ? 'http://127.0.0.1:5555' : '';
+          const res = await fetch(`${apiBase}/api/sc/home`);
           const data = await res.json();
-          if (data.success && data.sliders && data.sliders.length > 0) {
+          if (data && data.success && data.sliders && data.sliders.length > 0) {
             let allTitles = [];
             let top10Titles = [];
             let trendingTitles = [];
@@ -3776,9 +3777,15 @@
             loadRowGenre(trackAction, 4);      // Azione
             loadRowGenre(trackAnimation, 19);  // Animazione
             loadRowGenre(trackComedy, 12);     // Commedia
+          } else {
+            throw new Error('Dati catalogo non pronti');
           }
         } catch (e) {
-          showToast('Connessione al catalogo fallita');
+          if (retryCount < 3) {
+            setTimeout(() => loadHome(retryCount + 1), 1000);
+          } else {
+            showToast('Connessione al catalogo in corso...');
+          }
         }
       }
 
