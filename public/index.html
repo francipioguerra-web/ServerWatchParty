@@ -4025,17 +4025,17 @@
         }
       }
 
-      // DIRECT PLAY (100% FULLSCREEN VIXCLOUD PLAYER WITH VIDEO & AUDIO)
+      // DIRECT PLAY (OPENS STREAM IN NEW TAB / PAGE FULL QUALITY)
       async function playDirectly(item) {
         const target = item || currentActiveItem;
         if (!target) return;
         currentActiveItem = target;
-        showToast("Caricamento video a schermo intero...");
+        showToast("Risoluzione flusso in corso...");
         const extraction = await resolveExtraction(target);
         const title = target.current_ep_title ? `${decodeHtml(target.name || target.title)} - ${target.current_ep_title}` : decodeHtml(target.name || target.title);
         closeDetails();
 
-        const streamUrl = extraction.embed_url || extraction.master_m3u8 || extraction.vix_url;
+        const streamUrl = extraction.embed_url || extraction.vix_url || extraction.master_m3u8;
 
         pendingExtraction = {
           m3u8: extraction.master_m3u8,
@@ -4048,7 +4048,8 @@
           return;
         }
 
-        playInWebPlayer(streamUrl, title);
+        window.open(streamUrl, '_blank');
+        showToast(`Apertura video in una nuova scheda...`);
       }
 
       // -------------------------------------------------------------
@@ -4215,41 +4216,23 @@
         };
 
         let startedLocally = false;
-        try {
-          const res = await fetch("http://127.0.0.1:5555/api/download/start", {
-            method: "POST",
-            headers: { "Content-Type": "application/json" },
-            body: JSON.stringify(payload)
-          });
-          const data = await res.json();
-          if (data && (data.download_id || data.success)) {
-            startedLocally = true;
-          }
-        } catch (e) {}
-
-        if (!startedLocally && !window.location.origin.includes("127.0.0.1")) {
+        if (window.location.origin.includes('127.0.0.1') || window.location.origin.includes('localhost') || window.location.protocol === 'file:') {
           try {
-            const res2 = await fetch("/api/download/start", {
-              method: "POST",
-              headers: { "Content-Type": "application/json" },
+            const res = await fetch('/api/download/start', {
+              method: 'POST',
+              headers: { 'Content-Type': 'application/json' },
               body: JSON.stringify(payload)
             });
-            const data2 = await res2.json();
-            if (data2 && (data2.download_id || data2.success)) {
+            const data = await res.json();
+            if (data && (data.download_id || data.success)) {
               startedLocally = true;
             }
-          } catch (e2) {}
+          } catch (e) {}
+        } else {
+          // On Render website: trigger macOS URL Scheme to open & pass download to StreamingCommunity.app
+          const schemeUrl = `streamingcommunity://download?url=${encodeURIComponent(finalUrl)}&title=${encodeURIComponent(title)}`;
+          window.location.href = schemeUrl;
         }
-
-        // Trigger custom macOS URL Scheme to open & wake StreamingCommunity.app on Mac
-        const schemeUrl = `streamingcommunity://download?url=${encodeURIComponent(finalUrl)}&title=${encodeURIComponent(title)}`;
-        const iframe = document.createElement("iframe");
-        iframe.style.display = "none";
-        iframe.src = schemeUrl;
-        document.body.appendChild(iframe);
-        setTimeout(() => {
-          if (iframe.parentNode) iframe.parentNode.removeChild(iframe);
-        }, 3000);
 
         if (startedLocally) {
           showToast(`✅ Download avviato in StreamingCommunity.app: "${title}.mp4" 🚀`);
