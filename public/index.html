@@ -1463,45 +1463,113 @@
       flex-shrink: 0;
     }
 
-    /* PLAYER OVERLAY */
+    /* PLAYER OVERLAY (100% TRUE FULLSCREEN NO BLACK BARS / NO SHRINKS) */
     .player-overlay {
       position: fixed;
-      inset: 0;
-      z-index: 200;
+      top: 0;
+      left: 0;
+      width: 100vw;
+      height: 100vh;
+      z-index: 9999;
       background: #000;
       display: flex;
-      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      overflow: hidden;
+      margin: 0;
+      padding: 0;
     }
 
     .player-overlay.hidden {
-      display: none;
+      display: none !important;
     }
 
     .player-top-bar {
-      padding: 12px 18px;
+      padding: 16px 24px;
       display: flex;
       align-items: center;
       justify-content: space-between;
-      background: linear-gradient(180deg, rgba(0, 0, 0, 0.85) 0%, transparent 100%);
+      gap: 16px;
+      background: linear-gradient(180deg, rgba(0, 0, 0, 0.94) 0%, rgba(0, 0, 0, 0.5) 60%, transparent 100%);
       position: absolute;
       top: 0;
       left: 0;
       right: 0;
-      z-index: 10;
+      z-index: 100;
+      pointer-events: auto;
+      transition: opacity 0.3s ease;
+    }
+
+    .btn-player-download {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      background: linear-gradient(135deg, #e50914, #ff3b30);
+      color: #fff;
+      border: none;
+      padding: 8px 16px;
+      border-radius: 999px;
+      font-size: 0.84rem;
+      font-weight: 700;
+      cursor: pointer;
+      box-shadow: 0 4px 14px rgba(229, 9, 20, 0.45);
+      transition: all 0.2s ease;
+      white-space: nowrap;
+      flex-shrink: 0;
+    }
+
+    .btn-player-download:hover {
+      transform: scale(1.05);
+      box-shadow: 0 6px 20px rgba(229, 9, 20, 0.65);
+    }
+
+    .btn-player-download:active {
+      transform: scale(0.96);
+    }
+
+    .card-btn-hover-dl {
+      background: rgba(30, 41, 59, 0.85);
+      border: 1px solid rgba(255, 255, 255, 0.2);
+      color: #fff;
+      width: 38px;
+      height: 38px;
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      cursor: pointer;
+      backdrop-filter: blur(12px);
+      transition: all 0.2s cubic-bezier(0.34, 1.56, 0.64, 1);
+    }
+    .card-btn-hover-dl:hover {
+      transform: scale(1.15);
+      background: #22c55e;
+      border-color: #22c55e;
+      box-shadow: 0 4px 16px rgba(34, 197, 94, 0.6);
     }
 
     .player-video {
-      width: 100%;
-      height: 100%;
+      position: absolute;
+      top: 0;
+      left: 0;
+      width: 100vw;
+      height: 100vh;
       object-fit: contain;
       background: #000;
+      z-index: 1;
+      border: none;
+      outline: none;
     }
 
     .player-iframe {
-      width: 100%;
-      height: 100%;
+      position: absolute;
+      top: 0;
+      left: 0;
+      width: 100vw;
+      height: 100vh;
       border: none;
       background: #000;
+      z-index: 1;
     }
 
     /* FLOATING BOTTOM NAVBAR (ICON-ONLY / PURE BLUR / ULTRA SMOOTH MORPH) */
@@ -2339,13 +2407,22 @@
   <!-- FULLSCREEN VIDEO PLAYER MODAL -->
   <div id="player-modal" class="player-overlay hidden">
     <div class="player-top-bar">
-      <button id="btn-player-back" class="icon-action-btn" data-tooltip="Chiudi Player" title="Chiudi Player" style="width: 38px; height: 38px;">
-        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><line x1="19" y1="12" x2="5" y2="12"></line><polyline points="12 19 5 12 12 5"></polyline></svg>
-      </button>
-      <span id="player-active-title" style="font-weight: 700; font-size: 0.95rem; color: #fff; text-align: center; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; max-width: 60%;">Riproduzione</span>
-      <button id="btn-player-vix-direct" class="icon-action-btn btn-vix" data-tooltip="Apri Link Diretto Vixcloud" title="Apri Link Diretto Vixcloud" style="width: 38px; height: 38px;">
-        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"></path><polyline points="15 3 21 3 21 9"></polyline><line x1="10" y1="14" x2="21" y2="3"></line></svg>
-      </button>
+      <div style="display: flex; align-items: center; gap: 12px; min-width: 0;">
+        <button id="btn-player-back" class="icon-action-btn" data-tooltip="Chiudi Player" title="Chiudi Player" style="width: 38px; height: 38px; flex-shrink: 0;">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><line x1="19" y1="12" x2="5" y2="12"></line><polyline points="12 19 5 12 12 5"></polyline></svg>
+        </button>
+        <span id="player-active-title" style="font-weight: 700; font-size: 1rem; color: #fff; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; max-width: 55vw;">Riproduzione</span>
+      </div>
+
+      <div style="display: flex; align-items: center; gap: 10px; flex-shrink: 0;">
+        <button id="btn-player-quick-download" class="btn-player-download" title="Scarica Video a Massima Velocità">
+          <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path><polyline points="7 10 12 15 17 10"></polyline><line x1="12" y1="15" x2="12" y2="3"></line></svg>
+          <span>Scarica Video</span>
+        </button>
+        <button id="btn-player-vix-direct" class="icon-action-btn btn-vix" data-tooltip="Apri Link Diretto Vixcloud" title="Apri Link Diretto Vixcloud" style="width: 38px; height: 38px;">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"></path><polyline points="15 3 21 3 21 9"></polyline><line x1="10" y1="14" x2="21" y2="3"></line></svg>
+        </button>
+      </div>
     </div>
 
     <video id="web-video" class="player-video" controls playsinline webkit-playsinline x-webkit-airplay="allow"></video>
@@ -3326,6 +3403,13 @@
             <button class="card-btn-hover-play" title="Riproduci Subito" data-action="play">
               <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor"><polygon points="6 4 19 12 6 20"></polygon></svg>
             </button>
+            <button class="card-btn-hover-dl" title="Scarica Video Veloce" data-action="download">
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+                <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path>
+                <polyline points="7 10 12 15 17 10"></polyline>
+                <line x1="12" y1="15" x2="12" y2="3"></line>
+              </svg>
+            </button>
             <button class="card-btn-hover-fav ${isFav ? 'active' : ''}" title="Aggiungi ai Preferiti" data-action="favorite">
               <svg class="fav-icon" width="17" height="17" viewBox="0 0 24 24" fill="${favFill}" stroke="${favStroke}" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
                 <path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"></path>
@@ -3466,6 +3550,14 @@
             e.stopPropagation();
             e.preventDefault();
             playDirectly(item);
+            return;
+          }
+
+          const dlBtn = e.target.closest('.card-btn-hover-dl');
+          if (dlBtn) {
+            e.stopPropagation();
+            e.preventDefault();
+            downloadWithMacApp(item);
             return;
           }
 
@@ -4067,13 +4159,13 @@
         openPlayerChooser(extraction, title);
       };
 
-      // DOWNLOAD WITH STREAMINGCOMMUNITY.APP (MAC)
+      // DOWNLOAD WITH STREAMINGCOMMUNITY.APP (FAST LOCAL ENGINE)
       async function downloadWithMacApp(item) {
         const target = item || currentActiveItem;
         if (!target) return;
         const title = target.current_ep_title ? `${decodeHtml(target.name || target.title)} - ${target.current_ep_title}` : decodeHtml(target.name || target.title);
         
-        showToast("Preparazione download in corso...");
+        showToast(`🚀 Avvio download di "${title}" a massima velocità...`);
 
         let streamUrl = '';
         try {
@@ -4081,7 +4173,7 @@
           streamUrl = extraction.master_m3u8 || extraction.embed_url || '';
         } catch (e) {}
 
-        const watchUrl = target.current_watch_url || `https://streamingcommunityz.luxe/it/watch/${target.id}${target.current_episode_id ? `?e=${target.current_episode_id}` : ''}`;
+        const watchUrl = target.current_watch_url || `https://streamingcommunityz.style/it/watch/${target.id}${target.current_episode_id ? `?e=${target.current_episode_id}` : ''}`;
         const finalUrl = streamUrl || watchUrl;
 
         const payload = {
@@ -4093,9 +4185,8 @@
         };
 
         let startedLocally = false;
-
         try {
-          const res = await fetch("http://127.0.0.1:5555/api/download/start", {
+          const res = await fetch("/api/download/start", {
             method: "POST",
             headers: { "Content-Type": "application/json" },
             body: JSON.stringify(payload)
@@ -4106,22 +4197,24 @@
           }
         } catch (e) {}
 
-        if (startedLocally) {
-          showToast(`Download di "${title}" avviato in StreamingCommunity.app! 🚀`);
-          return;
+        if (!startedLocally) {
+          try {
+            const res2 = await fetch("http://127.0.0.1:5555/api/download/start", {
+              method: "POST",
+              headers: { "Content-Type": "application/json" },
+              body: JSON.stringify(payload)
+            });
+            const data2 = await res2.json();
+            if (data2 && (data2.download_id || data2.success)) {
+              startedLocally = true;
+            }
+          } catch (e2) {}
         }
 
-        try {
-          const query = new URLSearchParams(payload).toString();
-          const img = new Image();
-          img.src = `http://127.0.0.1:5555/api/download/start?${query}`;
-        } catch(e) {}
-
-        if (streamUrl) {
-          navigator.clipboard.writeText(streamUrl).catch(() => {});
-          showToast(`Link flusso pronto! Incollalo in StreamingCommunity.app per scaricare.`);
+        if (startedLocally) {
+          showToast(`✅ Download avviato! Salvataggio in Download: "${title}.mp4" 🚀`);
         } else {
-          showToast(`Apri StreamingCommunity.app per scaricare "${title}".`);
+          showToast(`Richiesta di download inviata per "${title}".`);
         }
       }
 
@@ -4154,62 +4247,49 @@
         playerActiveTitle.textContent = title || 'Riproduzione';
         playerModal.classList.remove('hidden');
 
-        // If it's an embed URL or Vixcloud (bypasses Render/CORS blocking)
-        const isEmbed = streamUrl.includes('/embed/') || 
-                        streamUrl.includes('vixcloud.co') || 
-                        streamUrl.includes('/iframe/') || 
-                        streamUrl.includes('vidsrc') ||
-                        streamUrl.includes('watch?e=');
+        const isM3u8 = streamUrl.includes('.m3u8') || streamUrl.includes('/playlist/') || streamUrl.includes('/api/stream/');
 
-        if (isEmbed) {
-          webVideo.classList.add('hidden');
-          webVideo.pause();
-          webVideo.src = '';
-          webIframe.classList.remove('hidden');
-          webIframe.src = streamUrl;
-          return;
-        }
+        if (isM3u8 && Hls.isSupported()) {
+          webIframe.classList.add('hidden');
+          webIframe.src = 'about:blank';
+          webVideo.classList.remove('hidden');
 
-        webIframe.classList.add('hidden');
-        webIframe.src = 'about:blank';
-        webVideo.classList.remove('hidden');
-
-        webVideo.src = streamUrl;
-        webVideo.load();
-
-        const playPromise = webVideo.play();
-        if (playPromise !== undefined) {
-          playPromise.then(() => {
-            if (isAppleNative || /iPhone|iPad|iPod/i.test(navigator.userAgent) || (navigator.platform === 'MacIntel' && navigator.maxTouchPoints > 1)) {
-              if (webVideo.webkitEnterFullscreen) {
-                webVideo.webkitEnterFullscreen();
-              } else if (webVideo.requestFullscreen) {
-                webVideo.requestFullscreen();
-              }
-            }
-          }).catch(() => {
-            if (Hls.isSupported()) {
-              if (currentHls) currentHls.destroy();
-              currentHls = new Hls({ enableWorker: true, lowLatencyMode: true });
-              currentHls.loadSource(streamUrl);
-              currentHls.attachMedia(webVideo);
-              currentHls.on(Hls.Events.MANIFEST_PARSED, () => {
-                webVideo.play().catch(() => {});
-              });
-              currentHls.on(Hls.Events.ERROR, () => {
-                if (pendingExtraction && pendingExtraction.embed) {
-                  webVideo.classList.add('hidden');
-                  webIframe.classList.remove('hidden');
-                  webIframe.src = pendingExtraction.embed;
-                }
-              });
-            } else if (pendingExtraction && pendingExtraction.embed) {
+          if (currentHls) currentHls.destroy();
+          currentHls = new Hls({
+            enableWorker: true,
+            lowLatencyMode: true,
+            backBufferLength: 90
+          });
+          currentHls.loadSource(streamUrl);
+          currentHls.attachMedia(webVideo);
+          currentHls.on(Hls.Events.MANIFEST_PARSED, () => {
+            webVideo.play().catch(() => {});
+          });
+          currentHls.on(Hls.Events.ERROR, (event, data) => {
+            if (data && data.fatal && pendingExtraction && pendingExtraction.embed) {
               webVideo.classList.add('hidden');
               webIframe.classList.remove('hidden');
               webIframe.src = pendingExtraction.embed;
             }
           });
+          return;
         }
+
+        if (isM3u8 && webVideo.canPlayType('application/vnd.apple.mpegurl')) {
+          webIframe.classList.add('hidden');
+          webIframe.src = 'about:blank';
+          webVideo.classList.remove('hidden');
+          webVideo.src = streamUrl;
+          webVideo.play().catch(() => {});
+          return;
+        }
+
+        // Fallback to Iframe
+        webVideo.classList.add('hidden');
+        webVideo.pause();
+        webVideo.src = '';
+        webIframe.classList.remove('hidden');
+        webIframe.src = streamUrl;
       }
 
 
@@ -4223,6 +4303,13 @@
           window.open(url, '_blank');
           showToast("Apertura link Vixcloud...");
         }
+      }
+
+      const btnPlayerQuickDownload = document.getElementById('btn-player-quick-download');
+      if (btnPlayerQuickDownload) {
+        btnPlayerQuickDownload.onclick = () => {
+          downloadWithMacApp(currentActiveItem);
+        };
       }
 
       btnPlayerVixDirect.onclick = () => {
