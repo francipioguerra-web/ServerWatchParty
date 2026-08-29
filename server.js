@@ -13,6 +13,7 @@ app.use(express.static(path.join(__dirname, 'public')));
 const GOOGLE_CLIENT_ID = process.env.GOOGLE_CLIENT_ID || "827422677497-4ohkdeqrl6thm55dqvba6j7q2qmdb6nm.apps.googleusercontent.com";
 
 const CANDIDATE_DOMAINS = [
+  'https://streamingcommunityz.style',
   'https://streamingcommunityz.miami',
   'https://streamingcommunityz.luxe',
   'https://streamingcommunityz.boats',
