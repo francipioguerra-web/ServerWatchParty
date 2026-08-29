@@ -4025,31 +4025,31 @@
         }
       }
 
-      // DIRECT PLAY (OPENS STREAM IN NEW TAB / PAGE FULL QUALITY)
+      // DIRECT IN-APP FULLSCREEN PLAYBACK (PLAYS DIRECTLY INSIDE THE MAC APP / BROWSER)
       async function playDirectly(item) {
         const target = item || currentActiveItem;
         if (!target) return;
         currentActiveItem = target;
-        showToast("Risoluzione flusso in corso...");
-        const extraction = await resolveExtraction(target);
-        const title = target.current_ep_title ? `${decodeHtml(target.name || target.title)} - ${target.current_ep_title}` : decodeHtml(target.name || target.title);
+        showToast("Caricamento video nell'app...");
         closeDetails();
 
-        const streamUrl = extraction.embed_url || extraction.vix_url || extraction.master_m3u8;
+        const title = target.current_ep_title ? `${decodeHtml(target.name || target.title)} - ${target.current_ep_title}` : decodeHtml(target.name || target.title);
+        const watchUrl = target.current_watch_url || `https://streamingcommunityz.style/it/watch/${target.id}${target.current_episode_id ? `?e=${target.current_episode_id}` : ''}`;
+        
+        // Proxy URL ensures full Vixcloud headers, CORS and audio/video sync are handled by the local engine
+        const proxyStreamUrl = `/api/stream/proxy?url=${encodeURIComponent(watchUrl)}`;
+
+        const extraction = await resolveExtraction(target);
+        const streamUrl = proxyStreamUrl || extraction.master_m3u8;
 
         pendingExtraction = {
-          m3u8: extraction.master_m3u8,
+          m3u8: proxyStreamUrl,
           embed: extraction.embed_url || extraction.vix_url,
           title: title
         };
 
-        if (!streamUrl) {
-          showToast("Errore: video non disponibile.");
-          return;
-        }
-
-        window.open(streamUrl, '_blank');
-        showToast(`Apertura video in una nuova scheda...`);
+        // Open in the built-in fullscreen player overlay inside the app!
+        playInWebPlayer(streamUrl, title);
       }
 
       // -------------------------------------------------------------
@@ -4270,14 +4270,40 @@
         playerActiveTitle.textContent = title || 'Riproduzione';
         playerModal.classList.remove('hidden');
 
-        // Vixcloud embed player renders 100% video & audio in WKWebView seamlessly
-        const targetUrl = (pendingExtraction && pendingExtraction.embed) || streamUrl;
-        
-        webVideo.classList.add('hidden');
+        if (currentHls) {
+          currentHls.destroy();
+          currentHls = null;
+        }
+
+        webIframe.classList.add('hidden');
+        webVideo.classList.remove('hidden');
         webVideo.pause();
-        webVideo.src = '';
-        webIframe.classList.remove('hidden');
-        webIframe.src = targetUrl;
+        webVideo.removeAttribute('src');
+        webVideo.load();
+
+        const effectiveStreamUrl = streamUrl;
+
+        // 1. Native HLS support in macOS WKWebView (Mac App & Safari)
+        if (webVideo.canPlayType('application/vnd.apple.mpegurl')) {
+          webVideo.src = effectiveStreamUrl;
+          webVideo.play().catch(e => console.log('Autoplay check:', e));
+        } else if (typeof Hls !== 'undefined' && Hls.isSupported()) {
+          // 2. HLS.js for other browsers
+          currentHls = new Hls({
+            enableWorker: true,
+            lowLatencyMode: false
+          });
+          currentHls.loadSource(effectiveStreamUrl);
+          currentHls.attachMedia(webVideo);
+          currentHls.on(Hls.Events.MANIFEST_PARSED, function() {
+            webVideo.play().catch(e => console.log('Autoplay check:', e));
+          });
+        } else {
+          // 3. Fallback to iframe
+          webVideo.classList.add('hidden');
+          webIframe.classList.remove('hidden');
+          webIframe.src = (pendingExtraction && pendingExtraction.embed) || effectiveStreamUrl;
+        }
       }
 
 
