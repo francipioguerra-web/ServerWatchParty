@@ -4732,10 +4732,10 @@
                 </div>
 
                 <div style="display: flex; gap: 8px;">
-                  ${isRunning ? `<button onclick="pauseDownload(\'${dlId}\')" class="btn-secondary btn-sm" style="padding: 4px 10px; font-size: 0.75rem; border-radius: 6px; cursor: pointer;">Pausa</button>` : ''}
-                  ${isPaused ? `<button onclick="resumeDownload(\'${dlId}\')" class="btn-secondary btn-sm" style="padding: 4px 10px; font-size: 0.75rem; border-radius: 6px; cursor: pointer;">Riprendi</button>` : ''}
-                  ${!isCompleted ? `<button onclick="cancelDownload(\'${dlId}\')" class="btn-secondary btn-sm" style="padding: 4px 10px; font-size: 0.75rem; border-radius: 6px; color: #f87171; cursor: pointer;">Annulla</button>` : ''}
-                  ${isCompleted ? `<button onclick="openFolderForFile(\'${encodeURIComponent(dl.filepath || '')}\')" class="btn-secondary btn-sm" style="padding: 4px 10px; font-size: 0.75rem; border-radius: 6px; cursor: pointer;">Mostra in Download</button>` : ''}
+                  ${isRunning ? `<button onclick="pauseDownload('${dlId}')" class="btn-secondary btn-sm" style="padding: 4px 10px; font-size: 0.75rem; border-radius: 6px; cursor: pointer;">Pausa</button>` : ''}
+                  ${isPaused ? `<button onclick="resumeDownload('${dlId}')" class="btn-secondary btn-sm" style="padding: 4px 10px; font-size: 0.75rem; border-radius: 6px; cursor: pointer;">Riprendi</button>` : ''}
+                  ${!isCompleted ? `<button onclick="cancelDownload('${dlId}')" class="btn-secondary btn-sm" style="padding: 4px 10px; font-size: 0.75rem; border-radius: 6px; color: #f87171; cursor: pointer;">Annulla</button>` : ''}
+                  ${isCompleted ? `<button onclick="openFolderForFile('${encodeURIComponent(dl.filepath || '')}')" class="btn-secondary btn-sm" style="padding: 4px 10px; font-size: 0.75rem; border-radius: 6px; cursor: pointer;">Mostra in Download</button>` : ''}
                 </div>
               </div>
             </div>
