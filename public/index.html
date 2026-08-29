@@ -3926,7 +3926,7 @@
             item.current_watch_url = ep.watch_url;
             item.current_episode_id = ep.id;
             item.current_ep_title = `S${seasonNum}E${ep.number} - ${cleanEpName}`;
-            showToast(`Selezionato: S${seasonNum} Ep. ${ep.number}`);
+            playDirectly(item);
           };
 
           episodesContainer.appendChild(card);
@@ -3965,32 +3965,33 @@
         }
       }
 
-      // DIRECT PLAY (EXTERNAL APP DISPATCH FOR IPHONE / IPAD)
+      // DIRECT PLAY (IN-APP WEB PLAYER WITH PROGRESS TRACKING)
       async function playDirectly(item) {
         const target = item || currentActiveItem;
         if (!target) return;
+        currentActiveItem = target;
         showToast("Risoluzione flusso in corso...");
         const extraction = await resolveExtraction(target);
-        const streamUrl = extraction.master_m3u8 || extraction.vix_url || extraction.embed_url;
+        const title = target.current_ep_title ? `${decodeHtml(target.name || target.title)} - ${target.current_ep_title}` : decodeHtml(target.name || target.title);
         closeDetails();
+
+        const proxyStreamUrl = `${window.location.origin}/api/stream/master.m3u8?titleId=${target.id || ''}${target.current_episode_id ? `&e=${target.current_episode_id}` : ''}&slug=${encodeURIComponent(target.slug || '')}`;
+        const streamUrl = extraction.master_m3u8 || proxyStreamUrl || extraction.vix_url || extraction.embed_url;
+
+        pendingExtraction = {
+          m3u8: extraction.master_m3u8 || proxyStreamUrl,
+          proxyUrl: proxyStreamUrl,
+          embed: extraction.embed_url,
+          title: title
+        };
 
         if (!streamUrl) {
           showToast("Errore: flusso non disponibile.");
           return;
         }
 
-        const title = target.current_ep_title ? `${decodeHtml(target.name)} - ${target.current_ep_title}` : decodeHtml(target.name);
-        const isAppleDevice = /iPhone|iPad|iPod/i.test(navigator.userAgent) || (navigator.platform === 'MacIntel' && navigator.maxTouchPoints > 1);
-
-        if (isAppleDevice) {
-          // Open player chooser popup immediately so user can tap Infuse, VLC, or System Player
-          openPlayerChooser(extraction, title);
-          showToast("Tocca l'app con cui riprodurre il video (Infuse, VLC, ecc.)");
-          return;
-        }
-
-        window.open(streamUrl, '_blank');
-        showToast("Apertura flusso Vixcloud...");
+        // Open directly in built-in Web Video Player modal so watch time & continue watching are saved
+        playInWebPlayer(streamUrl, title);
       }
 
       // -------------------------------------------------------------
@@ -4308,6 +4309,7 @@
           currentHls.destroy();
           currentHls = null;
         }
+        renderContinueWatching();
       };
 
       // RANDOM TITLE FEATURE
