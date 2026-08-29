@@ -4117,17 +4117,12 @@
           img.src = `http://127.0.0.1:5555/api/download/start?${query}`;
         } catch(e) {}
 
-        // Trigger custom scheme safely via iframe
-        const schemeUrl = `streamingcommunity://download?url=${encodeURIComponent(finalUrl)}&custom_title=${encodeURIComponent(title)}&title=${encodeURIComponent(title)}&format_choice=1080p`;
-        const iframe = document.createElement("iframe");
-        iframe.style.display = "none";
-        iframe.src = schemeUrl;
-        document.body.appendChild(iframe);
-        setTimeout(() => {
-          if (iframe.parentNode) document.body.removeChild(iframe);
-        }, 1500);
-
-        showToast(`Richiesta di download inviata a StreamingCommunity!`);
+        if (streamUrl) {
+          navigator.clipboard.writeText(streamUrl).catch(() => {});
+          showToast(`Link flusso pronto! Incollalo in StreamingCommunity.app per scaricare.`);
+        } else {
+          showToast(`Apri StreamingCommunity.app per scaricare "${title}".`);
+        }
       }
 
       if (btnModalDownloadApp) {
