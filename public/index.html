@@ -4271,7 +4271,7 @@
         playerModal.classList.remove('hidden');
 
         if (currentHls) {
-          currentHls.destroy();
+          try { currentHls.destroy(); } catch(e) {}
           currentHls = null;
         }
 
@@ -4283,23 +4283,41 @@
 
         const effectiveStreamUrl = streamUrl;
 
-        // 1. Native HLS support in macOS WKWebView (Mac App & Safari)
-        if (webVideo.canPlayType('application/vnd.apple.mpegurl')) {
-          webVideo.src = effectiveStreamUrl;
-          webVideo.play().catch(e => console.log('Autoplay check:', e));
-        } else if (typeof Hls !== 'undefined' && Hls.isSupported()) {
-          // 2. HLS.js for other browsers
+        // Prioritize HLS.js with MSE decoding (fixes black screen / AES-128 rendering in WKWebView)
+        if (typeof Hls !== 'undefined' && Hls.isSupported()) {
           currentHls = new Hls({
             enableWorker: true,
-            lowLatencyMode: false
+            lowLatencyMode: false,
+            backBufferLength: 90,
+            autoStartLoad: true
           });
           currentHls.loadSource(effectiveStreamUrl);
           currentHls.attachMedia(webVideo);
           currentHls.on(Hls.Events.MANIFEST_PARSED, function() {
             webVideo.play().catch(e => console.log('Autoplay check:', e));
           });
+          currentHls.on(Hls.Events.ERROR, function(event, data) {
+            console.error('HLS.js event error:', data);
+            if (data.fatal) {
+              switch (data.type) {
+                case Hls.ErrorTypes.NETWORK_ERROR:
+                  currentHls.startLoad();
+                  break;
+                case Hls.ErrorTypes.MEDIA_ERROR:
+                  currentHls.recoverMediaError();
+                  break;
+                default:
+                  try { currentHls.destroy(); } catch(e) {}
+                  webVideo.src = effectiveStreamUrl;
+                  webVideo.play().catch(() => {});
+                  break;
+              }
+            }
+          });
+        } else if (webVideo.canPlayType('application/vnd.apple.mpegurl')) {
+          webVideo.src = effectiveStreamUrl;
+          webVideo.play().catch(e => console.log('Autoplay check:', e));
         } else {
-          // 3. Fallback to iframe
           webVideo.classList.add('hidden');
           webIframe.classList.remove('hidden');
           webIframe.src = (pendingExtraction && pendingExtraction.embed) || effectiveStreamUrl;
