@@ -4216,11 +4216,12 @@
       async function resolveExtraction(item) {
         showToast("Risoluzione flusso Vixcloud...");
         try {
+          const watchUrl = item.current_watch_url || `https://streamingcommunityz.style/it/watch/${item.id}${item.current_episode_id ? `?e=${item.current_episode_id}` : ''}`;
           const res = await fetch('/api/vixcloud/extract', {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({
-              url: item.current_watch_url,
+              url: watchUrl,
               titleId: item.id,
               episodeId: item.current_episode_id,
               slug: item.slug
@@ -4237,26 +4238,42 @@
         }
       }
 
-      // DIRECT IN-APP FULLSCREEN PLAYBACK (PLAYS DIRECTLY INSIDE THE MAC APP / BROWSER)
+      // DIRECT IN-APP FULLSCREEN PLAYBACK & WEBSITE NEW TAB STREAMING
       async function playDirectly(item) {
         const target = item || currentActiveItem;
         if (!target) return;
         currentActiveItem = target;
-        showToast("Caricamento video nell'app...");
         closeDetails();
 
         const title = target.current_ep_title ? `${decodeHtml(target.name || target.title)} - ${target.current_ep_title}` : decodeHtml(target.name || target.title);
         const watchUrl = target.current_watch_url || `https://streamingcommunityz.style/it/watch/${target.id}${target.current_episode_id ? `?e=${target.current_episode_id}` : ''}`;
-        
-        // Proxy URL ensures full Vixcloud headers, CORS and audio/video sync are handled by the local engine
-        const proxyStreamUrl = `/api/stream/proxy?url=${encodeURIComponent(watchUrl)}`;
 
+        const isLocalApp = window.location.hostname === '127.0.0.1' || window.location.hostname === 'localhost' || window.location.port === '5555';
+        
+        if (!isLocalApp) {
+          // ON THE WEBSITE (Render / Web browser):
+          // Open the streaming page directly in a new tab!
+          showToast("Apertura streaming in una nuova scheda...");
+          const extraction = await resolveExtraction(target);
+          const targetUrl = extraction.embed_url || extraction.vix_url || watchUrl;
+          if (targetUrl) {
+            window.open(targetUrl, '_blank');
+          } else {
+            window.open(watchUrl, '_blank');
+          }
+          return;
+        }
+
+        // ON THE MAC DESKTOP APP (pywebview / local 127.0.0.1:5555):
+        showToast("Caricamento video nell'app...");
+        
+        const proxyStreamUrl = `/api/stream/proxy?url=${encodeURIComponent(watchUrl)}`;
         const extraction = await resolveExtraction(target);
         const streamUrl = proxyStreamUrl || extraction.master_m3u8;
 
         pendingExtraction = {
           m3u8: proxyStreamUrl,
-          embed: extraction.embed_url || extraction.vix_url,
+          embed: extraction.embed_url || extraction.vix_url || watchUrl,
           title: title
         };
 
@@ -4505,7 +4522,6 @@
 
         const effectiveStreamUrl = streamUrl;
 
-        // Prioritize HLS.js with MSE decoding (enableWorker: false prevents WKWebView worker stalls)
         if (typeof Hls !== 'undefined' && Hls.isSupported()) {
           currentHls = new Hls({
             enableWorker: false,
@@ -4532,8 +4548,14 @@
                   break;
                 default:
                   try { currentHls.destroy(); } catch(e) {}
-                  webVideo.src = effectiveStreamUrl;
-                  webVideo.play().catch(() => {});
+                  if (webVideo.canPlayType('application/vnd.apple.mpegurl')) {
+                    webVideo.src = effectiveStreamUrl;
+                    webVideo.play().catch(() => {});
+                  } else if (pendingExtraction && (pendingExtraction.embed || pendingExtraction.m3u8)) {
+                    webVideo.style.display = 'none';
+                    webIframe.style.display = 'block';
+                    webIframe.src = pendingExtraction.embed || pendingExtraction.m3u8;
+                  }
                   break;
               }
             }
@@ -4541,10 +4563,10 @@
         } else if (webVideo.canPlayType('application/vnd.apple.mpegurl')) {
           webVideo.src = effectiveStreamUrl;
           webVideo.play().catch(e => console.log('Autoplay check:', e));
-        } else {
+        } else if (pendingExtraction && (pendingExtraction.embed || pendingExtraction.m3u8)) {
           webVideo.style.display = 'none';
           webIframe.style.display = 'block';
-          webIframe.src = (pendingExtraction && pendingExtraction.embed) || effectiveStreamUrl;
+          webIframe.src = pendingExtraction.embed || pendingExtraction.m3u8;
         }
       }
 
