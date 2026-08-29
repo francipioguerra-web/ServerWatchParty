@@ -1555,10 +1555,12 @@
       width: 100vw;
       height: 100vh;
       object-fit: contain;
-      background: #000;
-      z-index: 1;
+      background: transparent;
+      z-index: 10;
       border: none;
       outline: none;
+      transform: translateZ(0);
+      -webkit-transform: translateZ(0);
     }
 
     .player-iframe {
@@ -1568,8 +1570,10 @@
       width: 100vw;
       height: 100vh;
       border: none;
-      background: #000;
-      z-index: 1;
+      background: transparent;
+      z-index: 10;
+      transform: translateZ(0);
+      -webkit-transform: translateZ(0);
     }
 
     /* FLOATING BOTTOM NAVBAR (ICON-ONLY / PURE BLUR / ULTRA SMOOTH MORPH) */
@@ -4275,21 +4279,27 @@
           currentHls = null;
         }
 
-        webIframe.classList.add('hidden');
-        webVideo.classList.remove('hidden');
+        webIframe.style.display = 'none';
+        webIframe.src = 'about:blank';
+
+        webVideo.style.display = 'block';
+        webVideo.style.opacity = '1';
+        webVideo.style.visibility = 'visible';
         webVideo.pause();
         webVideo.removeAttribute('src');
         webVideo.load();
 
         const effectiveStreamUrl = streamUrl;
 
-        // Prioritize HLS.js with MSE decoding (fixes black screen / AES-128 rendering in WKWebView)
+        // Prioritize HLS.js with MSE decoding (enableWorker: false prevents WKWebView worker stalls)
         if (typeof Hls !== 'undefined' && Hls.isSupported()) {
           currentHls = new Hls({
-            enableWorker: true,
+            enableWorker: false,
             lowLatencyMode: false,
-            backBufferLength: 90,
-            autoStartLoad: true
+            backBufferLength: 60,
+            autoStartLoad: true,
+            maxBufferLength: 30,
+            maxMaxBufferLength: 600
           });
           currentHls.loadSource(effectiveStreamUrl);
           currentHls.attachMedia(webVideo);
@@ -4318,13 +4328,11 @@
           webVideo.src = effectiveStreamUrl;
           webVideo.play().catch(e => console.log('Autoplay check:', e));
         } else {
-          webVideo.classList.add('hidden');
-          webIframe.classList.remove('hidden');
+          webVideo.style.display = 'none';
+          webIframe.style.display = 'block';
           webIframe.src = (pendingExtraction && pendingExtraction.embed) || effectiveStreamUrl;
         }
       }
-
-
 
       // OPEN VIXCLOUD DIRECT LINK
       async function openVixDirect(item) {
