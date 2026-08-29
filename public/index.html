@@ -514,22 +514,7 @@
       font-size: 0.85rem;
     }
 
-    /* PROGRESS BAR FOR CONTINUE WATCHING */
-    .card-progress-bar {
-      position: absolute;
-      bottom: 0;
-      left: 0;
-      height: 4px;
-      background: rgba(255, 255, 255, 0.2);
-      width: 100%;
-      z-index: 5;
-    }
-    .card-progress-fill {
-      height: 100%;
-      background: var(--accent);
-      width: 0%;
-      box-shadow: 0 0 10px var(--accent-glow);
-    }
+
 
     /* MAIN CONTAINER */
     .main-container {
@@ -1952,17 +1937,7 @@
 
       <!-- SECTIONS CONTAINER -->
       <div class="home-sections-container">
-        <!-- ROW 0: CONTINUA A GUARDARE -->
-        <section class="carousel-section hidden" id="section-continue-watching">
-          <div class="carousel-header">
-            <h3 class="carousel-title">Continua a guardare</h3>
-          </div>
-          <div class="carousel-scroll-wrapper">
-            <button class="carousel-nav-btn prev" data-target="track-continue-watching" aria-label="Scorri a sinistra">‹</button>
-            <div class="carousel-track" id="track-continue-watching"></div>
-            <button class="carousel-nav-btn next" data-target="track-continue-watching" aria-label="Scorri a destra">›</button>
-          </div>
-        </section>
+
 
         <!-- ROW 1: TOP 10 DI OGGI IN ITALIA -->
         <section class="carousel-section" id="section-top10">
@@ -3380,21 +3355,10 @@
           `;
         } else {
           card.className = 'media-card';
-          
-          let progressBarHtml = '';
-          if (item._progress !== undefined) {
-             progressBarHtml = `
-              <div class="card-progress-bar">
-                <div class="card-progress-fill" style="width: ${item._progress}%;"></div>
-              </div>
-             `;
-          }
-          
           card.innerHTML = `
             <div class="card-poster-wrap">
               <img class="card-poster" src="${item.poster || 'https://via.placeholder.com/300x450'}" alt="${cleanName}" loading="lazy">
               <div class="card-badge">${item.type === 'tv' ? 'Serie TV' : 'Film'}</div>
-              ${progressBarHtml}
               ${hoverOverlayHtml}
             </div>
             <div class="card-info">
@@ -3642,39 +3606,11 @@
 
         renderCards(items);
       }
-      function renderContinueWatching() {
-        const history = JSON.parse(localStorage.getItem('sc_watch_history') || '{}');
-        const track = document.getElementById('track-continue-watching');
-        const section = document.getElementById('section-continue-watching');
-        if (!track || !section) return;
 
-        const historyList = Object.values(history)
-          .filter(h => h.item && h.time > 5 && (h.duration <= 0 || (h.time / h.duration) < 0.95))
-          .sort((a, b) => b.timestamp - a.timestamp);
-        
-        if (historyList.length === 0) {
-          section.classList.add('hidden');
-          return;
-        }
-
-        section.classList.remove('hidden');
-        
-        const items = historyList.map(h => {
-            let item = { ...h.item };
-            if (h.duration > 0) {
-              item._progress = Math.min(100, Math.max(0, (h.time / h.duration) * 100));
-            }
-            item._savedTime = h.time;
-            return item;
-        });
-
-        renderCarousel(track, items);
-      }
 
       async function loadHome() {
         showHomeMultiRows();
-        renderContinueWatching();
-        try {
+                try {
           const res = await fetch('/api/sc/home');
           const data = await res.json();
           if (data.success && data.sliders && data.sliders.length > 0) {
@@ -3759,8 +3695,7 @@
         if (searchClearBtn) searchClearBtn.classList.add('hidden');
         if (floatingSearchBar) floatingSearchBar.classList.add('hidden');
         setActiveNav(navHome);
-        renderContinueWatching();
-        window.scrollTo({ top: 0, behavior: 'instant' });
+                window.scrollTo({ top: 0, behavior: 'instant' });
       }
 
       function showFilteredGridView(title, countText) {
@@ -4133,33 +4068,57 @@
       };
 
       // DOWNLOAD WITH STREAMINGCOMMUNITY.APP (MAC)
-      function downloadWithMacApp(item) {
+      async function downloadWithMacApp(item) {
         const target = item || currentActiveItem;
         if (!target) return;
-        const title = target.current_ep_title ? `${decodeHtml(target.name)} - ${target.current_ep_title}` : decodeHtml(target.name);
-        const watchUrl = target.current_watch_url || `${window.location.origin}/it/watch/${target.id}${target.current_episode_id ? `?e=${target.current_episode_id}` : ''}`;
+        const title = target.current_ep_title ? `${decodeHtml(target.name || target.title)} - ${target.current_ep_title}` : decodeHtml(target.name || target.title);
         
-        showToast("Apertura StreamingCommunity.app per il download...");
+        showToast("Preparazione download con StreamingCommunity.app...");
 
-        // 1. Send download task directly to local app background server (if running)
-        fetch('http://127.0.0.1:5555/api/download/start', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({
-            url: watchUrl,
-            title: title,
-            episode_id: target.current_episode_id
-          })
-        }).catch(() => {});
+        let streamUrl = '';
+        try {
+          const extraction = await resolveExtraction(target);
+          streamUrl = extraction.master_m3u8 || extraction.embed_url || '';
+        } catch (e) {}
 
-        // 2. Trigger native macOS app via custom protocol registered in Info.plist
-        const schemeUrl = `streamingcommunity://download?url=${encodeURIComponent(watchUrl)}&title=${encodeURIComponent(title)}&id=${target.id || ''}`;
+        const watchUrl = target.current_watch_url || `https://streamingcommunityz.luxe/it/watch/${target.id}${target.current_episode_id ? `?e=${target.current_episode_id}` : ''}`;
+        const finalUrl = streamUrl || watchUrl;
+
+        const payload = {
+          url: finalUrl,
+          custom_title: title,
+          title: title,
+          media_type: 'hls',
+          format_choice: '1080p'
+        };
+
+        const trySend = (endpoint) => {
+          try {
+            fetch(`${endpoint}/api/download/start`, {
+              method: 'POST',
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify(payload)
+            }).catch(() => {});
+          } catch(e) {}
+          try {
+            const query = new URLSearchParams(payload).toString();
+            const img = new Image();
+            img.src = `${endpoint}/api/download/start?${query}`;
+          } catch(e2) {}
+        };
+
+        trySend('http://127.0.0.1:5555');
+        trySend('http://localhost:5555');
+
+        const schemeUrl = `streamingcommunity://download?url=${encodeURIComponent(finalUrl)}&custom_title=${encodeURIComponent(title)}&title=${encodeURIComponent(title)}&format_choice=1080p`;
         
         const link = document.createElement('a');
         link.href = schemeUrl;
         document.body.appendChild(link);
         link.click();
         document.body.removeChild(link);
+
+        showToast("Download inviato a StreamingCommunity.app!");
       }
 
       if (btnModalDownloadApp) {
@@ -4191,26 +4150,6 @@
         playerActiveTitle.textContent = title || 'Riproduzione';
         playerModal.classList.remove('hidden');
 
-        let savedTime = 0;
-        if (currentActiveItem) {
-          if (currentActiveItem._savedTime) {
-            savedTime = currentActiveItem._savedTime;
-          } else {
-            let history = JSON.parse(localStorage.getItem('sc_watch_history') || '{}');
-            let id = currentActiveItem.id;
-            if (currentActiveItem.current_episode_id) id = `${id}_${currentActiveItem.current_episode_id}`;
-            if (history[id] && history[id].time > 5) {
-              savedTime = history[id].time;
-            }
-          }
-        }
-
-        if (savedTime > 0) {
-          const mins = Math.floor(savedTime / 60);
-          const secs = Math.floor(savedTime % 60);
-          showToast(`Ripresa da ${mins}:${secs < 10 ? '0' : ''}${secs} ⏱️`);
-        }
-
         // If it's an embed URL or Vixcloud (bypasses Render/CORS blocking)
         const isEmbed = streamUrl.includes('/embed/') || 
                         streamUrl.includes('vixcloud.co') || 
@@ -4234,18 +4173,9 @@
         webVideo.src = streamUrl;
         webVideo.load();
 
-        if (savedTime > 0) {
-          webVideo.addEventListener('loadedmetadata', () => {
-            try { webVideo.currentTime = savedTime; } catch(e){}
-          }, { once: true });
-        }
-
         const playPromise = webVideo.play();
         if (playPromise !== undefined) {
           playPromise.then(() => {
-            if (savedTime > 0) {
-              try { webVideo.currentTime = savedTime; } catch(e){}
-            }
             if (isAppleNative || /iPhone|iPad|iPod/i.test(navigator.userAgent) || (navigator.platform === 'MacIntel' && navigator.maxTouchPoints > 1)) {
               if (webVideo.webkitEnterFullscreen) {
                 webVideo.webkitEnterFullscreen();
@@ -4260,9 +4190,6 @@
               currentHls.loadSource(streamUrl);
               currentHls.attachMedia(webVideo);
               currentHls.on(Hls.Events.MANIFEST_PARSED, () => {
-                if (savedTime > 0) {
-                  try { webVideo.currentTime = savedTime; } catch(e){}
-                }
                 webVideo.play().catch(() => {});
               });
               currentHls.on(Hls.Events.ERROR, () => {
@@ -4309,8 +4236,7 @@
           currentHls.destroy();
           currentHls = null;
         }
-        renderContinueWatching();
-      };
+              };
 
       // RANDOM TITLE FEATURE
       function pickRandomTitle() {
