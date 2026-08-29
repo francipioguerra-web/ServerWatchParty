@@ -4250,14 +4250,16 @@
 
         const isLocalApp = window.location.hostname === '127.0.0.1' || window.location.hostname === 'localhost' || window.location.port === '5555';
         
+        showToast("Risoluzione video...");
+        const extraction = await resolveExtraction(target);
+        const targetEmbedUrl = extraction.embed_url || extraction.vix_url || watchUrl;
+
         if (!isLocalApp) {
           // ON THE WEBSITE (Render / Web browser):
           // Open the streaming page directly in a new tab!
           showToast("Apertura streaming in una nuova scheda...");
-          const extraction = await resolveExtraction(target);
-          const targetUrl = extraction.embed_url || extraction.vix_url || watchUrl;
-          if (targetUrl) {
-            window.open(targetUrl, '_blank');
+          if (targetEmbedUrl) {
+            window.open(targetEmbedUrl, '_blank');
           } else {
             window.open(watchUrl, '_blank');
           }
@@ -4266,19 +4268,15 @@
 
         // ON THE MAC DESKTOP APP (pywebview / local 127.0.0.1:5555):
         showToast("Caricamento video nell'app...");
-        
-        const proxyStreamUrl = `/api/stream/proxy?url=${encodeURIComponent(watchUrl)}`;
-        const extraction = await resolveExtraction(target);
-        const streamUrl = proxyStreamUrl || extraction.master_m3u8;
 
         pendingExtraction = {
-          m3u8: proxyStreamUrl,
-          embed: extraction.embed_url || extraction.vix_url || watchUrl,
+          m3u8: extraction.master_m3u8,
+          embed: targetEmbedUrl,
           title: title
         };
 
         // Open in the built-in fullscreen player overlay inside the app!
-        playInWebPlayer(streamUrl, title);
+        playInWebPlayer(targetEmbedUrl, title);
       }
 
       // -------------------------------------------------------------
@@ -4510,64 +4508,15 @@
           currentHls = null;
         }
 
-        webIframe.style.display = 'none';
-        webIframe.src = 'about:blank';
-
-        webVideo.style.display = 'block';
-        webVideo.style.opacity = '1';
-        webVideo.style.visibility = 'visible';
+        // Vixcloud embed player renders 100% video & audio in WKWebView seamlessly inside the app modal
+        const targetUrl = (pendingExtraction && (pendingExtraction.embed || pendingExtraction.m3u8)) || streamUrl;
+        
+        webVideo.style.display = 'none';
         webVideo.pause();
-        webVideo.removeAttribute('src');
-        webVideo.load();
-
-        const effectiveStreamUrl = streamUrl;
-
-        if (typeof Hls !== 'undefined' && Hls.isSupported()) {
-          currentHls = new Hls({
-            enableWorker: false,
-            lowLatencyMode: false,
-            backBufferLength: 60,
-            autoStartLoad: true,
-            maxBufferLength: 30,
-            maxMaxBufferLength: 600
-          });
-          currentHls.loadSource(effectiveStreamUrl);
-          currentHls.attachMedia(webVideo);
-          currentHls.on(Hls.Events.MANIFEST_PARSED, function() {
-            webVideo.play().catch(e => console.log('Autoplay check:', e));
-          });
-          currentHls.on(Hls.Events.ERROR, function(event, data) {
-            console.error('HLS.js event error:', data);
-            if (data.fatal) {
-              switch (data.type) {
-                case Hls.ErrorTypes.NETWORK_ERROR:
-                  currentHls.startLoad();
-                  break;
-                case Hls.ErrorTypes.MEDIA_ERROR:
-                  currentHls.recoverMediaError();
-                  break;
-                default:
-                  try { currentHls.destroy(); } catch(e) {}
-                  if (webVideo.canPlayType('application/vnd.apple.mpegurl')) {
-                    webVideo.src = effectiveStreamUrl;
-                    webVideo.play().catch(() => {});
-                  } else if (pendingExtraction && (pendingExtraction.embed || pendingExtraction.m3u8)) {
-                    webVideo.style.display = 'none';
-                    webIframe.style.display = 'block';
-                    webIframe.src = pendingExtraction.embed || pendingExtraction.m3u8;
-                  }
-                  break;
-              }
-            }
-          });
-        } else if (webVideo.canPlayType('application/vnd.apple.mpegurl')) {
-          webVideo.src = effectiveStreamUrl;
-          webVideo.play().catch(e => console.log('Autoplay check:', e));
-        } else if (pendingExtraction && (pendingExtraction.embed || pendingExtraction.m3u8)) {
-          webVideo.style.display = 'none';
-          webIframe.style.display = 'block';
-          webIframe.src = pendingExtraction.embed || pendingExtraction.m3u8;
-        }
+        webVideo.src = '';
+        
+        webIframe.style.display = 'block';
+        webIframe.src = targetUrl;
       }
 
       // OPEN VIXCLOUD DIRECT LINK
@@ -4600,107 +4549,10 @@
         webVideo.src = '';
         webIframe.src = 'about:blank';
         if (currentHls) {
-          currentHls.destroy();
+          try { currentHls.destroy(); } catch(e) {}
           currentHls = null;
         }
-              };
-
-      // RANDOM TITLE FEATURE
-      function pickRandomTitle() {
-        if (!loadedCatalog || loadedCatalog.length === 0) {
-          showToast("Caricamento catalogo in corso...");
-          return;
-        }
-        const rand = loadedCatalog[Math.floor(Math.random() * loadedCatalog.length)];
-        showToast(`Scelto per te: ${decodeHtml(rand.name)}`);
-        openDetails(rand);
-      }
-
-      if (navRandom) navRandom.onclick = () => {
-        setActiveNav(navRandom);
-        pickRandomTitle();
       };
-
-      // LIVE SEARCH ENGINE (DIRECTLY RENDERS LARGE CARDS ON HOME GRID)
-      let searchTimeout = null;
-
-      async function performSearch(query) {
-        const q = (query || '').trim();
-        if (!q) {
-          showHomeMultiRows();
-          return;
-        }
-
-        showFilteredGridView(`Risultati per: "${q}"`, 'Ricerca...');
-        catalogGrid.innerHTML = '<div style="grid-column: 1/-1; text-align: center; color: var(--text-dim); padding: 50px;">Ricerca in corso...</div>';
-
-        try {
-          const res = await fetch(`/api/sc/search?q=${encodeURIComponent(q)}`);
-          const data = await res.json();
-          if ((mainSearchInput.value || '').trim() !== q) return;
-
-          if (data.success && data.titles && data.titles.length > 0) {
-            showFilteredGridView(`Risultati per: "${q}"`, `${data.titles.length} Titoli`);
-            renderCards(data.titles);
-          } else {
-            const filtered = loadedCatalog.filter(t => t.name.toLowerCase().includes(q.toLowerCase()));
-            if (filtered.length > 0) {
-              showFilteredGridView(`Risultati per: "${q}"`, `${filtered.length} Titoli`);
-              renderCards(filtered);
-            } else {
-              showFilteredGridView(`Risultati per: "${q}"`, '0 Titoli');
-              catalogGrid.innerHTML = `
-                <div style="grid-column: 1/-1; text-align: center; color: var(--text-dim); padding: 50px 20px;">
-                  <div style="font-size: 1.1rem; font-weight: 700; color: #fff; margin-bottom: 8px;">Nessun titolo trovato per "${q}"</div>
-                  <div style="font-size: 0.85rem;">Prova a cercare un altro titolo o torna alla home.</div>
-                </div>
-              `;
-            }
-          }
-        } catch (e) {
-          const filtered = loadedCatalog.filter(t => t.name.toLowerCase().includes(q.toLowerCase()));
-          showFilteredGridView(`Risultati per: "${q}"`, `${filtered.length} Titoli`);
-          renderCards(filtered);
-        }
-        window.scrollTo({ top: 0, behavior: 'instant' });
-      }
-
-      mainSearchInput.addEventListener('input', (e) => {
-        const q = e.target.value;
-        if (q.trim()) {
-          searchClearBtn.classList.remove('hidden');
-        } else {
-          searchClearBtn.classList.add('hidden');
-          if (searchTimeout) clearTimeout(searchTimeout);
-          showHomeMultiRows();
-          return;
-        }
-
-        if (searchTimeout) clearTimeout(searchTimeout);
-        searchTimeout = setTimeout(() => {
-          performSearch(q);
-        }, 200);
-      });
-
-      mainSearchInput.addEventListener('search', () => {
-        const q = mainSearchInput.value.trim();
-        if (q) performSearch(q);
-        else showHomeMultiRows();
-      });
-
-      searchClearBtn.onclick = () => {
-        showHomeMultiRows();
-        if (floatingSearchBar) {
-          floatingSearchBar.classList.remove('hidden');
-          setTimeout(() => mainSearchInput.focus(), 50);
-        }
-      };
-
-      if (btnCloseFloatingSearch) {
-        btnCloseFloatingSearch.onclick = () => {
-          showHomeMultiRows();
-        };
-      }
 
       // NAVBAR CONTROLS
       function setActiveNav(btn) {
