@@ -19,6 +19,11 @@
   <script src="https://accounts.google.com/gsi/client" async defer></script>
 
   <style>
+    html {
+      font-size: 17.5px;
+      scroll-behavior: smooth;
+    }
+
     :root {
       --bg-main: #09090b;
       --bg-surface: #121217;
@@ -518,9 +523,9 @@
 
     /* MAIN CONTAINER */
     .main-container {
-      max-width: 1440px;
+      max-width: 1760px;
       margin: 0 auto;
-      padding: 16px;
+      padding: 0 max(3vw, 24px) 120px max(3vw, 24px);
     }
 
     /* HERO BANNER (FULL VIEWPORT WIDTH & CINEMATIC IMMERSION) */
@@ -939,16 +944,18 @@
 
     .media-grid {
       display: grid;
-      grid-template-columns: repeat(auto-fill, minmax(170px, 1fr));
-      gap: 16px;
-      margin-bottom: 30px;
+      grid-template-columns: repeat(auto-fill, minmax(210px, 1fr));
+      gap: 22px;
+      margin-bottom: 40px;
     }
 
     @media (max-width: 600px) {
       .media-grid {
-        grid-template-columns: repeat(auto-fill, minmax(130px, 1fr));
-        gap: 10px;
-      }
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(210px, 1fr));
+      gap: 22px;
+      margin-bottom: 40px;
+    }
     }
 
     /* STREAMINGCOMMUNITY MULTI-ROW CAROUSELS */
@@ -973,7 +980,7 @@
     }
 
     .carousel-title {
-      font-size: 1.22rem;
+      font-size: 1.45rem;
       font-weight: 800;
       color: #fff;
       letter-spacing: -0.2px;
@@ -1003,10 +1010,10 @@
 
     .carousel-track {
       display: flex;
-      gap: 14px;
+      gap: 20px;
       overflow-x: auto;
       scroll-behavior: smooth;
-      padding: 6px 4px 14px;
+      padding: 10px 6px 20px;
       scrollbar-width: none;
       -ms-overflow-style: none;
       -webkit-overflow-scrolling: touch;
@@ -1017,14 +1024,14 @@
     }
 
     .carousel-track .media-card {
-      flex: 0 0 148px;
-      max-width: 148px;
+      flex: 0 0 170px;
+      max-width: 170px;
     }
 
     @media (min-width: 768px) {
       .carousel-track .media-card {
-        flex: 0 0 180px;
-        max-width: 180px;
+        flex: 0 0 215px;
+        max-width: 215px;
       }
     }
 
@@ -1070,8 +1077,8 @@
 
     /* TOP 10 NUMBERED CARDS (STREAMINGCOMMUNITY / NETFLIX STYLE) */
     .top10-track .media-card {
-      flex: 0 0 205px;
-      max-width: 205px;
+      flex: 0 0 255px;
+      max-width: 255px;
       background: transparent;
       border: none;
       box-shadow: none;
@@ -1081,7 +1088,7 @@
     }
 
     .top10-rank-number {
-      font-size: 6.5rem;
+      font-size: 8rem;
       font-weight: 900;
       line-height: 0.8;
       color: #0b0b0f;
