@@ -4073,7 +4073,7 @@
         if (!target) return;
         const title = target.current_ep_title ? `${decodeHtml(target.name || target.title)} - ${target.current_ep_title}` : decodeHtml(target.name || target.title);
         
-        showToast("Preparazione download con StreamingCommunity.app...");
+        showToast("Preparazione download in corso...");
 
         let streamUrl = '';
         try {
@@ -4092,33 +4092,42 @@
           format_choice: '1080p'
         };
 
-        const trySend = (endpoint) => {
-          try {
-            fetch(`${endpoint}/api/download/start`, {
-              method: 'POST',
-              headers: { 'Content-Type': 'application/json' },
-              body: JSON.stringify(payload)
-            }).catch(() => {});
-          } catch(e) {}
-          try {
-            const query = new URLSearchParams(payload).toString();
-            const img = new Image();
-            img.src = `${endpoint}/api/download/start?${query}`;
-          } catch(e2) {}
-        };
+        let startedLocally = false;
 
-        trySend('http://127.0.0.1:5555');
-        trySend('http://localhost:5555');
+        try {
+          const res = await fetch("http://127.0.0.1:5555/api/download/start", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify(payload)
+          });
+          const data = await res.json();
+          if (data && (data.download_id || data.success)) {
+            startedLocally = true;
+          }
+        } catch (e) {}
 
+        if (startedLocally) {
+          showToast(`Download di "${title}" avviato in StreamingCommunity.app! 🚀`);
+          return;
+        }
+
+        try {
+          const query = new URLSearchParams(payload).toString();
+          const img = new Image();
+          img.src = `http://127.0.0.1:5555/api/download/start?${query}`;
+        } catch(e) {}
+
+        // Trigger custom scheme safely via iframe
         const schemeUrl = `streamingcommunity://download?url=${encodeURIComponent(finalUrl)}&custom_title=${encodeURIComponent(title)}&title=${encodeURIComponent(title)}&format_choice=1080p`;
-        
-        const link = document.createElement('a');
-        link.href = schemeUrl;
-        document.body.appendChild(link);
-        link.click();
-        document.body.removeChild(link);
+        const iframe = document.createElement("iframe");
+        iframe.style.display = "none";
+        iframe.src = schemeUrl;
+        document.body.appendChild(iframe);
+        setTimeout(() => {
+          if (iframe.parentNode) document.body.removeChild(iframe);
+        }, 1500);
 
-        showToast("Download inviato a StreamingCommunity.app!");
+        showToast(`Richiesta di download inviata a StreamingCommunity!`);
       }
 
       if (btnModalDownloadApp) {
