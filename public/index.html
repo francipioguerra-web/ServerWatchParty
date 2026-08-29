@@ -4189,13 +4189,13 @@
         openPlayerChooser(extraction, title);
       };
 
-      // DOWNLOAD WITH STREAMINGCOMMUNITY.APP (FAST LOCAL ENGINE)
+      // DOWNLOAD WITH STREAMINGCOMMUNITY.APP (FAST LOCAL ENGINE & SCHEME TRIGGER)
       async function downloadWithMacApp(item) {
         const target = item || currentActiveItem;
         if (!target) return;
         const title = target.current_ep_title ? `${decodeHtml(target.name || target.title)} - ${target.current_ep_title}` : decodeHtml(target.name || target.title);
         
-        showToast(`🚀 Avvio download di "${title}" a massima velocità...`);
+        showToast(`🚀 Avvio download di "${title}"...`);
 
         let streamUrl = '';
         try {
@@ -4216,7 +4216,7 @@
 
         let startedLocally = false;
         try {
-          const res = await fetch("/api/download/start", {
+          const res = await fetch("http://127.0.0.1:5555/api/download/start", {
             method: "POST",
             headers: { "Content-Type": "application/json" },
             body: JSON.stringify(payload)
@@ -4227,9 +4227,9 @@
           }
         } catch (e) {}
 
-        if (!startedLocally) {
+        if (!startedLocally && !window.location.origin.includes("127.0.0.1")) {
           try {
-            const res2 = await fetch("http://127.0.0.1:5555/api/download/start", {
+            const res2 = await fetch("/api/download/start", {
               method: "POST",
               headers: { "Content-Type": "application/json" },
               body: JSON.stringify(payload)
@@ -4241,10 +4241,20 @@
           } catch (e2) {}
         }
 
+        // Trigger custom macOS URL Scheme to open & wake StreamingCommunity.app on Mac
+        const schemeUrl = `streamingcommunity://download?url=${encodeURIComponent(finalUrl)}&title=${encodeURIComponent(title)}`;
+        const iframe = document.createElement("iframe");
+        iframe.style.display = "none";
+        iframe.src = schemeUrl;
+        document.body.appendChild(iframe);
+        setTimeout(() => {
+          if (iframe.parentNode) iframe.parentNode.removeChild(iframe);
+        }, 3000);
+
         if (startedLocally) {
-          showToast(`✅ Download avviato! Salvataggio in Download: "${title}.mp4" 🚀`);
+          showToast(`✅ Download avviato in StreamingCommunity.app: "${title}.mp4" 🚀`);
         } else {
-          showToast(`Richiesta di download inviata per "${title}".`);
+          showToast(`🚀 Apertura di StreamingCommunity.app per scaricare "${title}"...`);
         }
       }
 
@@ -4611,10 +4621,32 @@
       };
 
       window.cancelDownload = async function(id) {
+        // 1. Instantly remove from local UI list so it vanishes from page immediately
+        if (lastDownloadsData) {
+          lastDownloadsData = lastDownloadsData.filter(d => (d.download_id || d.downloadid) !== id);
+          renderDownloadsList(lastDownloadsData);
+          const runningCount = lastDownloadsData.filter(d => d.state === 'running').length;
+          if (dlBadge) {
+            if (runningCount > 0) {
+              dlBadge.textContent = runningCount;
+              dlBadge.classList.remove('hidden');
+            } else {
+              dlBadge.classList.add('hidden');
+            }
+          }
+        }
+        showToast("Download annullato e file eliminati.");
+
+        // 2. Call backend to cancel process and purge all partial files
         try {
-          await fetch(`/api/download/cancel/${id}`, { method: 'POST' });
-          fetchAndRenderDownloads();
+          const apiBase = (window.location.protocol === 'file:' || !window.location.port) ? 'http://127.0.0.1:5555' : '';
+          await fetch(`${apiBase}/api/download/cancel/${id}`, { method: 'POST' });
         } catch(e) {}
+        try {
+          await fetch(`http://127.0.0.1:5555/api/download/cancel/${id}`, { method: 'POST' });
+        } catch(e) {}
+
+        setTimeout(fetchAndRenderDownloads, 500);
       };
 
       window.openFolderForFile = async function(encodedPath) {
