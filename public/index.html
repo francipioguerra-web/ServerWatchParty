@@ -514,6 +514,23 @@
       font-size: 0.85rem;
     }
 
+    /* PROGRESS BAR FOR CONTINUE WATCHING */
+    .card-progress-bar {
+      position: absolute;
+      bottom: 0;
+      left: 0;
+      height: 4px;
+      background: rgba(255, 255, 255, 0.2);
+      width: 100%;
+      z-index: 5;
+    }
+    .card-progress-fill {
+      height: 100%;
+      background: var(--accent);
+      width: 0%;
+      box-shadow: 0 0 10px var(--accent-glow);
+    }
+
     /* MAIN CONTAINER */
     .main-container {
       max-width: 1440px;
@@ -1026,14 +1043,35 @@
       justify-content: space-between;
     }
 
-    /* FILTERED VIEW (GENRE / BROWSE) */
+    /* FILTERED VIEW (GENRE / BROWSE / SEARCH) */
+    #genre-filtered-view {
+      padding-top: 14px;
+      min-height: 85vh;
+      animation: fadeInView 0.22s ease-out;
+    }
+
+    #genre-filtered-view.hidden {
+      display: none !important;
+    }
+
+    #home-multi-rows.hidden {
+      display: none !important;
+    }
+
+    @keyframes fadeInView {
+      from { opacity: 0; transform: translateY(8px); }
+      to { opacity: 1; transform: translateY(0); }
+    }
+
     .genre-view-header {
       display: flex;
       align-items: center;
       justify-content: space-between;
-      margin-bottom: 20px;
+      margin-bottom: 24px;
       flex-wrap: wrap;
       gap: 12px;
+      padding-bottom: 12px;
+      border-bottom: 1px solid rgba(255, 255, 255, 0.08);
     }
 
     .btn-back-home {
@@ -1043,9 +1081,9 @@
       background: rgba(255, 255, 255, 0.08);
       border: 1px solid rgba(255, 255, 255, 0.15);
       color: #fff;
-      padding: 6px 14px;
+      padding: 8px 16px;
       border-radius: 999px;
-      font-size: 0.82rem;
+      font-size: 0.84rem;
       font-weight: 700;
       cursor: pointer;
       transition: all 0.2s ease;
@@ -1118,6 +1156,8 @@
       display: flex;
       gap: 22px;
       padding: 24px;
+      align-items: flex-start;
+      flex-wrap: wrap;
     }
 
     @media (max-width: 700px) {
@@ -1145,6 +1185,7 @@
       flex: 1;
       display: flex;
       flex-direction: column;
+      min-width: 0;
     }
 
     .modal-title {
@@ -1830,6 +1871,18 @@
 
       <!-- SECTIONS CONTAINER -->
       <div class="home-sections-container">
+        <!-- ROW 0: CONTINUA A GUARDARE -->
+        <section class="carousel-section hidden" id="section-continue-watching">
+          <div class="carousel-header">
+            <h3 class="carousel-title">Continua a guardare</h3>
+          </div>
+          <div class="carousel-scroll-wrapper">
+            <button class="carousel-nav-btn prev" data-target="track-continue-watching" aria-label="Scorri a sinistra">‹</button>
+            <div class="carousel-track" id="track-continue-watching"></div>
+            <button class="carousel-nav-btn next" data-target="track-continue-watching" aria-label="Scorri a destra">›</button>
+          </div>
+        </section>
+
         <!-- ROW 1: TOP 10 DI OGGI IN ITALIA -->
         <section class="carousel-section" id="section-top10">
           <div class="carousel-header">
@@ -3224,10 +3277,21 @@
           `;
         } else {
           card.className = 'media-card';
+          
+          let progressBarHtml = '';
+          if (item._progress !== undefined) {
+             progressBarHtml = `
+              <div class="card-progress-bar">
+                <div class="card-progress-fill" style="width: ${item._progress}%;"></div>
+              </div>
+             `;
+          }
+          
           card.innerHTML = `
             <div class="card-poster-wrap">
               <img class="card-poster" src="${item.poster || 'https://via.placeholder.com/300x450'}" alt="${cleanName}" loading="lazy">
               <div class="card-badge">${item.type === 'tv' ? 'Serie TV' : 'Film'}</div>
+              ${progressBarHtml}
             </div>
             <div class="card-info">
               <div class="card-title">${cleanName}</div>
@@ -3373,8 +3437,35 @@
       // -------------------------------------------------------------
       // CATALOG & MULTI-ROW ENGINE
       // -------------------------------------------------------------
+      function renderContinueWatching() {
+        const history = JSON.parse(localStorage.getItem('sc_watch_history') || '{}');
+        const track = document.getElementById('track-continue-watching');
+        const section = document.getElementById('section-continue-watching');
+        if (!track || !section) return;
+
+        const historyList = Object.values(history).sort((a, b) => b.timestamp - a.timestamp);
+        
+        if (historyList.length === 0) {
+          section.classList.add('hidden');
+          return;
+        }
+
+        section.classList.remove('hidden');
+        
+        const items = historyList.map(h => {
+            let item = h.item;
+            if (h.duration > 0) {
+              item._progress = Math.min(100, Math.max(0, (h.time / h.duration) * 100));
+            }
+            return item;
+        });
+
+        renderCarousel(track, items);
+      }
+
       async function loadHome() {
         showHomeMultiRows();
+        renderContinueWatching();
         try {
           const res = await fetch('/api/sc/home');
           const data = await res.json();
@@ -3456,6 +3547,12 @@
       function showHomeMultiRows() {
         if (homeMultiRows) homeMultiRows.classList.remove('hidden');
         if (genreFilteredView) genreFilteredView.classList.add('hidden');
+        if (mainSearchInput) mainSearchInput.value = '';
+        if (searchClearBtn) searchClearBtn.classList.add('hidden');
+        if (floatingSearchBar) floatingSearchBar.classList.add('hidden');
+        setActiveNav(navHome);
+        renderContinueWatching();
+        window.scrollTo({ top: 0, behavior: 'instant' });
       }
 
       function showFilteredGridView(title, countText) {
@@ -3463,7 +3560,7 @@
         if (genreFilteredView) genreFilteredView.classList.remove('hidden');
         if (genreViewTitle) genreViewTitle.textContent = title;
         if (genreViewCount) genreViewCount.textContent = countText || '';
-        window.scrollTo({ top: 0, behavior: 'smooth' });
+        window.scrollTo({ top: 0, behavior: 'instant' });
       }
 
       async function loadGenreOrType({ genreId, type, name }) {
@@ -4000,84 +4097,88 @@
         }
 
         showFilteredGridView(`Risultati per: "${q}"`, 'Ricerca...');
+        catalogGrid.innerHTML = '<div style="grid-column: 1/-1; text-align: center; color: var(--text-dim); padding: 50px;">Ricerca in corso...</div>';
+
         try {
           const res = await fetch(`/api/sc/search?q=${encodeURIComponent(q)}`);
           const data = await res.json();
+          if ((mainSearchInput.value || '').trim() !== q) return;
+
           if (data.success && data.titles && data.titles.length > 0) {
             showFilteredGridView(`Risultati per: "${q}"`, `${data.titles.length} Titoli`);
             renderCards(data.titles);
           } else {
             const filtered = loadedCatalog.filter(t => t.name.toLowerCase().includes(q.toLowerCase()));
-            showFilteredGridView(`Risultati per: "${q}"`, `${filtered.length} Titoli`);
-            renderCards(filtered);
+            if (filtered.length > 0) {
+              showFilteredGridView(`Risultati per: "${q}"`, `${filtered.length} Titoli`);
+              renderCards(filtered);
+            } else {
+              showFilteredGridView(`Risultati per: "${q}"`, '0 Titoli');
+              catalogGrid.innerHTML = `
+                <div style="grid-column: 1/-1; text-align: center; color: var(--text-dim); padding: 50px 20px;">
+                  <div style="font-size: 1.1rem; font-weight: 700; color: #fff; margin-bottom: 8px;">Nessun titolo trovato per "${q}"</div>
+                  <div style="font-size: 0.85rem;">Prova a cercare un altro titolo o torna alla home.</div>
+                </div>
+              `;
+            }
           }
         } catch (e) {
           const filtered = loadedCatalog.filter(t => t.name.toLowerCase().includes(q.toLowerCase()));
           showFilteredGridView(`Risultati per: "${q}"`, `${filtered.length} Titoli`);
           renderCards(filtered);
         }
+        window.scrollTo({ top: 0, behavior: 'instant' });
       }
 
       mainSearchInput.addEventListener('input', (e) => {
         const q = e.target.value;
-        if (q.trim()) searchClearBtn.classList.remove('hidden');
-        else searchClearBtn.classList.add('hidden');
+        if (q.trim()) {
+          searchClearBtn.classList.remove('hidden');
+        } else {
+          searchClearBtn.classList.add('hidden');
+          if (searchTimeout) clearTimeout(searchTimeout);
+          showHomeMultiRows();
+          return;
+        }
 
         if (searchTimeout) clearTimeout(searchTimeout);
         searchTimeout = setTimeout(() => {
           performSearch(q);
-          const gridEl = document.getElementById('grid-section-heading');
-          if (gridEl) {
-            const rect = gridEl.getBoundingClientRect();
-            if (rect.top < 0 || rect.top > window.innerHeight * 0.6) {
-              gridEl.scrollIntoView({ behavior: 'smooth', block: 'start' });
-            }
-          }
-        }, 250);
+        }, 200);
       });
 
       mainSearchInput.addEventListener('search', () => {
-        performSearch(mainSearchInput.value);
+        const q = mainSearchInput.value.trim();
+        if (q) performSearch(q);
+        else showHomeMultiRows();
       });
 
       searchClearBtn.onclick = () => {
-        mainSearchInput.value = '';
-        searchClearBtn.classList.add('hidden');
-        performSearch('');
-        mainSearchInput.focus();
+        showHomeMultiRows();
+        if (floatingSearchBar) {
+          floatingSearchBar.classList.remove('hidden');
+          setTimeout(() => mainSearchInput.focus(), 50);
+        }
       };
 
       if (btnCloseFloatingSearch) {
         btnCloseFloatingSearch.onclick = () => {
-          floatingSearchBar.classList.add('hidden');
-          mainSearchInput.value = '';
-          searchClearBtn.classList.add('hidden');
-          performSearch('');
+          showHomeMultiRows();
         };
       }
 
       // NAVBAR CONTROLS
       function setActiveNav(btn) {
         document.querySelectorAll('.nav-item').forEach(b => b.classList.remove('active'));
-        btn.classList.add('active');
+        if (btn) btn.classList.add('active');
       }
 
       btnBrandHome.onclick = () => {
-        setActiveNav(navHome);
-        if (floatingSearchBar) floatingSearchBar.classList.add('hidden');
-        mainSearchInput.value = '';
-        searchClearBtn.classList.add('hidden');
-        performSearch('');
-        window.scrollTo({ top: 0, behavior: 'smooth' });
+        showHomeMultiRows();
       };
 
       navHome.onclick = () => {
-        setActiveNav(navHome);
-        if (floatingSearchBar) floatingSearchBar.classList.add('hidden');
-        mainSearchInput.value = '';
-        searchClearBtn.classList.add('hidden');
-        performSearch('');
-        window.scrollTo({ top: 0, behavior: 'smooth' });
+        showHomeMultiRows();
       };
 
       navSearch.onclick = (e) => {
@@ -4165,6 +4266,22 @@
       // WATCHPARTY VIDEO SYNC EVENT LISTENERS
       // -------------------------------------------------------------
       if (webVideo) {
+        webVideo.addEventListener('timeupdate', () => {
+          if (!currentActiveItem) return;
+          let history = JSON.parse(localStorage.getItem('sc_watch_history') || '{}');
+          let id = currentActiveItem.id;
+          if (currentActiveItem.current_episode_id) {
+              id = `${id}_${currentActiveItem.current_episode_id}`;
+          }
+          history[id] = {
+              item: currentActiveItem,
+              time: webVideo.currentTime,
+              duration: webVideo.duration || 1,
+              timestamp: Date.now()
+          };
+          localStorage.setItem('sc_watch_history', JSON.stringify(history));
+        });
+
         webVideo.addEventListener('play', () => {
           if (socket && watchpartyRoomId && !isVideoSyncing) {
             socket.emit('sync_play', { roomId: watchpartyRoomId, time: webVideo.currentTime });
