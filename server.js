@@ -896,6 +896,246 @@ app.get('/api/stream/segment', async (req, res) => {
   }
 });
 
+// ----------------- PROFILES & DEDICATED WATCH PARTY SYNC -----------------
+const SEED_FILE = path.join(__dirname, 'seed_data.json');
+let SEED_DATA = { profiles: { active_profile_id: null, profiles: [] }, favorites: {}, history: {}, dates_cache: {} };
+if (fs.existsSync(SEED_FILE)) {
+  try {
+    SEED_DATA = JSON.parse(fs.readFileSync(SEED_FILE, 'utf8'));
+  } catch (e) {
+    console.error('Error loading seed_data.json in ServerWatchParty:', e);
+  }
+}
+
+const DATA_DIR_WP = path.join(__dirname, 'data');
+if (!fs.existsSync(DATA_DIR_WP)) {
+  try { fs.mkdirSync(DATA_DIR_WP, { recursive: true }); } catch(e) {}
+}
+const PROFILES_FILE_WP = path.join(DATA_DIR_WP, 'profiles.json');
+const WATCHPARTY_FILE_WP = path.join(DATA_DIR_WP, 'watchparty.json');
+const FAVORITES_FILE_WP = path.join(DATA_DIR_WP, 'favorites.json');
+const HISTORY_FILE_WP = path.join(DATA_DIR_WP, 'history.json');
+
+function readJsonSafeWP(filePath, defaultVal) {
+  if (fs.existsSync(filePath)) {
+    try {
+      const parsed = JSON.parse(fs.readFileSync(filePath, 'utf8'));
+      if (parsed) return parsed;
+    } catch(e) {}
+  }
+  return defaultVal;
+}
+
+function writeJsonSafeWP(filePath, data) {
+  try {
+    const tmp = `${filePath}.tmp`;
+    fs.writeFileSync(tmp, JSON.stringify(data, null, 2), 'utf8');
+    fs.renameSync(tmp, filePath);
+  } catch(e) {
+    console.error(`Error writing ${filePath}:`, e);
+  }
+}
+
+function getProfilesDataWP() {
+  let data = readJsonSafeWP(PROFILES_FILE_WP, null);
+  if (!data || !Array.isArray(data.profiles) || data.profiles.length < 2) {
+    data = SEED_DATA.profiles || { active_profile_id: null, profiles: [] };
+    writeJsonSafeWP(PROFILES_FILE_WP, data);
+  }
+  return data;
+}
+
+function getFavoritesDataWP() {
+  let data = readJsonSafeWP(FAVORITES_FILE_WP, null);
+  if (!data || Object.keys(data).length === 0) {
+    data = SEED_DATA.favorites || {};
+    writeJsonSafeWP(FAVORITES_FILE_WP, data);
+  }
+  return data;
+}
+
+function getHistoryDataWP() {
+  let data = readJsonSafeWP(HISTORY_FILE_WP, null);
+  if (!data || (Array.isArray(data) && data.length === 0)) {
+    data = SEED_DATA.history || [];
+    writeJsonSafeWP(HISTORY_FILE_WP, data);
+  }
+  return data;
+}
+
+function getWatchPartyDataWP() {
+  let data = readJsonSafeWP(WATCHPARTY_FILE_WP, { sessions: [] });
+  const now = Date.now();
+  data.sessions = (data.sessions || []).filter(s => (now - (s.created_at || 0)) < 3 * 3600 * 1000);
+  return data;
+}
+
+app.get('/api/profiles', (req, res) => {
+  const pData = getProfilesDataWP();
+  const sanitized = (pData.profiles || []).map(p => {
+    const copy = { ...p };
+    copy.has_pin = Boolean(copy.pin);
+    delete copy.pin;
+    delete copy.history;
+    delete copy.favorites;
+    return copy;
+  });
+  res.json({
+    active_profile_id: pData.active_profile_id || null,
+    profiles: sanitized
+  });
+});
+
+app.get('/api/user_data/bundle', (req, res) => {
+  res.json({
+    success: true,
+    profiles: getProfilesDataWP(),
+    favorites: getFavoritesDataWP(),
+    history: getHistoryDataWP(),
+    timestamp: Date.now()
+  });
+});
+
+app.post('/api/user_data/sync', (req, res) => {
+  const body = req.body || {};
+  if (body.profiles) writeJsonSafeWP(PROFILES_FILE_WP, body.profiles);
+  if (body.favorites) writeJsonSafeWP(FAVORITES_FILE_WP, body.favorites);
+  if (body.history) writeJsonSafeWP(HISTORY_FILE_WP, body.history);
+  res.json({ success: true, message: 'Dati sincronizzati con successo' });
+});
+
+app.post('/api/watchparty/create', (req, res) => {
+  const { host_profile_id, guest_profile_id, item } = req.body || {};
+  if (!host_profile_id || !guest_profile_id || !item) {
+    return res.status(400).json({ success: false, error: 'Parametri mancanti' });
+  }
+
+  const pData = getProfilesDataWP();
+  const profs = {};
+  (pData.profiles || []).forEach(p => { profs[p.id] = p; });
+
+  const hostProf = profs[host_profile_id] || { name: 'Host', avatar: 'preset:netflix-red' };
+  const guestProf = profs[guest_profile_id] || { name: 'Ospite', avatar: 'preset:amber-crown' };
+
+  const sessionId = `wp_${Date.now()}_${Math.random().toString(36).substring(2, 8)}`;
+  const session = {
+    session_id: sessionId,
+    host_profile_id,
+    host_name: hostProf.name,
+    host_avatar: hostProf.avatar,
+    guest_profile_id,
+    guest_name: guestProf.name,
+    guest_avatar: guestProf.avatar,
+    item,
+    status: 'waiting',
+    current_time: 0,
+    paused: true,
+    playback_rate: 1.0,
+    last_seq: 0,
+    last_action: 'create',
+    created_at: Date.now(),
+    last_sync: Date.now()
+  };
+
+  const wpData = getWatchPartyDataWP();
+  wpData.sessions.push(session);
+  writeJsonSafeWP(WATCHPARTY_FILE_WP, wpData);
+
+  res.json({ success: true, session });
+});
+
+app.get('/api/watchparty/pending', (req, res) => {
+  const profileId = req.query.profile_id;
+  if (!profileId) return res.status(400).json({ success: false, error: 'profile_id mancante' });
+
+  const wpData = getWatchPartyDataWP();
+  const pending = (wpData.sessions || []).filter(s => s.guest_profile_id === profileId && s.status === 'waiting');
+  res.json({ success: true, sessions: pending });
+});
+
+app.post('/api/watchparty/accept', (req, res) => {
+  const { session_id } = req.body || {};
+  if (!session_id) return res.status(400).json({ success: false, error: 'session_id mancante' });
+
+  const wpData = getWatchPartyDataWP();
+  const session = (wpData.sessions || []).find(s => s.session_id === session_id);
+  if (!session) return res.status(404).json({ success: false, error: 'Sessione non trovata' });
+
+  session.status = 'active';
+  session.last_sync = Date.now();
+  writeJsonSafeWP(WATCHPARTY_FILE_WP, wpData);
+
+  res.json({ success: true, session });
+});
+
+app.post('/api/watchparty/decline', (req, res) => {
+  const { session_id } = req.body || {};
+  if (!session_id) return res.status(400).json({ success: false, error: 'session_id mancante' });
+
+  const wpData = getWatchPartyDataWP();
+  const session = (wpData.sessions || []).find(s => s.session_id === session_id);
+  if (!session) return res.status(404).json({ success: false, error: 'Sessione non trovata' });
+
+  session.status = 'declined';
+  session.last_sync = Date.now();
+  writeJsonSafeWP(WATCHPARTY_FILE_WP, wpData);
+
+  res.json({ success: true });
+});
+
+app.post('/api/watchparty/sync', (req, res) => {
+  const body = req.body || {};
+  const { session_id, current_time, paused, playback_rate, seq, stream_url, episode_id, season_number, episode_number } = body;
+  if (!session_id) return res.status(400).json({ success: false, error: 'session_id mancante' });
+
+  const wpData = getWatchPartyDataWP();
+  const session = (wpData.sessions || []).find(s => s.session_id === session_id);
+  if (!session || session.status !== 'active') {
+    return res.status(404).json({ success: false, error: 'Sessione non attiva' });
+  }
+
+  if (current_time !== undefined && current_time !== null) session.current_time = Number(current_time) || 0;
+  if (paused !== undefined && paused !== null) session.paused = Boolean(paused);
+  if (playback_rate !== undefined && playback_rate !== null) session.playback_rate = Number(playback_rate) || 1.0;
+  if (seq !== undefined && seq !== null) session.last_seq = Number(seq) || 0;
+  if (stream_url) session.stream_url = stream_url;
+  if (episode_id) session.current_episode_id = episode_id;
+  if (season_number) session.current_season_number = season_number;
+  if (episode_number) session.current_episode_number = episode_number;
+
+  session.last_action = body.action || session.last_action || 'sync';
+  session.last_sync = Date.now();
+  writeJsonSafeWP(WATCHPARTY_FILE_WP, wpData);
+
+  res.json({ success: true, session });
+});
+
+app.get('/api/watchparty/state', (req, res) => {
+  const sessionId = req.query.session_id;
+  if (!sessionId) return res.status(400).json({ success: false, error: 'session_id mancante' });
+
+  const wpData = getWatchPartyDataWP();
+  const session = (wpData.sessions || []).find(s => s.session_id === sessionId);
+  if (!session) return res.status(404).json({ success: false, error: 'Sessione non trovata' });
+
+  res.json({ success: true, session });
+});
+
+app.post('/api/watchparty/end', (req, res) => {
+  const { session_id } = req.body || {};
+  if (!session_id) return res.status(400).json({ success: false, error: 'session_id mancante' });
+
+  const wpData = getWatchPartyDataWP();
+  const session = (wpData.sessions || []).find(s => s.session_id === session_id);
+  if (!session) return res.status(404).json({ success: false, error: 'Sessione non trovata' });
+
+  session.status = 'ended';
+  session.last_sync = Date.now();
+  writeJsonSafeWP(WATCHPARTY_FILE_WP, wpData);
+
+  res.json({ success: true });
+});
+
 // Fallback index route
 app.get('*', (req, res) => {
   res.sendFile(path.join(__dirname, 'public', 'index.html'));
