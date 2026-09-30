@@ -1096,6 +1096,8 @@ app.post('/api/watchparty/sync', (req, res) => {
 
   if (current_time !== undefined && current_time !== null) session.current_time = Number(current_time) || 0;
   if (paused !== undefined && paused !== null) session.paused = Boolean(paused);
+  if (body.guest_ready !== undefined) session.guest_ready = Boolean(body.guest_ready);
+  if (body.guest_buffering !== undefined) session.guest_buffering = Boolean(body.guest_buffering);
   if (playback_rate !== undefined && playback_rate !== null) session.playback_rate = Number(playback_rate) || 1.0;
   if (seq !== undefined && seq !== null) session.last_seq = Number(seq) || 0;
   if (stream_url) session.stream_url = stream_url;
@@ -1200,6 +1202,14 @@ io.on('connection', (socket) => {
 
   socket.on('sync_seek', (data) => {
     if (data.roomId) socket.to(data.roomId).emit('sync_seek', data);
+  });
+
+  socket.on('sync_guest_ready', (data) => {
+    if (data.roomId) socket.to(data.roomId).emit('sync_guest_ready', data);
+  });
+
+  socket.on('sync_guest_buffering', (data) => {
+    if (data.roomId) socket.to(data.roomId).emit('sync_guest_buffering', data);
   });
 
   socket.on('disconnect', () => {
